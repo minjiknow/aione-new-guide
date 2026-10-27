@@ -1012,10 +1012,10 @@
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="ai-answer"
 													data-preview-layout="panels">
-													<main class="guide-panel-layout">
+													<main class="three-panel guide-panel-layout guide-panel-resizable" data-split-min="120">
 														<section
 															class="panel panel-left upload-panel-area split-handler type2"
-															data-slot="left" data-panel-min="280" data-split-min="80"
+															data-slot="left" data-panel-min="120" data-split-min="80"
 															data-panel="folder"
 															aria-labelledby="guide-example-19-answerSourceTitle">
 															<header class="panel-head" style="cursor: grab;">
@@ -1050,7 +1050,7 @@
 																</div>
 															</header>
 														</section>
-														<div class="panel-resize-handle" role="separator"
+														<div class="panel-resize-handle" role="separator" tabindex="0"
 															aria-label="왼쪽 패널 크기 조절" aria-orientation="vertical"></div>
 														<section class="panel panel-center" data-slot="center"
 															data-panel="center"
@@ -1109,7 +1109,7 @@
 															</header>
 														</section>
 														<div aria-label="오른쪽 패널 크기 조절" aria-orientation="vertical"
-															class="panel-resize-handle" role="separator"></div>
+															class="panel-resize-handle" role="separator" tabindex="0"></div>
 														<section aria-labelledby="guide-example-19-answerChatTitle"
 															class="panel panel-right" data-panel="chat"
 															data-slot="right">
@@ -1127,14 +1127,14 @@
 													</main>
 												</div>
 											</div>
-											<p class="guide-preview-note">가로 3등분 패널 · 헤더를 드래그해 위치 교환, 본문 생략<br>관련자료·답변서
+											<p class="guide-preview-note">가로 3등분 패널 · 경계선 드래그·좌우 방향키로 크기 조절 · 헤더 드래그로 위치 교환, 본문 생략<br>관련자료·답변서
 												초안의 문서 내용은 원본 화면에서 연결</p>
 											<a class="guide-preview-source" href="ai-answer.html">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">three-panel</span>
 										</td>
-										<td>부모 작업 영역에 맞춰 분할<br>예시는 640px 너비, 좌·중·우 각 1fr<br>각 패널 최소 너비와 분할 설정을 함께 적용
+										<td>부모 작업 영역에 맞춰 분할<br>예시는 640px 너비, 초기 좌·중·우 각 1fr · 최소 너비 120px<br>각 패널 최소 너비와 분할 설정을 함께 적용
 										</td>
 										<td>패널과 크기 조절 핸들을 감싸는 영역. 패널과 핸들을 바로 아래 자식으로 배치합니다.</td>
 									</tr>
@@ -1202,10 +1202,10 @@
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="ai-answer"
 													data-preview-layout="panels">
-													<main class="guide-panel-layout">
+													<main class="three-panel guide-panel-layout guide-panel-resizable" data-split-min="120">
 														<section
 															class="panel panel-left upload-panel-area split-handler type2"
-															data-slot="left" data-panel-min="280" data-split-min="80"
+															data-slot="left" data-panel-min="120" data-split-min="80"
 															data-panel="folder"
 															aria-labelledby="guide-example-21-answerSourceTitle">
 															<header class="panel-head" style="cursor: grab;">
@@ -1240,7 +1240,7 @@
 																</div>
 															</header>
 														</section>
-														<div class="panel-resize-handle" role="separator"
+														<div class="panel-resize-handle" role="separator" tabindex="0"
 															aria-label="왼쪽 패널 크기 조절" aria-orientation="vertical"></div>
 														<section class="panel panel-center" data-slot="center"
 															data-panel="center"
@@ -1299,7 +1299,7 @@
 															</header>
 														</section>
 														<div aria-label="오른쪽 패널 크기 조절" aria-orientation="vertical"
-															class="panel-resize-handle" role="separator"></div>
+															class="panel-resize-handle" role="separator" tabindex="0"></div>
 														<section aria-labelledby="guide-example-21-answerChatTitle"
 															class="panel panel-right" data-panel="chat"
 															data-slot="right">
@@ -1317,8 +1317,7 @@
 													</main>
 												</div>
 											</div>
-											<p class="guide-preview-note">가로 3등분과 핸들 위치 예시 · 헤더 드래그로 위치 교환, 실제 크기 조절은 원본
-												화면에서 확인<br>관련자료·답변서
+											<p class="guide-preview-note">경계선을 드래그하거나 Tab으로 선택 후 좌우 방향키로 크기 조절 · Shift+방향키는 32px 이동 · 헤더 드래그로 위치 교환<br>관련자료·답변서
 												초안의 문서 내용은 원본 화면에서 연결</p>
 											<a class="guide-preview-source" href="ai-answer.html">원본 보러가기</a>
 										</td>
@@ -1329,7 +1328,7 @@
 											<span class="class-value">패널 사이 배치</span>
 										</td>
 										<td>원본의 data-resize·role="separator"·tabindex·aria-*와 초기화 코드를 함께 유지합니다. 동작:
-											AIOneSplitHandler.</td>
+											AIOneSplitHandler. 가이드 예시는 640px 영역에 맞춰 패널 최소 너비를 120px로 설정합니다.</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">채팅 입력·토글</td>
@@ -1810,28 +1809,41 @@
 										<td>일반 ai-one-toast와 구분되는 작업 완료 알림입니다. show로 표시하며 제목·상세 문구·닫기 버튼을 유지합니다.</td>
 									</tr>
 									<tr data-guide-row>
-										<td role="rowheader">목록 상태</td>
-										<td>
-											<div class="guide-preview-viewport">
-												<div class="guide-preview" data-preview-page="common">
-													<div class="samples"><span
-															class="drawer-run-status drawer-chat-status pending">진행중</span><span
-															class="drawer-run-status drawer-chat-status">완료</span><span
-															class="drawer-run-status drawer-chat-status failed">실패</span>
-													</div>
-												</div>
-											</div>
-											<p class="guide-preview-note">공통 목록 상태 구조 · 상태 문구는 예시</p><a
-												class="guide-preview-source" href="../css/common.css">원본 보러가기</a>
-										</td>
-										<td><span
-												class="class-value">drawer-run-status<br>drawer-chat-status<br>drawer-run-badge<br>nav-complete-dot</span>
-										</td>
-										<td>내용에 따라 너비 결정<br>padding 3px 8px<br>글자 크기 기본 9px × UI 배율</td>
-										<td>drawer-run-status·drawer-chat-status에 pending(진행 중), failed(실패) 등 원본 상태 클래스를
-											조합합니다. 완료 예시는 기본 상태입니다.<br>상태 문구도 함께 표시하고, 메뉴의 알림 점과 혼용하지 않습니다. 실제 데이터의 상태
-											변환은 common.js 매핑을 사용합니다.</td>
-									</tr>
+                                        <td role="rowheader">실행 상태 · drawer-run-status</td>
+                                        <td>
+                                            <div class="guide-preview-viewport">
+                                                <div class="guide-preview" data-preview-page="common"><div class="samples"><span class="drawer-run-status pending">진행중</span><span class="drawer-run-status">완료</span><span class="drawer-run-status failed">실패</span></div></div>
+                                            </div>
+                                            <a class="guide-preview-source" href="../css/common.css">원본 보러가기</a>
+                                        </td>
+                                        <td><span class="class-value">drawer-run-status</span></td>
+                                        <td>padding 3px 8px<br>글자 9px × UI 배율 · 굵기 700<br>완료·실패 점 6px · 진행 중 회전 표시 8px</td>
+                                        <td>진행중·완료·실패를 표시하는 기본 상태 배지입니다. 기본은 완료, pending은 진행 중, failed는 실패입니다.<br>현재는 상태점·색상·회전 표시까지 이 클래스가 담당합니다. 20261019_인터웹에서는 기본 완료가 초록색이었고, 채팅용 색상과 상태점은 drawer-chat-status에서 추가했습니다.</td>
+                                    </tr>
+									<tr data-guide-row>
+                                        <td role="rowheader">부가정보 배지 · drawer-run-badge</td>
+                                        <td>
+                                            <div class="guide-preview-viewport">
+                                                <div class="guide-preview" data-preview-page="common"><div class="drawer-run-badges"><span class="drawer-run-badge">파일 3건</span><span class="drawer-run-badge member">의원 2명</span><span class="drawer-run-badge query">질의 5건</span><span class="drawer-run-badge review">확인 필요</span></div></div>
+                                            </div>
+                                            <a class="guide-preview-source" href="../css/common.css">원본 보러가기</a>
+                                        </td>
+                                        <td><span class="class-value">drawer-run-badge</span></td>
+                                        <td>padding 3px 8px · 테두리 1px<br>글자 9px × UI 배율 · 굵기 700<br>묶음: drawer-run-badges · 간격 4px</td>
+                                        <td>파일·의원·질의 건수와 확인 필요 같은 부가정보를 표시합니다. 기본은 강조색, member는 청록색, query는 보라색, review는 주황색입니다. 상태점·회전 표시는 없습니다.<br>20261019_인터웹 대비 여백 2px 6px → 3px 8px, 글자 8px → 9px, 굵기 600 → 700, 묶음 위 여백 3px → 0으로 변경됐고 review가 추가됐습니다.</td>
+                                    </tr>
+									<tr data-guide-row>
+                                        <td role="rowheader">완료 알림 점 · nav-complete-dot</td>
+                                        <td>
+                                            <div class="guide-preview-viewport">
+                                                <div class="guide-preview" data-preview-page="common"><div class="guide-completion-example">답변서 초안<span class="nav-complete-dot" role="img" aria-label="완료 알림 있음"></span></div></div>
+                                            </div>
+                                            <a class="guide-preview-source" href="../css/common.css">원본 보러가기</a>
+                                        </td>
+                                        <td><span class="class-value">nav-complete-dot</span></td>
+                                        <td>7 × 7px 원형<br>위·오른쪽 7px에 절대 배치<br>예시의 부모만 위치 기준으로 지정</td>
+                                        <td>완료 알림이 있는 메뉴·목록 항목에 붙는 점입니다. 상태 문구나 건수 배지와 별개로 사용하며 hidden으로 숨깁니다. 일반 위치는 파란색, 사이드바 안에서는 강조색과 반복 애니메이션이 적용됩니다.<br>20261019_인터웹과 현재의 스타일·메뉴 표시 및 해제 로직은 같습니다. 다른 세 배지와 역할이 달라 기본 클래스로 유지합니다.</td>
+                                    </tr>
 									<tr data-guide-row>
 										<td role="rowheader">라디오 · 오류 신고</td>
 										<td>
@@ -1908,7 +1920,7 @@
 										<td>
 											<span class="class-value">sidebar app-sidebar</span>
 										</td>
-										<td>기본 너비 220px · 접힘 상태 collapsed는 56px<br>실제 조합: class="sidebar app-sidebar
+										<td>기본 너비 220px · 펼친 상태에서 최소 180px~최대 360px 조절<br>접힘 상태 collapsed는 56px<br>실제 조합: class="sidebar app-sidebar
 											collapsed"</td>
 									</tr>
 									<tr data-guide-row>
@@ -1984,7 +1996,7 @@
 AIOneSidebar.setCollapsed("#sidebar", false);  // 펼치기</code></pre>
 					<h3>너비 조절과 확인 사항</h3>
 					<ul class="guide-list">
-						<li>경계 드래그로 너비를 변경하고 더블클릭으로 220px로 되돌립니다.</li>
+						<li>일반 사이드바와 챗봇 사이드바 모두 기본 너비는 220px이며, 펼친 데스크톱 상태에서 경계를 드래그해 최소 180px~최대 360px로 조절합니다. 더블클릭하면 기본 220px로 되돌립니다.</li>
 						<li>키보드는 좌우 화살표로 10px씩 조절하며 Home·End는 최소·최대, Enter는 기본값입니다.</li>
 						<li>접힌 상태와 768px 이하에서는 너비 조절을 사용하지 않습니다.</li>
 					</ul>
@@ -2012,7 +2024,7 @@ AIOneSidebar.setCollapsed("#sidebar", false);  // 펼치기</code></pre>
 										<td role="rowheader">전체 영역·접힘</td>
 										<td><span class="class-value">chatbot-app /
 												chatbot-sidebar<br>is-sidebar-collapsed</span></td>
-										<td>기본 220px · 일반 접힘 56px<br>부모 chatbot-app에 is-sidebar-collapsed 적용</td>
+										<td>기본 너비 220px · 펼친 상태에서 최소 180px~최대 360px 조절<br>일반 접힘 56px<br>부모 chatbot-app에 is-sidebar-collapsed 적용</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">로고·접기 버튼</td>

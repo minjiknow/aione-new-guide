@@ -27,18 +27,22 @@
     });
   });
   // 예시도 실제 공통 컨트롤러를 사용합니다. 화면별 API 초기화는 호출하지 않습니다.
-  document.querySelectorAll('.guide-preview .three-panel').forEach(container => {
+  document.querySelectorAll('.guide-preview .three-panel:not(.guide-panel-layout)').forEach(container => {
     window.AIOnePanel.initShell({ container, accessory: false });
   });
   document.querySelectorAll('.guide-panel-layout').forEach(container => {
     window.AIOneWorkspaceUi.initPanelDragDrop({
       container,
       applyState(state) {
-        window.AIOneWorkspaceUi.applyPanelLayout(container, state);
+        window.AIOneWorkspaceUi.applyPanelLayout(container, state, container.classList.contains('guide-panel-resizable')
+          ? { minimumWidths: { folder: 120, center: 120, chat: 120 } } : {});
         // 공통 노드 이동은 재사용하고, 예시의 동일한 3열 너비는 CSS로 유지합니다.
-        container.style.removeProperty('grid-template-columns');
+        if (!container.classList.contains('guide-panel-resizable')) container.style.removeProperty('grid-template-columns');
       },
     });
+  });
+  document.querySelectorAll('.guide-panel-resizable').forEach(container => {
+    window.AIOneSplitHandler.init(container);
   });
   window.AIOneWorkspaceUi.initAccessoryController({
     container: () => document.querySelector('.guide-preview .three-panel'),
