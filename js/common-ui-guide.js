@@ -1,4 +1,4 @@
-/** 공통 UI 가이드: 표 검색, 목차 선택 상태, 표 헤더 고정을 처리합니다. */
+/** 공통 UI 가이드: 내용 검색, 목차 선택 상태, 표 헤더 고정을 처리합니다. */
 (() => {
   'use strict';
   document.querySelectorAll('[data-guide-message-actions]').forEach(actions => {
@@ -95,31 +95,72 @@
     });
   });
   const input = document.querySelector('#guide-search');
-  const rows = [...document.querySelectorAll('[data-guide-row]')];
   const status = document.querySelector('#search-status');
+  const empty = document.querySelector('#guide-search-empty');
   const tables = [...document.querySelectorAll('.guide-table')];
   const normalize = value => value.normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g, ' ').trim();
-  const index = rows.map(row => ({
-    row,
-    text: normalize(row.textContent),
-  }));
-  status.textContent = `전체 ${rows.length}개 항목`;
+  // 표의 행과 표 밖 설명을 같은 검색 단위로 관리합니다.
+  // 제목은 각 단위에 포함해 제목 검색 시 관련 내용을 함께 보여 줍니다.
+  const searchSections = [...document.querySelectorAll('.guide-section')].map(section => {
+    const title = section.querySelector(':scope > h2').textContent;
+    const groups = [];
+    let group = { heading: null, items: [] };
+    groups.push(group);
+    [...section.children].forEach(element => {
+      if (element.matches('h2')) return;
+      if (element.matches('h3')) {
+        group = { heading: element, items: [] };
+        groups.push(group);
+        return;
+      }
+      const rows = [...element.querySelectorAll('[data-guide-row]')];
+      const nodes = rows.length ? rows : [element];
+      nodes.forEach(node => group.items.push({
+        node,
+        text: normalize([title, group.heading?.textContent || '', node.textContent].join(' ')),
+      }));
+    });
+    return { section, groups };
+  });
+  const total = searchSections.reduce((sum, { groups }) => sum + groups.reduce((count, group) => count + group.items.length, 0), 0);
+  status.textContent = `전체 ${total}개 내용`;
   input.addEventListener('input', () => {
     const terms = normalize(input.value).split(' ').filter(Boolean);
     let visible = 0;
-    index.forEach(({ row, text }) => {
-      row.hidden = !terms.every(term => text.includes(term));
-      if (!row.hidden) visible++;
+    searchSections.forEach(({ section, groups }) => {
+      let sectionMatches = 0;
+      groups.forEach(({ heading, items }) => {
+        let groupMatches = 0;
+        items.forEach(({ node, text }) => {
+          node.hidden = !terms.every(term => text.includes(term));
+          if (!node.hidden) groupMatches++;
+        });
+        if (heading) heading.hidden = groupMatches === 0;
+        sectionMatches += groupMatches;
+      });
+      section.hidden = sectionMatches === 0;
+      visible += sectionMatches;
     });
     tables.forEach(table => {
-      table.querySelector('.empty-row').hidden = !!table.querySelector('[data-guide-row]:not([hidden])');
+      const hasMatches = !!table.querySelector('[data-guide-row]:not([hidden])');
+      table.closest('.guide-table-area').hidden = !hasMatches;
+      table.querySelector('.empty-row').hidden = true;
     });
-    status.textContent = terms.length ? `${visible} / ${rows.length}개 항목` : `전체 ${rows.length}개 항목`;
+    empty.hidden = visible !== 0;
+    status.textContent = terms.length ? `검색 결과 ${visible}개 내용 / 전체 ${total}개` : `전체 ${total}개 내용`;
+    // 아래쪽에서 검색해도 결과 시작 부분을 바로 볼 수 있게 합니다.
+    scroller.scrollTop = Math.min(scroller.scrollTop, toolbar.offsetTop);
+    scheduleStickyHeaders();
   });
   input.addEventListener('keydown', event => {
     if (event.key === 'Escape') { input.value = ''; input.dispatchEvent(new Event('input')); }
   });
   const links = [...document.querySelectorAll('[data-guide-section]')];
+  links.forEach(link => link.addEventListener('click', () => {
+    if (!document.getElementById(link.hash.slice(1))?.hidden) return;
+    input.value = '';
+    input.dispatchEvent(new Event('input'));
+  }));
   window.AIOneSidebar.configure('#guideSidebar', {
     activePage: location.hash.slice(1) || 'components',
     storageKey: 'ai-one:guide-sidebar-collapsed',
@@ -154,13 +195,15 @@
 
   function updateNavigationFromScroll() {
     const activationTop = toolbar.getBoundingClientRect().bottom + 28;
-    let current = sections[0];
-    for (const section of sections) {
+    const visibleSections = sections.filter(section => !section.hidden);
+    if (!visibleSections.length) { setActiveSection(''); return; }
+    let current = visibleSections[0];
+    for (const section of visibleSections) {
       if (section.getBoundingClientRect().top > activationTop + 1) break;
       current = section;
     }
     if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1) {
-      current = sections[sections.length - 1];
+      current = visibleSections[visibleSections.length - 1];
     }
     setActiveSection(current.id);
   }
@@ -173,6 +216,7 @@
 
     let active = null;
     for (const wrapper of wrappers) {
+      if (wrapper.closest('[hidden]')) continue;
       const hasOverflow = wrapper.scrollWidth > wrapper.clientWidth + 1;
       wrapper.classList.toggle('has-horizontal-scroll', hasOverflow);
       wrapper.classList.toggle('has-no-horizontal-scroll', !hasOverflow);
