@@ -1614,9 +1614,12 @@
                         await runtime.page.completeResponse?.({ result, conversationId, requestDocIds,
                             skeletonTarget, pageRequest, isRequestActive });
                     }
+                    // 261027 수정 - 공통 AI 채팅을 사용하는 모든 화면의 해당 메뉴에 완료점을 표시한다.
+                    const completionMenuKey = document.body.dataset.page;
+                    if (completionMenuKey) window.AIOneSidebar?.markCompletion(completionMenuKey);
                     // 목록은 어느 채팅을 보고 있어도 갱신 가능하지만, 본문/보고서 상태는 건드리지 않는다.
                     await loadConversationList({ page: 1, title: "" });
-                    // 공통 Manage 완료점 대신 실제 작업이 끝난 대화방에 완료점을 표시한다.
+                    // 실제 작업이 끝난 대화방의 미확인 완료점도 유지한다.
                     completedConversationIds.add(String(conversationId));
                     renderConversationHistory();
                 } catch (error) {

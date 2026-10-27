@@ -505,8 +505,15 @@
             case "ND_send.do": {
                 const text = String(get("content") || get("message") || "");
                 const reply = domain === "chat" ? chatReply(conversationId, get("agent") || conversation?.agent) : null;
+                // 반영 목업은 기존 자료 목록 렌더러를 재사용하되 자료 한 건만 표시한다.
+                const isWorkSupportApply = isWorkSupportPage && text === "선택한 참조자료를 바탕으로 주요 내용을 정리해 주세요.";
+                const workSupportResponse = isWorkSupportPage
+                    ? (isWorkSupportApply
+                        ? { ...answerData.responses.search, documents: answerData.responses.search.documents.slice(0, 1) }
+                        : /찾|검색/.test(text) ? answerData.responses.search : answerData.responses.answer)
+                    : null;
                 const answer = isSaleReviewPage ? data.messages.chat : domain === "answer"
-                    ? (isWorkSupportPage ? (/찾|검색/.test(text) ? JSON.stringify(answerData.responses.search) : JSON.stringify(answerData.responses.answer)) : data.messages.answer)
+                    ? (isWorkSupportPage ? JSON.stringify(workSupportResponse) : data.messages.answer)
                     : reply?.content || data.messages.chat;
                 const id = makeId("dummy-message");
                 const history = messages.get(messageKey) || [];
