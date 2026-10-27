@@ -963,6 +963,30 @@ min-width: 0;
 [data-chat-message-list][data-variant="answer"] {
     min-height: 0;
 }
+.apply-selected-btn {
+    flex: 0 0 auto;
+    min-width: 52px;
+    height: 30px;
+    padding: 0 13px;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--primary);
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 700;
+    cursor: pointer;
+}
+.apply-selected-btn:hover:not(:disabled) {
+    border-color: var(--primary-dark);
+    background: rgba(var(--primary-rgb), 0.055);
+    color: var(--primary-dark);
+}
+.apply-selected-btn:disabled {
+    color: var(--text-muted);
+    background: var(--surface);
+    border-color: var(--border);
+    cursor: not-allowed;
+}
 /* Source: sale-review.css */
 .status-badge {
     white-space: nowrap;
