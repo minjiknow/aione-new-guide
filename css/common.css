@@ -4536,6 +4536,21 @@ html[data-theme="dark"] .nav-link.active {
     pointer-events: auto;
 }
 
+/* 이동용 로고는 펼치기 버튼과 클릭 영역을 분리합니다. */
+.sidebar.collapsed .sidebar-top-bar:has([data-sidebar-brand-action="navigate"]) {
+    height: 88px;
+    gap: 4px;
+}
+.sidebar.collapsed .sidebar-top-bar:has([data-sidebar-brand-action="navigate"]) .sidebar-brand {
+    opacity: 1;
+    pointer-events: auto;
+}
+.sidebar.collapsed .sidebar-top-bar:has([data-sidebar-brand-action="navigate"]) .sidebar-collapse-btn {
+    grid-area: 2 / 1;
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .sidebar.collapsed .sidebar-brand,
 .sidebar.collapsed .nav-link,
 .sidebar.collapsed .user-card {
