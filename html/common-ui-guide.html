@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<!--
+[파일 요약]
+공통 UI 가이드: 기존 사이드바·입력창·데이터 테이블 컴포넌트를 재사용합니다.
+공통 파일: css/common.css, css/ai-theme.css, js/common.js.
+페이지 파일: css/common-ui-guide.css, js/common-ui-guide.js.
+기준 문서: docs/AI-ONE_공통_UI_가이드.docx.
+-->
+<html lang="ko" data-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="AI ONE 공통 UI 요소와 사이드바, 색상 관리 및 클래스 조합 기준을 정리한 개발 가이드">
+        <title>AI ONE 공통 UI 가이드</title>
+        <link rel="icon" href="../assets/icons/ai-one-logo.svg" type="image/svg+xml">
+        <link rel="stylesheet" href="../css/common.css">
+        <link rel="stylesheet" href="../css/ai-theme.css">
+        <link rel="stylesheet" href="../css/common-ui-guide.css">
+        <script src="../js/common.js" defer></script>
+        <script src="../js/common-ui-guide.js" defer></script>
+    </head>
+    <body data-page="common-ui-guide">
+        <a class="skip-link" href="#guide-content">본문으로 바로가기</a>
+        <div class="app">
+            <aside class="sidebar app-sidebar" id="guideSidebar" aria-label="공통 UI 가이드 목차">
+                <div class="sidebar-top-bar">
+                    <a class="sidebar-brand" id="sidebarBrandButton" href="home.html" aria-label="AI-ONE 홈" data-tooltip="AI-ONE 홈">
+                        <span class="brand-logo">
+                            <img class="brand-symbol" src="../assets/icons/ai-one-logo.svg" alt="AI-ONE" data-icon="ai-one-logo">
+                        </span>
+                        <span class="brand-text">
+                            <span class="brand-name">AI-ONE</span>
+                            <span class="brand-sub">공통 UI 가이드</span>
+                        </span>
+                    </a>
+                    <button type="button" class="icon-button icon-button-ghost sidebar-collapse-btn" id="sidebarCollapseBtn" aria-label="사이드바 접기" aria-expanded="true" data-tooltip="사이드바 접기">
+                        <img class="collapse-icon icon icon-text" src="../assets/icons/sidebar-collapse.svg" data-icon="sidebar-collapse" alt="" aria-hidden="true">
+                    </button>
+                </div>
+                <nav class="sidebar-nav" aria-label="가이드 목차">
+                    <div class="nav-group">
+                        <span class="nav-group-label">가이드 목차</span>
+                        <a class="nav-link" href="#components" data-page="components" data-guide-section="components" data-tooltip="공통 UI 요소" aria-label="공통 UI 요소">
+                            <img class="icon icon-text" src="../assets/icons/layers.svg" data-icon="layers" alt="" aria-hidden="true">
+                            <span class="nav-text">공통 UI 요소</span>
+                        </a>
+                        <a class="nav-link" href="#sidebar" data-page="sidebar" data-guide-section="sidebar" data-tooltip="사이드바" aria-label="사이드바">
+                            <img class="icon icon-text" src="../assets/icons/layout-columns.svg" data-icon="layout-columns" alt="" aria-hidden="true">
+                            <span class="nav-text">사이드바</span>
+                        </a>
+                        <a class="nav-link" href="#colors" data-page="colors" data-guide-section="colors" data-tooltip="색상 관리와 조합" aria-label="색상 관리와 조합">
+                            <img class="icon icon-text" src="../assets/icons/settings.svg" data-icon="settings" alt="" aria-hidden="true">
+                            <span class="nav-text">색상 관리와 조합</span>
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+            <div class="main-wrap guide-main">
+                <header class="guide-header page-width">
+                    <p class="eyebrow">AI ONE · 개발 가이드</p>
+                    <h1>AI ONE 공통 UI 가이드</h1>
+                    <p class="intro">공통 UI의 클래스와 사용 기준, 사이드바 연결 방법, 색상 조합을 한곳에 정리했습니다. 기존 화면의 내부 구조와 속성을 함께 사용하고, 실제 값과 동작은 해당 소스 파일에서 확인합니다.</p>
+                </header>
+                <div class="guide-toolbar">
+                    <div class="toolbar-inner page-width">
+                        <div class="search-group">
+                            <label class="search-label" for="guide-search">표 검색</label>
+                            <input class="form-input guide-search-input" type="search" id="guide-search" placeholder="클래스 · 속성 · API" aria-describedby="search-status" autocomplete="off">
+                            <p class="search-status" id="search-status" role="status" aria-live="polite">전체 32개 항목</p>
+                        </div>
+                    </div>
+                </div>
+                <main id="guide-content" class="guide-content page-width">
+                    <section id="components" class="guide-section" aria-labelledby="components-title">
+                        <h2 id="components-title">공통 UI 요소</h2>
+                        <div class="table-area guide-table-area">
+                            <div class="table-scroll guide-table-scroll" role="region" aria-label="공통 UI 요소 표" tabindex="0">
+                                <table class="table guide-table table-components" data-datatable="">
+                                    <caption class="sr-only">공통 UI 요소의 클래스와 사용 기준</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">요소</th>
+                                            <th scope="col">기본 클래스</th>
+                                            <th scope="col">크기 옵션</th>
+                                            <th scope="col">색상·형태·상태 및 사용</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">버튼</td>
+                                            <td>
+                                                <span class="class-value">button</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">button-sm</span>
+                                            </td>
+                                            <td>강조: button-primary<br>예: button button-primary button-sm</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">아이콘 버튼</td>
+                                            <td>
+                                                <span class="class-value">icon-button</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">icon-button-sm 24px<br>icon-button-lg 38px</span>
+                                            </td>
+                                            <td>기본 32px · 색상: icon-button-purple<br>아이콘만 있을 때 aria-label 유지</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">입력·선택</td>
+                                            <td>
+                                                <span class="class-value">form-input<br>form-select<br>form-textarea</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>input·select·textarea에 적용<br>label과 입력 요소의 id 연결</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">체크박스</td>
+                                            <td>
+                                                <span class="class-value">checkbox-control</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">checkbox-control-md 16px<br>checkbox-control-sm 14px<br>checkbox-control-xs 13px</span>
+                                            </td>
+                                            <td>input 뒤에 span.file-select-check-ui<br>크기는 표시용 span에 반영</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">추천·자료 태그</td>
+                                            <td>
+                                                <span class="class-value">chat-tag / rec-tag</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>chat-tag: 추천 문구 버튼<br>rec-tag: 자료 표시 / 부서: dept-tag, main</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">배지</td>
+                                            <td>
+                                                <span class="class-value">status-badge<br>sub-badge</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>status-badge: red·green, 형태 type1<br>sub-badge: blue, 파일명 file-name</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">탭·필터</td>
+                                            <td>
+                                                <span class="class-value">tab-button / filter-btn</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>선택: active · 탭은 is-active도 사용<br>건수: tab-count / badge filter-count</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">툴팁</td>
+                                            <td>
+                                                <span class="class-value">ai-one-tooltip</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>트리거에 data-tooltip 지정<br>AIOneTooltip이 레이어 자동 생성</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">드롭다운</td>
+                                            <td>
+                                                <span class="class-value">dropdown-menu-component<br>dropdown-menu<br>dropdown-menu-item</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>부모 data-dropdown-menu<br>버튼 data-dropdown-trigger<br>AIOneDropdownMenu.init(root)</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">모달</td>
+                                            <td>
+                                                <span class="class-value">modal / modal-contents</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">modal-small 160px<br>modal-medium 380px<br>modal-quite-large 550px<br>modal-large 960px</span>
+                                            </td>
+                                            <td>크기는 modal-contents에 적용<br>외곽 data-modal, 닫기 data-modal-close<br>AIOneModal.open(el) / close(el)</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">Drawer</td>
+                                            <td>
+                                                <span class="class-value">drawer / drawer-contents</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">drawer-small 360px<br>drawer-medium 420px<br>drawer-large 460px<br>drawer-xlarge 900px</span>
+                                            </td>
+                                            <td>크기는 drawer-contents에 적용<br>용도: drawer-variant-chat-list<br>data-sidepop-size와 크기 일치</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">파일</td>
+                                            <td>
+                                                <span class="class-value">upload-zone<br>file-item-simple</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>업로드 형태: upload-zone-type3<br>파일명: file-name-simple<br>파일 점: file-icon file-dot pdf</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">테이블·로딩</td>
+                                            <td>
+                                                <span class="class-value">table-area / table<br>ai-skeleton</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>table에 data-datatable<br>AIOneDataTable.setLoading(table, true/false)</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">토스트·빈 결과</td>
+                                            <td>
+                                                <span class="class-value">ai-one-toast<br>empty-state</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>토스트 내부: ai-one-toast-message<br>빈 결과 변형: filter-empty-state</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">상단바</td>
+                                            <td>
+                                                <span class="class-value">topbar</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>기존 상단바 구조와 동작 연결 유지<br>사이드바는 뒤쪽 사용 요약 참고</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">패널 전체 영역</td>
+                                            <td>
+                                                <span class="class-value">three-panel</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value"></span>
+                                            </td>
+                                            <td>패널과 크기 조절 핸들을 감싸는 영역. 패널과 핸들을 바로 아래 자식으로 배치합니다.</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">패널 영역</td>
+                                            <td>
+                                                <span class="class-value">panel panel-left<br>panel panel-center<br>panel panel-right</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">최소 너비:<br>data-panel-min</span>
+                                            </td>
+                                            <td>공통 panel에 좌·중·우 클래스를 조합합니다. 원본의 data-slot·data-panel·data-panel-min을 유지합니다.</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">패널 크기 조절</td>
+                                            <td>
+                                                <span class="class-value">panel-resize-handle</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">패널 사이 배치</span>
+                                            </td>
+                                            <td>원본의 data-resize·role="separator"·tabindex·aria-*와 초기화 코드를 함께 유지합니다. 동작: AIOneSplitHandler.</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">채팅 입력·토글</td>
+                                            <td>
+                                                <span class="class-value">chat-input-field<br>chat-input<br>chat-input-toggle</span>
+                                            </td>
+                                            <td>
+                                                <span class="class-value">기본 최대 120px<br>펼침 min(220px, 32vh)</span>
+                                            </td>
+                                            <td>부모 data-input-size로 펼침·접힘<br>버튼 aria-controls·aria-expanded 유지<br>값 변경 후 AIOneChatInput.resize(el)</td>
+                                        </tr>
+                                        <tr class="empty-row" hidden>
+                                            <td colspan="4">이 표에 일치하는 항목이 없습니다.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="sidebar" class="guide-section" aria-labelledby="sidebar-title">
+                        <h2 id="sidebar-title">사이드바</h2>
+                        <ul class="guide-list">
+                            <li>원본: html/home.html · 스타일·동작: css/common.css / js/common.js</li>
+                            <li>기본 클래스와 상태를 구분하고, 접기·너비 조절은 기존 AIOneSidebar를 사용합니다.</li>
+                        </ul>
+                        <div class="table-area guide-table-area">
+                            <div class="table-scroll guide-table-scroll" role="region" aria-label="사이드바 표" tabindex="0">
+                                <table class="table guide-table table-sidebar" data-datatable="">
+                                    <caption class="sr-only">사이드바의 클래스와 사용 기준</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">구성</th>
+                                            <th scope="col">기본 클래스</th>
+                                            <th scope="col">크기·상태·사용 기준</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">전체 영역</td>
+                                            <td>
+                                                <span class="class-value">sidebar app-sidebar</span>
+                                            </td>
+                                            <td>기본 너비 220px · 접힘 상태 collapsed는 56px<br>실제 조합: class="sidebar app-sidebar collapsed"</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">상단 로고</td>
+                                            <td>
+                                                <span class="class-value">sidebar-top-bar / sidebar-brand<br>brand-logo / brand-symbol / brand-text</span>
+                                            </td>
+                                            <td>로고와 접기 버튼을 함께 유지합니다.<br>기존 assets/icons/ai-one-logo.svg 사용</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">접기 버튼</td>
+                                            <td>
+                                                <span class="class-value">icon-button icon-button-ghost<br>sidebar-collapse-btn</span>
+                                            </td>
+                                            <td>기본: icon-button / 형태: icon-button-ghost<br>기능: sidebar-collapse-btn / id="sidebarCollapseBtn"<br>aria-expanded·aria-label·data-tooltip을 함께 갱신</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">메뉴 그룹</td>
+                                            <td>
+                                                <span class="class-value">sidebar-nav / nav-group<br>nav-group-label</span>
+                                            </td>
+                                            <td>sidebar-nav 안에 nav-group을 배치합니다.<br>메뉴 제목은 nav-group-label 사용</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">메뉴 항목</td>
+                                            <td>
+                                                <span class="class-value">nav-link / nav-text<br>nav-service-icon</span>
+                                            </td>
+                                            <td>선택 상태: active · 현재 페이지: aria-current="page"<br>아이콘: nav-service-icon-default / nav-service-icon-hover<br>href·data-route·data-page·data-tooltip 유지</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">Work·Chat 전환</td>
+                                            <td>
+                                                <span class="class-value">nav-mode / nav-link</span>
+                                            </td>
+                                            <td>상태: active·aria-selected<br>role="tablist"·role="tab" 유지<br>data-nav-mode-href에 이동할 화면 지정</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">너비 조절</td>
+                                            <td>
+                                                <span class="class-value">sidebar-resize-handle</span>
+                                            </td>
+                                            <td>common.js가 자동 생성하므로 중복 추가하지 않습니다.<br>펼친 데스크톱에서 180~360px 조절, 기본 220px<br>localStorage 키 ai-one:sidebar-width로 저장</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">하단 계정</td>
+                                            <td>
+                                                <span class="class-value">sidebar-footer<br>user-avatar / user-info</span>
+                                            </td>
+                                            <td>data-sidebar-account-toggle로 계정 메뉴 연결<br>메뉴: user-account-menu<br>프로필·환경설정·로그아웃은 기존 모달 연결 유지</td>
+                                        </tr>
+                                        <tr class="empty-row" hidden>
+                                            <td colspan="3">이 표에 일치하는 항목이 없습니다.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <h3>상태 변경</h3>
+                        <ul class="guide-list">
+                            <li>초기 HTML은 common.js가 자동 초기화합니다.</li>
+                            <li>동적으로 추가한 영역은 AIOneSidebar.init(root)를 호출합니다.</li>
+                            <li>접힘 상태는 클래스만 직접 바꾸지 말고 아래 API를 사용합니다.</li>
+                        </ul>
+                        <pre><code>AIOneSidebar.setCollapsed("#sidebar", true);   // 접기
+AIOneSidebar.setCollapsed("#sidebar", false);  // 펼치기</code></pre>
+                        <h3>너비 조절과 확인 사항</h3>
+                        <ul class="guide-list">
+                            <li>경계 드래그로 너비를 변경하고 더블클릭으로 220px로 되돌립니다.</li>
+                            <li>키보드는 좌우 화살표로 10px씩 조절하며 Home·End는 최소·최대, Enter는 기본값입니다.</li>
+                            <li>접힌 상태와 768px 이하에서는 너비 조절을 사용하지 않습니다.</li>
+                        </ul>
+                        <ul class="guide-list">
+                            <li>작은 화면의 자동 접힘은 페이지별 configure 설정을 따릅니다.</li>
+                            <li>메뉴 선택·Work/Chat 이동·접기·너비 복원·계정 메뉴를 확인하고, 원본의 ID·data-*·aria-* 및 아이콘을 유지합니다.</li>
+                        </ul>
+                    </section>
+                    <section id="colors" class="guide-section" aria-labelledby="colors-title">
+                        <h2 id="colors-title">색상 관리와 조합 기준</h2>
+                        <ul class="guide-list">
+                            <li>공통 색상은 css/ai-theme.css의 CSS 변수로 관리하고, 실제 UI에는 css/common.css의 기존 색상 클래스를 조합합니다.</li>
+                            <li>모드와 강조색 선택은 js/ai-theme.js가 처리합니다.</li>
+                        </ul>
+                        <div class="table-area guide-table-area">
+                            <div class="table-scroll guide-table-scroll" role="region" aria-label="색상 관리와 조합 기준 표" tabindex="0">
+                                <table class="table guide-table table-colors" data-datatable="">
+                                    <caption class="sr-only">색상 관리와 조합 기준의 클래스와 사용 기준</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">용도</th>
+                                            <th scope="col">주요 변수</th>
+                                            <th scope="col">조합 기준</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">배경과 테두리</td>
+                                            <td>
+                                                <span class="class-value">--bg / --surface<br>--surface-el / --border</span>
+                                            </td>
+                                            <td>화면 배경은 --bg, 콘텐츠 면은 --surface, 구분 영역은 --surface-el, 경계선은 --border를 사용합니다.</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">글자</td>
+                                            <td>
+                                                <span class="class-value">--text / --text-sub<br>--text-muted</span>
+                                            </td>
+                                            <td>기본 글자·보조 설명·약한 안내 순으로 구분합니다. 배경과 함께 라이트·다크 모드에서 확인합니다.</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">강조색</td>
+                                            <td>
+                                                <span class="class-value">--primary / --primary-dark<br>--primary-rgb</span>
+                                            </td>
+                                            <td>주요 동작은 --primary, 진한 상태는 --primary-dark. 옅은 배경과 테두리는 rgba(var(--primary-rgb), 투명도)로 조합합니다.</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">상태와 고정 계열</td>
+                                            <td>
+                                                <span class="class-value">--red / --green<br>--orange / --purple</span>
+                                            </td>
+                                            <td>오류·완료 등 의미에 맞는 기존 변형을 사용합니다. 강조색 선택과 별도로 관리되므로 임의로 같은 색으로 바꾸지 않습니다.</td>
+                                        </tr>
+                                        <tr data-guide-row>
+                                            <td role="rowheader">아이콘</td>
+                                            <td>
+                                                <span class="class-value">--icon-filter-primary<br>--icon-filter-white 등</span>
+                                            </td>
+                                            <td>기존 아이콘과 컴포넌트의 filter 규칙을 재사용합니다. 강조색 정의를 바꾸면 아이콘 색상 변수도 함께 확인합니다.</td>
+                                        </tr>
+                                        <tr class="empty-row" hidden>
+                                            <td colspan="3">이 표에 일치하는 항목이 없습니다.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <h3>기존 클래스 조합</h3>
+                        <p>button button-primary button-sm: 강조 배경 + 흰 글자, hover는 --primary-dark.</p>
+                        <p>button button-soft-primary: 옅은 강조 배경 + 강조 글자, hover는 강조 배경 + 흰 글자.</p>
+                        <p>status-badge red / status-badge green: 기존 오류·완료 등 상태 표현에 사용합니다.</p>
+                        <ul class="guide-list">
+                            <li>색상 변형은 같은 컴포넌트의 기존 클래스를 선택합니다.</li>
+                            <li>서로 다른 색상 변형을 중복하지 않고, 폰트·아이콘·크기·간격은 원본을 유지합니다.</li>
+                        </ul>
+                        <h3>테마와 강조색 변경</h3>
+                        <pre><code>AIOneTheme.setTheme("dark");  // light · dark · system
+AIOneTheme.setAccent("purple");  // default · blue · green · yellow · pink · orange · purple</code></pre>
+                        <ul class="guide-list">
+                            <li>API는 html의 data-theme·data-accent-color와 설정 UI를 갱신하고 선택값을 localStorage에 저장합니다. default는 모드별 기본 강조색으로 돌아갑니다. 위 예시의 두 설정은 서로 독립적으로 선택합니다.</li>
+                        </ul>
+                        <h3>색상 정의를 수정할 때</h3>
+                        <ul class="guide-list">
+                            <li>공통 강조색 변경은 ai-theme.css에서 --primary·--primary-dark·--primary-rgb·--icon-filter-primary를 함께 맞춥니다.</li>
+                            <li>화면별 색상 보정은 해당 페이지 CSS에서 기존 변수를 우선 사용합니다. 현재 일부 배경·테두리·아이콘 색상은 고정값이므로 변수 변경만으로 전체 UI가 바뀌지는 않습니다. 라이트·다크 모드와 hover·선택·disabled 상태를 함께 확인합니다.</li>
+                        </ul>
+                    </section>
+                </main>
+                <footer class="guide-footer">
+                    <div class="footer-inner page-width">
+                        <p>기준 문서: AI-ONE_공통_UI_가이드.docx · 2026.10.27</p>
+                        <p>경로는 프로젝트 루트 기준입니다.</p>
+                    </div>
+                </footer>
+            </div>
+        </div>
+    </body>
+</html>

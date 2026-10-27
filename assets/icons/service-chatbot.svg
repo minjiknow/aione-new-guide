@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="icon" viewBox="3.166 3 31.668 31.668" fill="none">
+<defs>
+										<clipPath id="service-purple-outer-clip">
+											<path
+												d="M26.9167 5.28809H11.0834L3.16675 18.9998L11.0834 32.7114H26.9167L34.8334 18.9998L26.9167 5.28809Z" />
+										</clipPath>
+										<clipPath id="service-purple-middle-clip">
+											<path
+												d="M22.7095 12.6667H11.1354L5.3562 22.6892L11.1354 32.7117H22.7095L28.5045 22.6892L22.7095 12.6667Z" />
+										</clipPath>
+										<clipPath id="service-purple-inner-clip">
+											<path
+												d="M17.2132 22.1667H11.1332L8.07739 27.4392L11.1332 32.7117H17.2132L20.269 27.4392L17.2132 22.1667Z" />
+										</clipPath>
+									</defs>
+									<g opacity="0.4" clip-path="url(#service-purple-outer-clip)">
+										<g transform="matrix(0 0.0137117 -0.0158333 0 19.0001 18.9997)">
+											<foreignObject x="-1072.93" y="-1072.93" width="2145.86" height="2145.86">
+												<div xmlns="http://www.w3.org/1999/xhtml"
+													style="width:100%;height:100%;background:conic-gradient(from 90deg,#8250DF 0deg,#DF50AF 360deg)">
+												</div>
+											</foreignObject>
+										</g>
+									</g>
+									<g clip-path="url(#service-purple-inner-clip)">
+										<g transform="matrix(0 0.0052725 -0.00609582 0 14.1732 27.4391)">
+											<foreignObject x="-1189.67" y="-1189.67" width="2379.34" height="2379.34">
+												<div xmlns="http://www.w3.org/1999/xhtml"
+													style="width:100%;height:100%;background:conic-gradient(from 90deg,#8250DF 0deg,#DF50AF 360deg)">
+												</div>
+											</foreignObject>
+										</g>
+									</g>
+									<g opacity="0.6" clip-path="url(#service-purple-middle-clip)">
+										<g transform="matrix(0 0.0100225 -0.0115742 0 16.9304 22.6891)">
+											<foreignObject x="-1099.78" y="-1099.78" width="2199.56" height="2199.56">
+												<div xmlns="http://www.w3.org/1999/xhtml"
+													style="width:100%;height:100%;background:conic-gradient(from 90deg,#8250DF 0deg,#DF50AF 360deg)">
+												</div>
+											</foreignObject>
+										</g>
+									</g>
+</svg>

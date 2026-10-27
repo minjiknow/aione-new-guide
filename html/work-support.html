@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<!--
+[파일 요약]
+내부자료 검색·업무지원 화면: html/work-support.html.
+연결 파일: js/panel.js와 panel-*.js, js/work-support.js. 참조소스·다운로드는 js/panel-source.js, 대화는 js/panel-conversation.js,
+구조화 답변·생성결과·미리보기 패널은 js/work-support.js에서 처리합니다.
+데이터 관리: js/dummy/dummy-work-support-data.js의 workSupport와 js/dummy/dummy-api.js.
+UI 관리: 기존 HTML template과 공통 렌더러를 재사용합니다. 공통 기본형은 css/common.css, 업무지원 스타일은 css/work-support.css에서 관리합니다.
+
+[변경 내용]
+- 261026 수정 - 공통 탑바 제목 편집·작업 목록 로딩 및 참조소스 확장·복원 모듈 연결
+- 261026 수정 - 접힌 참조소스 미리보기 차단과 미리보기 폭·최소 너비 확장 및 닫기 시 복원은 work-support.js에서 처리
+- 제작: 내부자료 검색·첨부·선택 및 업무지원 대화
+- 제작: 보고서·표·퀴즈·차트 생성 도구와 결과 목록·미리보기
+- 제작: 작업 목록·이름 관리·다운로드 및 공통 툴팁
+- 연동: 업무지원 전용 더미 데이터와 실제 생성·조회 연결 지점 구분
+
+[주요 구성]
+- 공통 Work·Chat 사이드바, 서비스 메뉴 및 작업 목록
+- 내부자료 검색·첨부·참조자료 선택과 업무지원 대화
+- 보고서·표·퀴즈·차트 생성 도구 및 생성결과 목록
+- 참조소스·생성결과 문서 미리보기, 다운로드 및 닫기
+- 미리보기 패널 폭 700px, 결과 목록 추가 조회 및 로딩 표시
+- 새 작업 초기화, 작업 이름 관리 모달 및 입력 안내
+- 상단 버튼·파일명·검색 결과 전체 보기의 공통 툴팁
+- 업무지원 전용 더미 데이터와 업로드·자료 반영·다운로드 안내
+
+[개발 연동 안내]
+업무지원 더미는 js/dummy/dummy-work-support-data.js의 workSupport에서 독립적으로 관리합니다.
+작업 목록·첨부·검색·보고서·응답·생성결과를 포함하며 answer 데이터를 참조하지 않습니다.
+더미 응답 분기는 js/dummy/dummy-api.js에서 처리합니다. 추천 프롬프트·placeholder는 화면 UI 문구입니다.
+실제 생성·목록 조회는 AIOneWorkSupportGenerate와 AIOneWorkSupportLoadResults를 연결합니다.
+원본 다운로드에는 결과 ID와 별개인 file_id가 필요합니다.
+
+[템플릿 및 데이터 바인딩]
+answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 함께 사용합니다.
+참조자료 카드·피드백·오류신고·환영 UI는 답변서와 같은 template ID/클래스 계약을 유지합니다.
+업무지원 구조화 답변과 생성결과 행은 work-support.js의 DOM 생성과 textContent로 바인딩합니다.
+파일명 툴팁은 common.js의 initFileTooltips/syncFileTooltips 한 곳에서 관리하며,
+추가 로딩·미리보기에도 자동 적용합니다. 반영 버튼과 sub-badge는 제외합니다.
+
+[주석 표기]
+기본 구간 형식: Start: 기능명 / End: 기능명
+변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+신규 구간 형식: Start: 신규 - 기능명 / End: 신규 - 기능명
+
+[주석 정리 내역]
+- 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+-->
+<html lang="ko" data-theme-preference="light" data-theme="light" data-accent-color="default"
+	style="color-scheme: light; --ui-font-scale: 1;">
+
+
+<head>
+
+	<meta charset="utf-8">
+	<!-- 	<meta http-equiv="X-UA-Compatible" content="IE=edge"> -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="주식회사 아이디알소프트 기술연구소">
+	<meta name="description" content="Openworks 포털관리 시스템">
+	<link rel="icon" href="../assets/icons/ai-one-logo.svg" type="image/svg+xml">
+
+	<title>내부자료 검색 · 업무지원 AI 워크스페이스</title>
+
+	<!-- Start: 스크립트 및 더미 데이터 연동 -->
+	<!--
+		[개발 연동 안내]
+		js/dummy 폴더는 퍼블리싱 화면 확인용입니다.
+		실제 API 확인은 ?preview=0으로 전환합니다. 배포본에서 더미를 제외할 때 아래 더미 스크립트 연결 4개를 함께 제거합니다.
+		기존 대화·자료 API 외에 생성·목록 조회 provider는 상단 개발 연동 안내에 따라 연결합니다.
+		
+	-->
+
+	<script src="../js/dummy/preview-config.js"></script>
+	<script src="../js/dummy/dummy-data.js" defer></script>
+	<script src="../js/dummy/dummy-work-support-data.js" defer></script>
+	<script src="../js/dummy/dummy-api.js" defer></script>
+
+	<script type="text/javascript">var CTX_PATH = "";</script>
+
+	<!-- jquery core -->
+	<script src="../js/libs/jquery/jquery-1.11.2.min.js"></script>
+	<script src="../js/libs/jquery/jquery-ui-1.11.3.min.js"></script>
+
+
+	<!-- <link rel="stylesheet" href="../css/pretendardvariable-dynamic-subset.min.css" /> -->
+	<!-- Pretendard 폰트는 현재 비활성 상태입니다. -->
+	<link rel="stylesheet" href="../css/common.css">
+	<!-- Start: 토스트 알림 스타일 -->
+	<link rel="stylesheet" href="../css/toastify.min.css">
+	<!-- End: 토스트 알림 스타일 -->
+
+	<!-- Start: 토스트 알림 기능 -->
+	<script src="../js/toastify.js" defer=""></script>
+	<!-- End: 토스트 알림 기능 -->
+	<script src="../js/common.js" defer=""></script>
+
+	<!-- 퍼블과 동일한 디자인 토큰/테마 로드 -->
+	<script type="text/javascript" src="../js/ai-theme.js"></script>
+	<link rel="stylesheet" href="../css/ai-theme.css">
+	<link rel="stylesheet" href="../css/ai-workspace.css">
+	<script type="text/javascript" src="../js/purify.min.js" defer=""></script>
+	<script type="text/javascript" src="../js/marked.min.js" defer=""></script>
+
+	<script type="text/javascript" src="../js/panel-conversation.js" defer=""></script>
+	<script type="text/javascript" src="../js/panel-source.js?v=20261026-file-icons" defer=""></script>
+	<script type="text/javascript" src="../js/panel-workspace.js" defer=""></script>
+	<script src="../js/panel.js" defer></script>
+	<script type="text/javascript" src="../js/work-support.js?v=20261026-collapsed-preview" defer=""></script>
+
+
+
+
+	<!-- End: 스크립트 및 더미 데이터 연동 -->
+	<link rel="stylesheet" href="../css/panel.css">
+	<link rel="stylesheet" href="../css/work-support.css">
+
+
+</head>
+
+<body data-page="searchwrite" class="work-support-page">
+
+	<div class="app">
+		<!-- Start: 사이드바 -->
+		<aside class="sidebar app-sidebar collapsed" id="sidebar" aria-label="주요 메뉴">
+
+			<div class="sidebar-top-bar">
+				<a class="sidebar-brand" id="sidebarBrandButton" href="home.html" aria-label="사이드바 펼치기"
+					data-tooltip="사이드바 펼치기">
+					<span class="brand-logo">
+						<img class="brand-symbol" src="../assets/icons/ai-one-logo.svg" alt="AI-ONE"
+							data-icon="ai-one-logo">
+					</span>
+					<span class="brand-text">
+						<span class="brand-name">AI-ONE</span>
+						<span class="brand-sub">재정경제부 AI 플랫폼</span>
+					</span>
+				</a>
+				<button type="button" class="icon-button icon-button-ghost sidebar-collapse-btn" id="sidebarCollapseBtn"
+					aria-label="사이드바 펼치기" aria-expanded="false" data-tooltip="사이드바 펼치기">
+					<img class="collapse-icon icon icon-text" src="../assets/icons/sidebar-collapse.svg"
+						data-icon="sidebar-collapse" alt="" aria-hidden="true">
+				</button>
+			</div>
+			<!-- Start: Work·Chat 모드 화면 바로 이동 -->
+			<div class="nav-mode" role="tablist" aria-label="사이드바 모드">
+				<button type="button" class="nav-link active" id="navModeWork" data-tooltip="업무 특화서비스 워크스페이스" role="tab"
+					aria-selected="true" aria-controls="navModeWorkPanel" aria-label="업무 특화서비스 워크스페이스">
+					<span class="nav-service-icon" aria-hidden="true">
+						<img class="nav-service-icon-default" src="../assets/icons/nav-mode-work.svg" width="17"
+							height="17" alt="">
+						<img class="nav-service-icon-hover" src="../assets/icons/nav-mode-work-hover.svg" width="17"
+							height="17" alt="">
+					</span>
+					<span class="nav-text">Work</span>
+				</button>
+				<button type="button" class="nav-link" id="navModeChat" data-tooltip="대화형 챗봇" role="tab"
+					aria-selected="false" data-nav-mode-href="chatbot.html" aria-label="대화형 챗봇" tabindex="-1">
+					<span class="nav-service-icon" aria-hidden="true">
+						<img class="nav-service-icon-default" src="../assets/icons/nav-chatbot.svg" width="17"
+							height="18" alt="">
+						<img class="nav-service-icon-hover" src="../assets/icons/nav-chatbot-hover.svg" width="17"
+							height="18" alt="">
+					</span>
+					<span class="nav-text">Chat</span>
+				</button>
+			</div>
+			<!-- End: Work·Chat 모드 화면 바로 이동 -->
+
+			<nav class="sidebar-nav" aria-label="메인 네비게이션">
+				<!-- 
+				<button class="nav-btn"  id="home" data-tooltip="홈">
+					<svg viewBox="0 0 24 24">
+						<path d="M3 11.5 12 4l9 7.5" />
+						<path d="M5.5 10.5V20h13v-9.5" />
+						<path d="M9.5 20v-6h5v6" />
+					</svg>
+				</button>
+				 -->
+				<div class="nav-group">
+					<a class="nav-link" href="home.html" data-route="home" data-page="home" data-tooltip="AI-ONE 홈"
+						aria-label="AI-ONE 홈">
+						<span class="nav-service-icon" aria-hidden="true"><img class="nav-service-icon-default"
+								src="../assets/icons/home.svg" data-icon="home" width="18" height="16" alt=""><img
+								class="nav-service-icon-hover" src="../assets/icons/home-hover.svg" width="18"
+								height="16" alt=""></span>
+						<span class="nav-text">AI-ONE 홈</span>
+					</a>
+				</div>
+
+
+				<div class="nav-group" id="navModeWorkPanel" data-nav-mode-panel role="tabpanel"
+					aria-labelledby="navModeWork">
+					<span class="nav-group-label">AI 서비스</span>
+					<a class="nav-link" href="classifcation.html?newChat=Y" data-route="intake" data-page="intake"
+						data-tooltip="국회질의분류" aria-label="국회질의분류">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-classification.svg"
+								width="17" height="17" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-classification-hover.svg"
+								width="17" height="17" alt="">
+						</span>
+						<span class="nav-text">국회질의분류</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="ai-answer.html?newChat=Y" data-route="answer" data-page="answer"
+						data-tooltip="국회 답변서 초안" aria-label="국회 답변서 초안">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">국회 답변서 초안</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="sale-review.html" data-route="asset" data-page="asset"
+						data-tooltip="매각표준검토서 검증" aria-label="매각표준검토서 검증">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-sale.svg" width="17"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-sale-hover.svg" width="17"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">매각표준검토서 검증</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="policy.html" data-route="policy-verify" data-page="policy-verify"
+						data-tooltip="정책변경보고서 검증" aria-label="정책변경보고서 검증">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-policy.svg" width="17"
+								height="18" alt="">
+							<!-- Start: 정책변경보고서 검증 아이콘 이미지 태그 적용 -->
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-policy-hover.svg" width="17"
+								height="18" alt="">
+							<!-- End: 정책변경보고서 검증 아이콘 이미지 태그 적용 -->
+						</span>
+						<span class="nav-text">정책변경보고서 검증</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link active" href="work-support.html" data-route="searchwrite" data-page="searchwrite"
+						data-tooltip="내부 자료 검색 · 업무 지원" aria-label="내부 자료 검색 · 업무 지원" aria-expanded="false"
+						aria-current="page">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-search.svg" width="17"
+								height="17" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-search-hover.svg" width="17"
+								height="17" alt="">
+						</span>
+						<span class="nav-text">내부 자료 검색 · 업무 지원</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+				</div>
+				<!-- <div class="nav-group" id="navModeChatPanel" data-nav-mode-panel role="tabpanel" aria-labelledby="navModeChat" hidden>
+					<a class="nav-link" href="chatbot.html?newChat=Y" data-route="chatbot" data-page="chatbot"
+						data-tooltip="챗봇" aria-label="챗봇">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-chatbot.svg" width="17"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-chatbot-hover.svg" width="17"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">챗봇</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음" data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+				</div> -->
+			</nav>
+			<div class="sidebar-footer">
+				<div class="user-card">
+					<button type="button" class="user-avatar" data-sidebar-account-toggle="" aria-label="담당자 정보"
+						data-tooltip="담당자 정보" aria-haspopup="menu" aria-expanded="false"
+						aria-controls="sidebarAccountMenu">
+						<img class="icon icon-text" src="../assets/icons/user.svg" data-icon="user" alt=""
+							aria-hidden="true">
+					</button>
+					<button type="button" class="user-info" data-sidebar-account-toggle="" aria-label="사용자 계정 메뉴"
+						aria-haspopup="menu" aria-expanded="false" aria-controls="sidebarAccountMenu"
+						data-tooltip="사용자 계정 메뉴">
+						<span class="user-name">일반담당자 </span>
+						<span class="user-meta-row">
+							<span class="user-dept">시스템운영팀</span>
+
+							<span class="user-role-badge">일반담당자</span>
+						</span>
+					</button>
+				</div>
+			</div>
+			<!-- Start: 내 정보 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarProfileModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-account-profile account-profile-modal"
+					role="dialog" aria-modal="true" data-modal-variant="account-profile" aria-label="내 정보">
+					<div class="modal-variant-panel" data-modal-panel="account-profile" data-account-modal-panel="">
+						<div class="account-modal-head">
+							<div class="modal-title">내 정보</div>
+							<button type="button" class="query-edit-modal-close" data-modal-close=""
+								aria-label="닫기">×</button>
+						</div>
+						<div class="account-modal-body account-profile-content">
+							<div class="account-profile-summary">
+								<span class="account-profile-avatar" aria-hidden="true">
+									<svg viewBox="0 0 24 24">
+										<circle cx="12" cy="8" r="4"></circle>
+										<path d="M5 21a7 7 0 0 1 14 0"></path>
+									</svg>
+								</span>
+								<div>
+									<strong data-account-profile-name="">일반담당자</strong>
+									<span data-account-profile-dept="">시스템운영팀</span>
+								</div>
+							</div>
+							<dl class="account-profile-list">
+								<div>
+									<dt>이름·직위</dt>
+									<dd data-account-profile-name="">일반담당자</dd>
+								</div>
+								<div>
+									<dt>소속 부서</dt>
+									<dd data-account-profile-dept="">시스템운영팀</dd>
+								</div>
+								<div>
+									<dt>사용자 권한</dt>
+
+									<dd><span class="account-role-tag" data-account-profile-role="">일반담당자</span></dd>
+								</div>
+								<!-- 								<div> -->
+								<!-- 									<dt>로그인 방식</dt> -->
+								<!-- 									<dd>통합 ID · SSO</dd> -->
+								<!-- 								</div> -->
+							</dl>
+						</div>
+						<div class="modal-actions account-modal-actions">
+							<button type="button" class="btn-cancel" data-modal-close="" hidden="">취소</button>
+							<button type="button" class="btn-confirm" data-modal-close="">확인</button>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 내 정보 클릭 시 나오는 프로필 모달 -->
+			<!-- Start: 환경설정 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarSettingsModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-account-settings account-settings-modal"
+					role="dialog" aria-modal="true" data-modal-variant="account-settings" aria-label="환경설정">
+					<div class="modal-variant-panel" data-modal-panel="account-settings" data-account-modal-panel="">
+						<div class="account-modal-head">
+							<div class="modal-title">환경설정</div>
+							<button type="button" class="query-edit-modal-close" data-modal-close=""
+								aria-label="닫기">×</button>
+						</div>
+						<div class="account-modal-body account-settings-content" data-settings-panel="">
+							<section class="account-settings-section">
+								<div class="settings-section-title">화면 모드</div>
+								<div class="theme-option-list" role="radiogroup" aria-label="화면 모드 선택">
+									<button type="button" class="theme-option" data-theme-value="system" role="radio"
+										aria-checked="false">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<rect x="3" y="4" width="18" height="14" rx="2"></rect>
+												<path d="M8 21h8M12 18v3"></path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>시스템</strong><small>기기 설정에
+												맞춤</small></span>
+										<span class="theme-option-check" aria-hidden="true"></span>
+									</button>
+									<button type="button" class="theme-option" data-theme-value="dark" role="radio"
+										aria-checked="false">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.5 6.5 0 0 0 21 12.8z"></path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>다크 모드</strong><small>어두운
+												화면</small></span>
+										<span class="theme-option-check" aria-hidden="true"></span>
+									</button>
+									<button type="button" class="theme-option active" data-theme-value="light"
+										role="radio" aria-checked="true">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<circle cx="12" cy="12" r="4"></circle>
+												<path
+													d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42">
+												</path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>라이트 모드</strong><small>밝은
+												화면</small></span>
+										<span class="theme-option-check" aria-hidden="true">✓</span>
+									</button>
+								</div>
+							</section>
+							<section class="account-settings-section">
+								<div class="settings-section-title">강조 컬러</div>
+								<div class="settings-accent-control" data-accent-control="" data-accent-value="default">
+									<button type="button" class="settings-accent-trigger" data-accent-trigger=""
+										aria-haspopup="listbox" aria-expanded="false" aria-label="강조 컬러 선택">
+										<span class="settings-accent-swatch" aria-hidden="true"
+											data-accent-value="default" aria-selected="true"></span>
+										<span data-accent-label="">기본값</span>
+										<span class="settings-accent-arrow" aria-hidden="true"></span>
+									</button>
+									<div class="settings-accent-options" data-accent-listbox="" role="listbox"
+										aria-label="강조 컬러 옵션" hidden="">
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="default" aria-selected="true">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>기본값</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="blue" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>블루</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="green" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>그린</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="yellow" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>옐로</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="pink" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>핑크</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="orange" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>오렌지</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="purple" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>퍼플</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+									</div>
+								</div>
+							</section>
+							<section class="account-settings-section">
+								<div class="settings-section-title">알림</div>
+								<div class="notification-setting-row">
+									<div class="notification-setting-text">
+										<strong>응답 완료 알림</strong>
+										<small>시간이 걸리는 요청에 응답할 때 알림을 받습니다.</small>
+										<span class="notification-setting-status" aria-live="polite">알림이 켜져 있습니다.</span>
+									</div>
+									<button type="button" class="notification-toggle active" role="switch"
+										aria-checked="true" aria-label="응답 완료 알림 설정"><span></span></button>
+								</div>
+							</section>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 환경설정 클릭 시 나오는 프로필 모달 -->
+
+			<!-- Start: 로그아웃 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarLogoutModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-logout" role="dialog" aria-modal="true"
+					data-modal-variant="logout" aria-label="로그아웃 확인">
+					<div class="modal-variant-panel" data-modal-panel="content">
+						<div class="modal-icon logout" data-modal-icon="logout" aria-hidden="true">
+							<img src="../assets/icons/logout.svg" alt="">
+						</div>
+						<div class="modal-title" id="sidebarLogoutModal-title" data-slot="title">로그아웃</div>
+						<div class="modal-msg" id="sidebarLogoutModal-description" data-slot="description">
+							AI-ONE에서 로그아웃하시겠습니까?
+						</div>
+						<div class="modal-actions" data-slot="actions">
+							<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+
+							<button type="button" class="btn-confirm danger" data-sidebar-logout-confirm=""
+								data-modal-close="">로그아웃</button>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 로그아웃 클릭 시 나오는 프로필 모달 -->
+
+			<!-- Start: 사이드 바 하단 클릭 시 나오는 프로필 메뉴 -->
+
+			<div class="user-account-menu user-account-menu-detached hidden" id="sidebarAccountMenu" role="menu"
+				aria-label="사용자 계정 메뉴" data-sidebar-account-menu="detached" hidden="">
+				<div class="user-account-summary">
+					<strong>일반담당자</strong>
+					<span>시스템운영팀</span>
+				</div>
+				<button type="button" role="menuitem" data-sidebar-account-action="profile"
+					data-modal-open="sidebarProfileModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/user.svg" data-icon="user" alt="" aria-hidden="true">
+					<span>내 정보</span>
+				</button>
+				<button type="button" role="menuitem" data-sidebar-account-action="settings"
+					data-modal-open="sidebarSettingsModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/settings-alt.svg" data-icon="settings-alt" alt="" aria-hidden="true">
+					<span>환경설정</span>
+				</button>
+				<button type="button" class="danger" role="menuitem" data-sidebar-account-action="logout"
+					data-modal-open="sidebarLogoutModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/logout.svg" data-icon="logout" alt="" aria-hidden="true">
+					<span>로그아웃</span>
+				</button>
+			</div>
+			<!-- End: 사이드 바 하단 클릭 시 나오는 프로필 메뉴 -->
+		</aside>
+		<!-- End: 사이드바 -->
+		<!-- div class="main-wrap" 부터 각 페이지에서 구현 -->
+
+
+		<!-- <div class="page answer-workspace"> -->
+		<div class="main-wrap">
+			<div class="topbar-area">
+				<!--
+				[상단 영역 안내]
+				.topbar-title: 페이지 제목과 설명
+				.topbar-bottom: 현재 대화 제목과 제목 수정
+				.topbar-right: 새 작업, 작업 목록, 보조도구 버튼
+				-->
+				<header class="topbar app-topbar type1">
+					<div class="topbar-title">
+						<h1 class="topbar-maintit" data-topbar-title="">내부자료 검색 · 업무지원 AI 워크스페이스</h1>
+						<p class="topbar-subtit" data-topbar-subtitle="">내부자료 검색 · AI 대화 · 분석·요약 · 다양한 작업 결과물 생성</p>
+					</div>
+					<div class="topbar-bottom">
+						<!-- 현재 업무지원 작업 제목: 기존 workspace-topbar-context 구조와 제목 편집 계약을 재사용합니다. -->
+						<div class="topbar-workspace-slot" data-slot="workspace">
+							<div class="workspace-topbar-context" aria-label="현재 작업 정보">
+								<div class="workspace-input-count">
+									<button type="button" class="workspace-edit-button" id="answerWorkspaceTitleBtn"
+										aria-label="대화 제목 수정" data-tooltip="대화 제목 수정" data-tooltip-auto
+										data-tooltip-placement="bottom">
+										<span id="answerWorkspaceTitleText" data-tooltip="2026년 세제개편 검토 보고서 작성">2026년
+											세제개편 검토
+											보고서 작성</span>
+										<img class="icon icon-small workspace-topbar-edit"
+											src="../assets/icons/edit-compact.svg" data-icon="edit-compact" alt=""
+											aria-hidden="true">
+									</button>
+									<input type="text" class="workspace-topbar-input hidden"
+										id="answerWorkspaceTitleInput" maxlength="60" aria-label="대화 제목 입력">
+								</div>
+							</div>
+						</div>
+						<div class="topbar-right app-topbar-actions">
+							<button type="button" class="button button-soft-primary" id="newChatBtn" data-pages="answer"
+								data-workspace-action="new-chat" aria-label="새 작업" data-tooltip="새 작업" data-tooltip-auto
+								data-tooltip-placement="bottom">
+								<img class="icon icon-small" aria-hidden="true" data-icon="plus" alt=""
+									src="../assets/icons/plus.svg">
+								<span>새 작업</span>
+							</button>
+							<button type="button" class="icon-button icon-button-purple" id="draftHistoryBtn"
+								data-pages="answer" aria-label="작업 목록" data-tooltip="작업 목록" data-tooltip-auto
+								data-tooltip-placement="bottom">
+								<img class="icon icon-text" aria-hidden="true" data-icon="list" alt=""
+									src="../assets/icons/list.svg">
+							</button>
+							<div class="accessory-tool" data-accessory-tools="">
+								<button type="button" class="accessory-trigger" aria-label="보조도구 모음"
+									aria-haspopup="true" aria-expanded="false" data-tooltip="보조도구 모음" data-tooltip-auto
+									data-tooltip-placement="bottom">
+									<span class="accessory-icon-closed" aria-hidden="true"><svg viewBox="0 0 24 24">
+											<rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect>
+											<rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect>
+											<rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect>
+											<path d="M17 14v6M14 17h6"></path>
+										</svg></span>
+									<span class="accessory-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24">
+											<path d="M6 6l12 12M18 6 6 18"></path>
+										</svg></span>
+								</button>
+								<div class="accessory-rail" role="toolbar" aria-label="보조도구 기능">
+									<button type="button" class="accessory-action" data-accessory-action="font"
+										aria-label="전체 글자크기" aria-haspopup="dialog" aria-expanded="false"
+										data-tooltip="전체 글자크기" data-tooltip-auto data-tooltip-placement="bottom">
+										<span class="accessory-action-icon"><span class="accessory-font-symbol"
+												aria-hidden="true"><small>A</small><strong>A</strong></span></span>
+									</button>
+									<button type="button" class="accessory-action" data-accessory-action="fullscreen"
+										id="fullscreenBtn" aria-label="전체화면 전환" aria-pressed="false"
+										data-tooltip="전체화면 전환" data-tooltip-auto data-tooltip-placement="bottom">
+										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+												width="14" height="14">
+												<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
+													stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+													stroke-linejoin="round"></path>
+											</svg></span>
+									</button>
+									<button type="button" class="accessory-action" data-accessory-action="panel-size"
+										id="panelSizeBtn" aria-label="패널 위치 순환" aria-pressed="false"
+										data-tooltip="패널 위치 순환" data-tooltip-auto data-tooltip-placement="bottom">
+										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
+												<path d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4"></path>
+											</svg></span>
+									</button>
+									<button type="button" class="accessory-action" data-accessory-action="layout"
+										id="layoutResetBtn" aria-label="레이아웃 초기화" data-tooltip="레이아웃 초기화"
+										data-tooltip-auto data-tooltip-placement="bottom">
+										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
+												<rect x="3" y="3" width="18" height="18" rx="2"></rect>
+												<path d="M9 3v18M15 3v18"></path>
+											</svg></span>
+									</button>
+								</div>
+								<div class="accessory-font-panel hidden" role="dialog" aria-label="전체 글자크기">
+									<div class="accessory-font-head"><strong>전체 글자크기</strong><span>100~150%</span></div>
+									<div class="accessory-font-control">
+										<button type="button" data-accessory-font-decrease="" aria-label="글자 작게"
+											disabled="" data-tooltip="글자 작게" data-tooltip-auto
+											data-tooltip-placement="bottom">−</button>
+										<span data-accessory-font-value="" aria-live="polite">100%</span>
+										<button type="button" data-accessory-font-increase="" aria-label="글자 크게"
+											data-tooltip="글자 크게" data-tooltip-auto
+											data-tooltip-placement="bottom">＋</button>
+									</div>
+									<button type="button" class="accessory-font-default" data-tooltip="기본 크기로"
+										data-tooltip-auto data-tooltip-placement="bottom">기본 크기로</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</header>
+			</div>
+			<div class="three-panel-area">
+				<main class="three-panel left-small right-large" data-component="three-panel"
+					style="grid-template-columns: 364px 2px minmax(0, 1fr) 2px 400px;">
+
+					<!-- Start: 참조 소스 업로드 영역 -->
+					<section class="panel panel-left upload-panel-area split-handler type2" data-slot="left"
+						data-panel-min="280" data-component="split-handler" data-split-min="80" data-panel="folder"
+						aria-labelledby="answerSourceTitle">
+						<header class="panel-head" draggable="true" style="cursor: grab;">
+							<h2 class="panel-title" id="answerSourceTitle">
+								<img class="icon icon-small" data-icon="ai-answer-source" alt="" aria-hidden="true"
+									src="../assets/icons/ai-answer-source.svg">
+								AI 참조소스
+							</h2>
+							<div class="panel-actions">
+								<button type="button" class="icon-button icon-button-ghost icon-button-sm"
+									id="sourceResetBtn" data-source-reset="" aria-label="참조소스 초기화" draggable="false"
+									data-tooltip="참조소스 초기화"><img class="icon icon-small" data-icon="reset" alt=""
+										aria-hidden="true" src="../assets/icons/reset.svg"></button>
+								<button type="button"
+									class="icon-button icon-button-ghost icon-button-sm panel-collapse-btn"
+									id="sourceCollapseBtn" data-source-collapse="" aria-label="참조소스 패널 접기"
+									draggable="false" title="참조소스 패널 접기"><img class="icon icon-small"
+										data-icon="panel-collapse" alt="" aria-hidden="true"
+										src="../assets/icons/panel-collapse.svg"></button>
+								<button type="button" class="icon-button icon-button-ghost icon-button-sm"
+									data-work-preview-close hidden aria-label="미리보기 닫기" data-tooltip="미리보기 닫기"><img
+										class="icon icon-small" src="../assets/icons/preview-close.svg" alt=""
+										aria-hidden="true"></button>
+							</div>
+						</header>
+						<div class="folder-upload-section answer-source-file-section file-list-section split-handler-pane"
+							data-file-actions="" data-file-delete-modal="answerSourceFileDeleteModal">
+							<div class="folder-upload-head">
+								<span>소스 추가</span>
+								<!-- 
+								소스 추가 제목 옆 파일 개수는 숨김 상태입니다. 기존 ID는 주석 안에 보관합니다.
+								<span class="selected-refs-count" data-source-file-count=""
+									id="sourceFileCount">0</span> 
+									-->
+								<!-- Start: 소스 추가 도움말 -->
+								<!-- 안내 문구는 이 HTML, 위치·닫기·접근성 상태는 panel-source.js에서 관리합니다. -->
+								<button type="button" class="btn source-help-btn" aria-label="소스 추가 도움말"
+									aria-controls="sourceHelpPopover" aria-expanded="false"
+									popovertarget="sourceHelpPopover">?</button>
+								<div id="sourceHelpPopover" class="source-help-popover" popover="auto">
+									<strong>지능형 검색 서비스 대상</strong>
+									<div class="source-help-description">
+										<p>클라우드 저장소에 저장된 10개 부서 업무자료 제공하고 전 부서를 대상으로 검색 기능 제공</p>
+										<p>재정경제부 지식배움터 내 메모보고 자료</p>
+										<p>재정경제부 발간 보고서 등 공개자료 등</p>
+									</div>
+								</div>
+								<!-- End: 소스 추가 도움말 -->
+							</div>
+							<form id="sourceSearchForm" class="source-search-area" role="search">
+								<textarea id="sourceSearchInput" rows="1" aria-label="소스 검색"
+									placeholder="소스를 검색하세요.">업무</textarea>
+								<button id="sourceSearchButton" type="submit" class="icon-button" aria-label="소스 검색"
+									disabled="" data-tooltip="소스 검색">
+									<img src="../assets/icons/search-plus.svg" alt="" data-icon="smart-search"
+										aria-hidden="true">
+								</button>
+							</form>
+							<div id="sourceSearchBanner" class="ai-search-banner" role="status" aria-live="polite"
+								hidden>
+								<span class="source-search-spinner" aria-hidden="true"></span>
+								<span id="sourceSearchStatus"></span>
+							</div>
+							<!-- 파일 업로드 박스 -->
+							<div class="answer-upload-component file-upload-area" data-component-type="type3">
+								<div class="upload-zone upload-zone-type3" id="referenceFileButton"
+									data-file-upload-zone="" role="button" tabindex="0" aria-label="업무지원 참조 파일 업로드">
+									<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt=""
+										aria-hidden="true">
+									<span class="upload-zone-icon" data-slot="icon" aria-hidden="true"><img
+											src="../assets/icons/upload-tray.svg" alt=""></span>
+									<span class="upload-zone-smart-icon" aria-hidden="true">
+										<svg viewBox="0 0 48 48">
+											<rect x="14" y="12" width="20" height="24" rx="5"></rect>
+											<path d="M19 19h10M19 24h10M19 29h6"></path>
+											<circle cx="12" cy="15" r="2.3"></circle>
+											<circle cx="36" cy="31" r="2.3"></circle>
+											<path d="M13.8 16.5 17 19M31 29l3.2 1.5"></path>
+										</svg>
+									</span>
+									<p class="upload-text"><span data-slot="title">
+											여기에 파일을 드롭하거나 검색 후 소스를 추가하세요
+										</span></p>
+									<span class="upload-hint"><span data-slot="content">참조자료를 바탕으로 요약·분석·비교 작업을 할 수
+											있습니다.<br>소스 추가 없이도 내부자료를 검색해 작업할 수 있습니다.</span></span>
+									<div data-slot="input">
+										<input type="file" id="referenceFileInput" multiple=""
+											accept=".pdf,.hwp,.hwpx,.doc,.docx,.txt,.md,image/*">
+									</div>
+								</div>
+							</div>
+							<!-- //파일 업로드 박스 -->
+							<button type="button" class="file-list-collapsed-add" data-source-file-add=""
+								aria-label="참조소스 파일 추가" data-tooltip="참조소스 파일 추가">
+								<img src="../assets/icons/plus.svg" alt="" aria-hidden="true">
+							</button>
+
+							<!-- Start: 소스 검색결과 기능 -->
+							<div class="answer-source-group source-search-results" id="sourceSearchResults" hidden
+								aria-labelledby="sourceSearchResultTitle">
+								<div class="answer-source-head file-list-header">
+									<div class="answer-source-stats" aria-live="polite">
+										<span id="sourceSearchResultTitle" class="source-search-result-title">
+											검색 결과 <span id="sourceSearchResultCount" class="txt-blue">0</span>건
+										</span>
+										<span id="sourceSearchSelectedBadge"
+											class="selected-refs-count source-search-selected-badge" hidden>
+											선택 <span id="sourceSearchSelectedCount">0</span>건
+										</span>
+									</div>
+									<!-- 검색 결과 전체 보기 툴팁은 기존 공통 data-tooltip으로 연결하며 아래 방향으로 표시합니다. -->
+									<button id="sourceSearchListToggle" type="button" aria-label="검색 결과 전체 보기"
+										class="icon-button icon-button-sm" aria-expanded="false"
+										data-tooltip="검색 결과 전체 보기" data-tooltip-auto data-tooltip-placement="bottom"
+										aria-controls="sourceSearchAllModal" aria-haspopup="dialog">
+										<img class="icon icon-small" src="../assets/icons/list.svg" alt=""
+											aria-hidden="true">
+									</button>
+								</div>
+								<div id="sourceSearchSelection" class="source-search-selection" hidden>
+									<label class="rec-checkbox-label" for="sourceSearchSelectAll">
+										<input id="sourceSearchSelectAll" type="checkbox"
+											class="checkbox-control checkbox-control-sm">
+										<span class="file-select-check-ui" aria-hidden="true"></span>
+										<span>전체선택</span>
+									</label>
+									<span>선택 <span id="sourceSearchSelectionCount">0</span>건 / 전체 <span
+											id="sourceSearchTotalCount">0</span>건</span>
+								</div>
+								<!-- 검색 결과는 가져오기 전까지 참조소스 목록과 분리해 표시합니다. -->
+								<ul class="file-list simple answer-source-files search-panel-scroll-list"
+									id="sourceSearchResultList" aria-live="polite"></ul>
+								<div class="source-search-footer">
+									<button id="sourceSearchMore" type="button" class="source-search-more"
+										aria-expanded="false" aria-controls="sourceSearchResultList">
+										<img src="../assets/icons/filter-group.svg" class="icon" alt=""
+											aria-hidden="true">
+										<span id="sourceSearchMoreLabel">그 외 소스 0개</span>
+									</button>
+									<button id="sourceSearchClear" type="button" class="button button-sm">삭제</button>
+									<button id="sourceSearchImport" type="button"
+										class="button button-primary button-sm">
+										가져오기 <span id="sourceSearchImportCount">0</span>
+									</button>
+								</div>
+							</div>
+							<!-- 전체 검색 소스 목록 모달 -->
+							<div class="modal-area">
+								<div class="hidden modal" id="sourceSearchAllModal" data-component="modal" data-modal=""
+									aria-hidden="true" hidden>
+									<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+									<section class="modal-contents modal-large source-search-all-dialog" role="dialog"
+										aria-modal="true" aria-labelledby="sourceSearchAllTitle">
+										<header class="account-modal-head">
+											<h2 class="modal-title" id="sourceSearchAllTitle">전체 검색 소스</h2>
+											<button type="button" class="query-edit-modal-close" data-modal-close=""
+												aria-label="닫기">×</button>
+										</header>
+										<div class="source-search-all-toolbar">
+											<span aria-live="polite">소스 <span id="sourceSearchAllCount">0</span>개
+												선택됨</span>
+											<label class="rec-checkbox-label" for="sourceSearchAllSelectAll">
+												<input id="sourceSearchAllSelectAll" type="checkbox"
+													class="checkbox-control checkbox-control-sm">
+												<span class="file-select-check-ui" aria-hidden="true"></span>
+												<span>전체선택</span>
+											</label>
+										</div>
+										<ul class="file-list simple source-search-all-list" id="sourceSearchAllList"
+											aria-label="전체 검색 소스 목록"></ul>
+										<footer class="modal-actions source-search-all-actions">
+											<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+											<button type="button" class="button button-primary btn-confirm"
+												id="sourceSearchAllImport">가져오기</button>
+										</footer>
+									</section>
+								</div>
+							</div>
+							<!-- //전체 검색 소스 목록 모달 -->
+							<!-- End: 소스 검색결과 기능 -->
+							<!-- Start: 참조소스 파일목록 그룹과 아코디언 헤더 -->
+
+
+							<!-- Start: 검색소스 파일 삭제 모달 -->
+							<div class="modal-area">
+								<div class="hidden modal" id="answerSourceSearchDeleteModal" data-component="modal"
+									data-modal="" aria-hidden="true">
+									<div class="modal-bg" data-file-delete-close="" aria-hidden="true"></div>
+									<section class="modal-contents modal-medium modal-variant-content" role="dialog"
+										aria-modal="true" data-modal-variant="content"
+										aria-labelledby="answerSourceSearchDeleteModal-title"
+										aria-describedby="answerSourceSearchDeleteModal-description">
+										<div class="modal-variant-panel" data-modal-panel="content">
+											<div class="modal-icon danger" data-modal-icon="default" aria-hidden="true">
+												⚠</div>
+											<div class="modal-title" id="answerSourceSearchDeleteModal-title">검색 결과 전체
+												삭제
+											</div>
+											<div class="modal-msg" id="answerSourceSearchDeleteModal-description">
+												<strong class="file-delete-name"
+													data-file-delete-name="">검색결과</strong><br>
+												검색된 소스를 가져오지 않고 삭제하시겠습니까?
+											</div>
+											<div class="modal-actions">
+												<button type="button" class="btn-cancel"
+													data-file-delete-close="">취소</button>
+												<button type="button" class="btn-confirm danger"
+													data-file-delete-confirm="">확인</button>
+											</div>
+										</div>
+									</section>
+								</div>
+							</div>
+							<!-- End: 검색소스 파일 삭제 모달 -->
+
+							<!--
+									[개발 연동 안내]
+									- answer-source-group: 파일 검색건과 업로드 파일 리스트 전체 묶음
+										· answer-source-head: 검색/업로드 건수, 셀렉트
+										· answer-source-files: 드롭/검색한 파일 전체 목록 확인
+									- category는 기존 파일행을 묶는 래퍼이며, 내부 목록은 file-list simple을 재사용한다.
+									- 파일 선택/삭제의 data-*와 기존 페이지 이벤트는 같은 파일행에 유지한다.
+									-->
+							<div class="answer-source-group">
+								<div class="answer-source-head file-list-header">
+									<button type="button" class="source-accordion icon-button" aria-expanded="true"
+										aria-controls="referenceFileList" aria-label="참조소스 파일목록 접기"
+										data-tooltip="참조소스 파일목록 접기">
+										<img class="icon icon-small" data-icon="source-collapse" alt=""
+											aria-hidden="true" src="../assets/icons/source-collapse.svg">
+									</button>
+									<div class="answer-source-stats" aria-live="polite">
+										<span class="status-badge type1">
+											<span class="file-icon file-dot hwp" aria-hidden="true"></span>
+											검색 <span data-source-search-count>0</span>건
+										</span>
+										<span class="status-badge type1">
+											<span class="file-icon file-dot xls" aria-hidden="true"></span>
+											업로드 <span data-source-upload-count>0</span>건
+										</span>
+
+									</div>
+									<label class="rec-checkbox-label">
+										<input type="checkbox" class="checkbox-control checkbox-control-sm"
+											data-source-select-all disabled>
+										<span class="file-select-check-ui" aria-hidden="true"></span>
+										전체선택
+									</label>
+								</div>
+								<!-- Start: 업로드한 파일 리스트 사례 -->
+								<ul class="file-list simple answer-source-files upload-panel-scroll-list"
+									id="referenceFileList" aria-live="polite"></ul>
+								<!-- End: 업로드한 파일 리스트 사례 -->
+							</div>
+
+
+							<!-- End: 참조소스 파일목록 그룹과 아코디언 헤더 -->
+						</div>
+						<div class="left-panel-resize-handle split-handler-handle type2" id="docSplitHandle"
+							role="separator" aria-orientation="horizontal" aria-label="원본 문서 영역 너비 조절" tabindex="0"
+							aria-valuemin="80" aria-valuemax="662" aria-valuenow="399" data-tooltip="원본 문서 영역 너비 조절">
+						</div>
+
+						<section class="work-document-preview" hidden aria-label="참조소스 문서 미리보기">
+							<div class="center-sub-head">
+								<strong class="file-name" data-work-preview-title></strong>
+								<div class="center-sub-actions">
+									<span id="previewScore" class="sub-badge blue" hidden></span>
+									<button type="button" class="icon-button icon-button-ghost icon-button-sm"
+										data-work-download="source" aria-label="참조소스 원본 다운로드"
+										data-tooltip="참조소스 원본 다운로드"><img class="icon icon-small"
+											src="../assets/icons/download.svg" alt="" aria-hidden="true"></button>
+								</div>
+							</div>
+							<article class="preview-body doc-viewer-body">
+								<div class="doc-pages-track answer-pdfjs-preview" id="sourcePreview"></div>
+							</article>
+							<template id="answerDocumentPreviewTemplate">
+								<div class="answer-pdf-pages">
+									<div class="answer-pdf-page">
+										<canvas width="595" height="842" aria-label="문서 미리보기 영역"></canvas>
+									</div>
+								</div>
+							</template>
+						</section>
+						<!-- Start: 선택된 관련 자료 -->
+						<div class="selected-refs split-handler-pane" id="selectedRefsSection">
+							<div class="selected-refs-head">
+								<span class="selected-refs-title">선택된 소스 목록</span>
+								<span class="selected-refs-count" data-selected-reference-count=""
+									id="selectedReferenceCount">0</span>
+								<!-- Start: 선택된 소스 목록 펼침·접힘 버튼 -->
+								<button type="button" class="icon-button selected-refs-toggle"
+									id="selectedReferencesToggle" aria-expanded="false"
+									aria-controls="selectedReferenceList selectedReferenceEmpty"
+									aria-label="선택된 소스 목록 펼치기" data-tooltip="선택된 소스 목록 펼치기">
+									<img class="icon icon-small" src="../assets/icons/chevron-down.svg" alt=""
+										aria-hidden="true">
+								</button>
+								<!-- End: 선택된 소스 목록 펼침·접힘 버튼 -->
+							</div>
+							<ul class="selected-refs-list" aria-live="polite" id="selectedReferenceList">
+							</ul>
+
+							<!-- Start: 선택된 소스 목록이 없을 경우 -->
+							<div class="selected-refs-guide" id="selectedReferenceEmpty"
+								data-selected-references-empty="">
+								<p class="selected-refs-guide-title">관련자료 추천 목록에서 추가할 자료를 선택해 보세요</p>
+								<p class="selected-refs-guide-desc">선택된 자료를 작업에 반영할 수 있습니다.</p>
+							</div>
+							<!-- End: 선택된 소스 목록이 없을 경우 -->
+							<!-- 펼침·접힘과 관계없이 왼쪽 패널 하단에 유지하는 반영 안내·버튼 -->
+							<div class="selected-refs-footer panel-fixed-apply-footer" id="selectedReferenceFooter">
+								<span class="refs-footer-icon" aria-hidden="true">✓</span>
+								<span class="selected-refs-footer-message" id="applyReferencesMessage"
+									data-reference-message="선택한 자료를 AI 참조자료로 활용할 수 있습니다.">선택한 자료를 AI 참조자료로
+									활용할 수 있습니다.</span>
+								<button type="button" class="apply-selected-btn" data-apply-references=""
+									id="applyReferencesBtn">
+									반영
+								</button>
+							</div>
+						</div>
+						<!-- End: 선택된 관련 자료 -->
+					</section>
+					<!-- End: 참조 소스 업로드 영역 -->
+					<div class="panel-resize-handle" data-resize="0" role="separator" aria-label="왼쪽 패널 크기 조절"
+						aria-orientation="vertical" tabindex="0" aria-valuemin="280" aria-valuemax="1224"
+						aria-valuenow="364"></div>
+
+					<!-- Start: 업무지원 대화 및 결과물 생성 영역 -->
+					<section class="panel panel-center" data-slot="center" data-panel="chat"
+						aria-labelledby="resultChatTitle">
+						<!--
+							[업무지원 패널 안내]
+							data-panel="chat": 요청 입력과 구조화 응답. data-panel="result": 생성 도구와 결과 목록.
+							공통 JS 연결용 answer 계열 ID·클래스는 유지하며 답변서 작성·비교 탭은 사용하지 않습니다.
+							-->
+						<header class="panel-head" draggable="true" style="cursor: grab;">
+							<h2 class="panel-title" id="resultChatTitle">
+								<img class="icon icon-small" data-icon="ai-answer-chat" alt="" aria-hidden="true"
+									src="../assets/icons/ai-answer-chat.svg">
+								AI 채팅
+							</h2>
+						</header>
+						<p class="panel-desc">참조소스 없이도 데이터화된 내부자료에서 답변하며, 대화 중 찾은 자료를 AI 참조소스에 추가해 이어서 활용할 수 있습니다.</p>
+						<!--
+						[데이터 표시 영역] 업무지원 작업의 메시지. 예시는 workSupport.messages와 responses에서 공급합니다.
+						[API 연결 위치] ../js/panel-conversation.js: loadConversationMessages() / ND_conversationMessageList.do.
+						새 질문 전송 및 답변 스트림: sendMessageStream() / ND_sendConversation.do.
+						-->
+						<div aria-live="polite" class="chat-messages time-hidden" data-chat-message-list=""
+							data-message-actions="all" data-variant="answer" id="chatBody">
+						</div>
+
+						<!-- Start: 메세지 입력 영역 -->
+						<div class="chat-input-area">
+
+							<!-- 프롬포트 추가 -->
+							<div class="chat-tags" data-chip-target="#chatInput" data-chip-suffix=""
+								data-chip-send="true"><span class="chat-tags-label">추천 프롬프트</span>
+								<button type="button" class="chat-tag">관련 자료를 더 찾아줘</button>
+								<button type="button" class="chat-tag">핵심 내용 위주로 요약해줘</button>
+								<button type="button" class="chat-tag">자료 간 주요 내용을 비교해줘</button>
+								<button type="button" class="chat-tag">주요 내용을 표로 정리해줘</button>
+								<button type="button" class="chat-tag">이 내용을 바탕으로 보고서를 작성해줘</button>
+							</div>
+
+							<!-- //프롬포트 추가 -->
+							<div class="chat-file-chips" id="chatFileChips"></div>
+							<form class="chat-input-row" data-answer-chat-form="">
+								<label class="sr-only" for="chatInput">업무지원 요청 입력</label>
+								<div class="chat-input-field"><textarea autocomplete="off" class="chat-input"
+										id="chatInput" placeholder="내부자료에 대해 질문하거나 자료 검색, 요약·분석, 보고서·작업을 요청해 주세요."
+										rows="1"></textarea><button type="button"
+										class="icon-button icon-button-sm chat-input-toggle" aria-controls="chatInput"
+										aria-expanded="false" aria-label="입력창 펼치기" data-tooltip="입력창 펼치기"><img
+											class="icon icon-small" src="../assets/icons/chevron-down.svg" alt=""
+											aria-hidden="true"></button></div>
+								<button aria-label="전송"
+									class="icon-button icon-button-primary icon-button-send chat-send" disabled=""
+									id="sendBtn" type="button" data-tooltip="전송">
+									<img alt="" aria-hidden="true" class="icon icon-text" data-icon="send"
+										src="../assets/icons/send.svg">
+								</button>
+							</form>
+						</div>
+						<!-- End: 메세지 입력 영역 -->
+
+					</section>
+					<div aria-label="오른쪽 패널 크기 조절" aria-orientation="vertical" class="panel-resize-handle"
+						data-resize="1" role="separator" tabindex="0" aria-valuemin="220" aria-valuemax="1260"
+						aria-valuenow="1080"></div>
+					<section class="panel panel-right" data-panel="result" data-slot="right" data-panel-min="320"
+						aria-labelledby="resultChatTitle">
+						<header class="panel-head" draggable="true" style="cursor: grab;">
+							<h2 class="panel-title">
+								<img class="icon icon-small" data-icon="ai-answer-chat" alt="" aria-hidden="true"
+									src="../assets/icons/support-result.svg">
+								결과물 생성
+							</h2>
+							<div class="panel-actions">
+								<button type="button"
+									class="icon-button icon-button-ghost icon-button-sm panel-collapse-btn"
+									id="resultCollapseBtn" data-source-collapse="" aria-label="결과물 생성 패널 접기"
+									draggable="false" aria-expanded="true" data-tooltip="결과물 생성 패널 접기"><img
+										class="icon icon-small" data-icon="panel-collapse" alt="" aria-hidden="true"
+										src="../assets/icons/panel-collapse.svg"></button>
+								<button type="button" class="icon-button icon-button-ghost icon-button-sm"
+									data-work-preview-close hidden aria-label="미리보기 닫기" data-tooltip="미리보기 닫기"><img
+										class="icon icon-small" src="../assets/icons/preview-close.svg" alt=""
+										aria-hidden="true"></button>
+							</div>
+						</header>
+						<section class="work-document-preview" hidden aria-label="생성 결과 문서 미리보기">
+							<div class="center-sub-head">
+								<strong class="file-name"></strong>
+
+								<div class="center-sub-actions">
+									<span class="sub-badge blue"></span>
+									<button type="button" class="icon-button icon-button-ghost icon-button-sm"
+										data-work-download="result" aria-label="생성 결과 다운로드"
+										data-tooltip="생성 결과 다운로드"><img class="icon icon-small"
+											src="../assets/icons/download.svg" alt="" aria-hidden="true"></button>
+								</div>
+							</div>
+							<article class="preview-body doc-viewer-body">
+								<div class="doc-pages-track answer-pdfjs-preview"></div>
+							</article>
+						</section>
+						<div class="result-manage-section">
+							<div class="result-title">
+								<p class="sub-title">생성 도구</p>
+								<p class="sub-desc">참조자료와 대화 내용을 기반으로 빠르게 생성합니다.</p>
+							</div>
+							<ul class="service-cards" aria-label="생성 도구 목록">
+								<li class="service-item">
+									<button type="button" class="service-card" data-service-tone="red"
+										data-service-version="1" aria-label="보고서">
+										<div class="service-card-top">
+											<div class="service-icon">
+												<svg viewBox="0 0 24 24" aria-hidden="true">
+													<path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path>
+													<path d="M14 3v5h5"></path>
+													<path d="M9 12h6M9 16h6"></path>
+												</svg>
+											</div>
+											<h3 class="service-title">보고서</h3>
+											<span class="service-arrow" aria-hidden="true">›</span>
+										</div>
+										<p class="service-desc">참조자료를 바탕으로 업무보고서 초안을 생성합니다.</p>
+									</button>
+								</li>
+								<li class="service-item">
+									<button type="button" class="service-card" data-service-tone="blue"
+										data-service-version="1" aria-label="데이터표">
+										<div class="service-card-top">
+											<div class="service-icon">
+												<svg viewBox="0 0 24 24" aria-hidden="true">
+													<rect x="3" y="5" width="18" height="14" rx="2"></rect>
+													<path d="M3 10h18M9 5v14M15 5v14"></path>
+												</svg>
+
+											</div>
+											<h3 class="service-title">데이터표</h3>
+											<span class="service-arrow" aria-hidden="true">›</span>
+										</div>
+										<p class="service-desc">주요 내용을 표로 정리하고 항목별로 비교합니다.</p>
+
+									</button>
+								</li>
+								<li class="service-item">
+									<button type="button" class="service-card" data-service-tone="cyan"
+										data-service-version="1" aria-label="퀴즈">
+										<div class="service-card-top">
+											<div class="service-icon">
+												<svg viewBox="0 0 24 24" aria-hidden="true">
+													<rect x="5" y="4" width="14" height="17" rx="2"></rect>
+													<path d="M9 2h6v4H9z"></path>
+													<path d="m8.5 11 1.7 1.7 3.3-3.4M8.5 16h7"></path>
+												</svg>
+											</div>
+											<h3 class="service-title">퀴즈</h3>
+											<span class="service-arrow" aria-hidden="true">›</span>
+										</div>
+										<p class="service-desc">선택 자료의 핵심 내용을 확인하는 문제를 생성합니다.</p>
+
+									</button>
+								</li>
+								<li class="service-item">
+									<button type="button" class="service-card" data-service-tone="purple"
+										data-service-version="1" aria-label="차트">
+										<div class="service-card-top">
+											<div class="service-icon">
+												<svg viewBox="0 0 24 24" aria-hidden="true">
+													<path d="M4 19V5M4 19h16"></path>
+													<path d="m7 15 4-4 3 2 4-6"></path>
+													<circle cx="7" cy="15" r=".8"></circle>
+													<circle cx="11" cy="11" r=".8"></circle>
+													<circle cx="14" cy="13" r=".8"></circle>
+													<circle cx="18" cy="7" r=".8"></circle>
+												</svg>
+											</div>
+											<h3 class="service-title">차트</h3>
+											<span class="service-arrow" aria-hidden="true">›</span>
+										</div>
+										<p class="service-desc">수치와 현황을 시각화해 핵심 흐름을 보여줍니다.</p>
+									</button>
+								</li>
+							</ul>
+						</div>
+						<div class="result-section">
+							<div class="result-title">
+								<span class="sub-title">생성 결과</span>
+								<span class="selected-refs-count" data-generated-result-count>0</span>
+							</div>
+							<div class="ai-search-banner is-loading" data-generated-result-loading role="status"
+								aria-live="polite" hidden><span class="source-search-spinner"
+									aria-hidden="true"></span><span>이전 생성결과 불러오는 중</span></div>
+							<!-- Start: 생성 결과 목록 -->
+							<ul class="file-list generated-result-list" aria-label="생성 결과 목록"
+								data-generated-result-list></ul>
+							<!-- End: 생성 결과 목록 -->
+							<div class="empty-state answer-recommend-empty  generated-result-empty"
+								data-generated-result-empty role="status" aria-live="polite">
+								<div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
+								<strong class="small gray" data-generated-result-empty-title>생성된 결과가 없습니다.</strong>
+							</div>
+						</div>
+					</section>
+					<!-- End: 업무지원 대화 및 결과물 생성 영역 -->
+				</main>
+			</div>
+		</div>
+		<div class="drawer-area">
+
+			<!-- Start: 참조소스 파일 삭제 모달 -->
+			<div class="modal-area">
+				<div class="hidden modal" id="answerSourceFileDeleteModal" data-component="modal" data-modal=""
+					aria-hidden="true">
+					<div class="modal-bg" data-file-delete-close="" aria-hidden="true"></div>
+					<section class="modal-contents modal-medium modal-variant-content" role="dialog" aria-modal="true"
+						data-modal-variant="content" aria-label="파일 삭제 확인">
+						<div class="modal-variant-panel" data-modal-panel="content">
+							<div class="modal-icon danger" data-modal-icon="default" aria-hidden="true">⚠</div>
+							<div class="modal-title" id="answerSourceFileDeleteModal-title">파일 삭제</div>
+							<div class="modal-msg" id="answerSourceFileDeleteModal-description">
+								<strong class="file-delete-name" data-file-delete-name=""></strong><br>
+								참조소스 목록에서 삭제하시겠습니까?
+							</div>
+							<div class="modal-actions">
+								<button type="button" class="btn-cancel" data-file-delete-close="">취소</button>
+								<button type="button" class="btn-confirm danger" data-file-delete-confirm="">삭제</button>
+							</div>
+						</div>
+					</section>
+				</div>
+			</div>
+			<!-- End: 참조소스 파일 삭제 모달 -->
+
+			<!-- Start: 작업 이름 변경 모달 -->
+			<!-- 기존 answerChatRenameModal ID와 data-sidepop 계약을 재사용합니다. 작업이름 라벨·빈 입력 안내는 HTML, 저장·실패 알림은 panel-conversation.js에서 관리합니다. -->
+			<div class="modal-area">
+				<div class="hidden modal" id="answerChatRenameModal" data-component="modal" data-modal=""
+					aria-hidden="true">
+					<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+					<section class="modal-contents modal-medium modal-variant-rename" role="dialog" aria-modal="true"
+						data-modal-variant="rename" aria-label="작업 이름 변경">
+						<div class="modal-variant-panel" data-modal-panel="content">
+							<div class="modal-icon rename" data-modal-icon="rename" aria-hidden="true">
+								<img src="../assets/icons/edit.svg" alt="">
+							</div>
+							<div class="modal-title" id="answerChatRenameModal-title">작업 이름 변경</div>
+							<div class="modal-msg" id="answerChatRenameModal-description">
+								<p class="modal-rename-helper">목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.</p>
+								<label class="modal-rename-field" for="answerChatRenameInput">
+									<span class="modal-rename-label">작업이름</span>
+									<input type="text" class="form-input" id="answerChatRenameInput" maxlength="60"
+										autocomplete="off" data-sidepop-rename-input="">
+								</label>
+								<p class="modal-rename-error" data-sidepop-rename-error="" hidden="">작업이름을 입력해 주세요.</p>
+							</div>
+							<div class="modal-actions">
+								<button type="button" class="btn-cancel" data-modal-close=""
+									data-chat-rename-close="">취소</button>
+								<button type="button" class="btn-confirm" data-sidepop-rename-confirm="">저장</button>
+							</div>
+						</div>
+					</section>
+				</div>
+			</div>
+			<!-- End: 작업 이름 변경 모달 -->
+
+			<!-- Start: 채팅 삭제 모달 -->
+			<div class="modal-area">
+				<div class="hidden modal" id="answerChatDeleteModal" data-component="modal" data-modal=""
+					aria-hidden="true">
+					<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+					<section class="modal-contents modal-medium modal-variant-content" role="dialog" aria-modal="true"
+						data-modal-variant="content" aria-label="대화 삭제 확인">
+						<div class="modal-variant-panel" data-modal-panel="content">
+							<div class="modal-icon danger" data-modal-icon="default" aria-hidden="true">⚠</div>
+							<div class="modal-title" id="answerChatDeleteModal-title">대화 삭제</div>
+							<div class="modal-msg" id="answerChatDeleteModal-description">
+								<strong data-sidepop-delete-title="">선택한 대화</strong>를 삭제하시겠습니까?
+							</div>
+							<div class="modal-actions">
+								<button type="button" class="btn-cancel" data-modal-close=""
+									data-chat-delete-close="">취소</button>
+								<button type="button" class="btn-confirm danger"
+									data-sidepop-delete-confirm="">삭제</button>
+							</div>
+						</div>
+					</section>
+				</div>
+			</div>
+			<!-- End: 채팅 삭제 모달 -->
+
+			<!-- Start: 업무 보고서 다운로드 확인 모달 -->
+			<div class="modal-area">
+				<div class="hidden modal" id="draftDownloadConfirmModal" data-component="modal" data-modal=""
+					aria-hidden="true">
+					<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+					<section class="modal-contents modal-quite-large modal-variant-content" role="dialog"
+						aria-modal="true" data-modal-variant="content" aria-label="보고서 다운로드 확인">
+						<div class="modal-variant-panel" data-modal-panel="content">
+							<div class="modal-icon confirm" data-modal-icon="default" aria-hidden="true">
+								<img alt="" aria-hidden="true" class="icon icon-small" data-icon="download"
+									src="../assets/icons/download.svg">
+							</div>
+							<div class="modal-title" id="draftDownloadConfirmModal-title">보고서 다운로드</div>
+							<div class="modal-msg" id="draftDownloadConfirmModal-description">
+								<strong>생성된 답변은 최종 <span class="text-danger">제출 전에 반드시 사용자가 내용 및 근거를 확인</span>하고<br>
+									<span class="text-danger">필요한 내용을 수정</span>하여 <span class="text-danger">사용</span>하시기
+									바랍니다.</strong>
+							</div>
+							<div class="modal-actions">
+								<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+								<button type="button" class="btn-confirm" id="draftDownloadConfirmBtn">다운로드</button>
+							</div>
+						</div>
+					</section>
+				</div>
+			</div>
+			<!-- End: 업무 보고서 다운로드 확인 모달 -->
+
+			<!-- Start: 업무지원 작업 메뉴 모달 -->
+			<div class="hidden modal modal-menu-backdrop" id="answerChatActionModal" data-component="modal"
+				data-modal="">
+				<section class="modal-contents modal-small" role="dialog" aria-modal="true" aria-label="대화 작업 메뉴">
+					<div class="modal-action-menu" role="menu">
+						<!--        <button type="button" class="modal-action-item" role="menuitem" data-sidepop-list-action="share">
+                        <img class="modal-action-icon" src="../assets/icons/share.svg" alt="" aria-hidden="true" />
+                        <span data-sidepop-action-label>대화 공유</span>
+                        </button> -->
+						<button type="button" class="modal-action-item" role="menuitem" data-sidepop-list-action="pin"
+							aria-pressed="false">
+							<img class="modal-action-icon" src="../assets/icons/pin.svg" alt="" aria-hidden="true">
+							<span data-sidepop-action-label="">고정</span>
+						</button>
+						<button type="button" class="modal-action-item" role="menuitem"
+							data-sidepop-list-action="rename">
+							<img class="modal-action-icon" src="../assets/icons/edit.svg" alt="" aria-hidden="true">
+							<span data-sidepop-action-label="">작업 이름 변경</span>
+						</button>
+						<button type="button" class="modal-action-item danger" role="menuitem"
+							data-sidepop-list-action="delete">
+							<img class="modal-action-icon" src="../assets/icons/delete.svg" alt="" aria-hidden="true">
+							<span data-sidepop-action-label="">삭제</span>
+						</button>
+					</div>
+				</section>
+			</div>
+			<!-- End: 업무지원 작업 메뉴 모달 -->
+			<!-- Start: 업무지원 작업 목록 팝업 -->
+			<!-- 적용 화면: work-support.html 상단 작업 목록 버튼. chatbot.html의 일반 챗봇 목록과 별도로 동작합니다. -->
+			<div aria-hidden="true" class="drawer" hidden="" id="runDrawer" inert="" data-component="sidepop"
+				data-sidepop="" data-sidepop-action-modal="answerChatActionModal"
+				data-sidepop-rename-modal="answerChatRenameModal" data-sidepop-delete-modal="answerChatDeleteModal">
+				<button aria-label="작업 목록 닫기" class="drawer-backdrop" data-drawer-close="" type="button"></button>
+				<aside aria-labelledby="runDrawerTitle" aria-modal="true"
+					class="drawer-contents drawer-medium drawer-variant-chat-list" data-sidepop-size="medium"
+					data-sidepop-variant="chat-list" role="dialog">
+					<section class="drawer-variant-panel" data-sidepop-panel="chat-list">
+						<header class="drawer-header">
+							<div class="drawer-heading">
+								<h2 class="drawer-title" id="runDrawerTitle">작업 목록</h2>
+								<p class="drawer-description">내부자료 검색 · 업무지원 작업 이력을 확인하고 이어서 작업할 수 있습니다.</p>
+							</div>
+							<button aria-label="작업 목록 닫기" class="icon-button icon-button-ghost" data-drawer-close=""
+								type="button" data-tooltip="작업 목록 닫기">×</button>
+						</header>
+						<div class="drawer-list-position">
+							<button type="button" class="drawer-position-button" id="runDrawerPositionBtn"
+								aria-label="작업 목록 좌측으로 이동" data-tooltip="작업 목록 좌측으로 이동">
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<rect x="3.5" y="4" width="17" height="16" rx="2"></rect>
+									<path d="M16 5.5V18.5M14 12H7M9.5 9.5 7 12l2.5 2.5"></path>
+								</svg>
+								<span>좌측으로 이동</span>
+							</button>
+						</div>
+						<div class="drawer-list-body">
+							<div class="drawer-list-search">
+								<svg aria-hidden="true" viewBox="0 0 24 24">
+									<circle cx="11" cy="11" r="7"></circle>
+									<path d="m20 20-3.6-3.6"></path>
+								</svg>
+								<input aria-label="작업 목록 검색" autocomplete="off" id="runListSearch"
+									placeholder="작업 목록 검색" type="search">
+								<button type="button" id="runListSearchClear" class="drawer-search-clear hidden"
+									aria-label="검색어 지우기">×</button>
+							</div>
+							<button type="button" id="runListSearchBtn" hidden="" aria-hidden="true"
+								tabindex="-1"></button>
+							<div class="drawer-list-meta">
+								<span>전체 <strong id="runListTotal">0</strong>건</span>
+								<select aria-label="작업 목록 정렬" class="drawer-list-sort" id="runListSort"
+									style="width: 70px;">
+									<option value="latest">최신순</option>
+									<option value="oldest">과거순</option>
+								</select>
+							</div>
+							<!--
+							[데이터 표시 영역] 업무지원 작업 목록 (#chatTopics). 검색·정렬·페이지 이동은 panel-conversation.js에서 처리합니다.
+							[API 연결 위치] ../js/panel-conversation.js: loadConversationList() → renderConversationHistory().
+							ND_conversationList.do 응답을 ../js/common.js의 renderChatItems()로 표시합니다.
+							[수정 내용] 상태점·제목 아래 날짜와 상태 배지를 배치하고, 더보기 버튼을 항상 표시합니다.
+							진행중·실패·완료 배지와 읽지 않은 완료점은 별도 상태이며, 진행 스피너는 배지 안에 표시합니다.
+							공통 카드 스타일은 common.css, 작업 진행 스피너는 panel.css에서 관리합니다.
+							workSupport.conversations를 공통 렌더러로 표시하며 showIcon: false로 채팅 아이콘을 생성하지 않습니다.
+							-->
+							<div aria-live="polite" class="drawer-chat-list drawer-scroll-list" id="chatTopics">
+							</div>
+							<div class="draft-history-pagination" id="draftHistoryPagination" hidden=""></div>
+						</div>
+					</section>
+				</aside>
+			</div>
+			<!-- End: 업무지원 작업 목록 팝업 -->
+		</div>
+
+		<!-- 공통 Toast 표시 영역 -->
+		<div aria-live="polite" class="ai-one-toast" data-toast="" id="toast" hidden="">
+			<span class="ai-one-toast-message" data-toast-message=""></span>
+		</div>
+
+		<!-- Start: panel.js 공통 정적 UI 템플릿 -->
+		<template id="answerFeedbackEditorTemplate">
+			<div class="chat-feedback-editor">
+				<textarea maxlength="1000" placeholder="이 답변에 대한 의견을 입력해 주세요."></textarea>
+				<div class="chat-feedback-editor-actions">
+					<button type="button" data-feedback-cancel="">취소</button>
+					<button type="button" data-feedback-save="">의견 저장</button>
+				</div>
+			</div>
+		</template>
+
+		<template id="answerIssueModalTemplate">
+			<div class="chat-issue-backdrop">
+				<section class="chat-issue-modal" role="dialog" aria-modal="true" aria-labelledby="chatIssueTitle">
+					<header class="chat-issue-head">
+						<div class="chat-issue-title-wrap">
+							<strong id="chatIssueTitle">오류 신고</strong>
+							<p>응답에서 발견된 문제를 알려주시면 개선에 활용하겠습니다.</p>
+						</div>
+						<button type="button" class="chat-issue-close" data-issue-close="" aria-label="닫기">×</button>
+					</header>
+					<div class="chat-issue-body">
+						<div class="chat-issue-field">
+							<span class="chat-issue-legend">문제 유형</span>
+							<div class="chat-issue-types">
+								<label class="chat-issue-type">
+									<input type="radio" name="chatIssueType" value="inaccurate" checked="">
+									<span>부정확하거나 잘못된 정보</span>
+								</label>
+								<label class="chat-issue-type">
+									<input type="radio" name="chatIssueType" value="harmful">
+									<span>유해하거나 안전하지 않은 내용</span>
+								</label>
+								<label class="chat-issue-type">
+									<input type="radio" name="chatIssueType" value="unhelpful">
+									<span>도움이 되지 않는 응답</span>
+								</label>
+								<label class="chat-issue-type">
+									<input type="radio" name="chatIssueType" value="legal">
+									<span>법적 문제</span>
+								</label>
+								<label class="chat-issue-type">
+									<input type="radio" name="chatIssueType" value="other">
+									<span>기타</span>
+								</label>
+							</div>
+						</div>
+						<div class="chat-issue-field">
+							<label for="chatIssueContent">상세 설명 (선택)</label>
+							<textarea id="chatIssueContent" maxlength="2000"
+								placeholder="문제 상황을 자세히 설명해 주세요"></textarea>
+						</div>
+						<div class="chat-issue-field">
+							<label>파일 첨부 (선택)</label>
+							<label class="chat-issue-upload" for="chatIssueFiles">
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path d="M12 16V4m0 0-4 4m4-4 4 4"></path>
+									<path d="M5 15v4h14v-4"></path>
+								</svg>
+								<span>클릭하거나 파일을 드래그하세요</span>
+								<small>스크린샷 등 최대 5개, 각 10MB 이내</small>
+							</label>
+							<input type="file" id="chatIssueFiles" multiple="" accept="image/*,.pdf,.txt" hidden="">
+							<div class="chat-issue-file-list" data-issue-file-list=""></div>
+						</div>
+					</div>
+					<div class="chat-issue-actions">
+						<button type="button" data-issue-close="">취소</button>
+						<button type="button" data-issue-submit="">제출</button>
+					</div>
+				</section>
+			</div>
+		</template>
+
+
+
+		<!-- Start: 검색자료·업로드자료 공통 카드 -->
+		<!-- 자료 카드 공통 마크업 예시. 업무지원 검색 결과는 work-support.js에서 렌더링합니다. -->
+		<template id="referenceSourceCardTemplate">
+			<button type="button" class="rec-card reference-source-card" data-reference-card="">
+				<span class="reference-source-icon" aria-hidden="true">
+					<img src="../assets/icons/reference-source.svg" alt="" width="14" height="14">
+				</span>
+				<strong class="rec-title reference-source-title"></strong>
+				<span class="sub-badge"></span>
+			</button>
+		</template>
+		<!-- End: 검색자료·업로드자료 공통 카드 -->
+
+
+		<template id="answerWelcomeTemplate">
+			<div>
+				<p>안녕하세요. <strong>내부자료 검색 · 업무지원 AI</strong>입니다. 내부자료를 검색하거나 파일을 업로드해 필요한 자료를 AI 참조소스로 활용하고, AI와 대화하며
+					분석·요약·비교 및 다양한 작업 결과물을 생성할 수 있습니다.</p>
+				<p><strong>이용 방법</strong></p>
+				<ol>
+					<li>왼쪽 <strong>AI 참조소스</strong>에서 내부자료를 검색하거나 파일을 업로드합니다.</li>
+					<li>사용할 자료를 선택하고 <strong>반영</strong>을 눌러 AI 참조자료로 지정합니다.</li>
+					<li>아래 채팅창에서 ‘요약해줘’, ‘자료별 차이점을 표로 정리해줘’, ‘차트로 보여줘’, ‘보고서 작성해줘’처럼 요청합니다.</li>
+					<li>생성된 분석·요약·표·보고서 등 결과물은 대화에서 확인할 수 있으며, 보고서는 <strong>보고서 다운로드</strong> 버튼으로 내려받을 수 있습니다.</li>
+				</ol>
+				<p><strong>참조소스 없이도 데이터화된 내부자료에서 답변</strong>하며, 대화 중 찾은 자료를 <strong>AI 참조소스에 추가</strong>해 이어서 활용할 수
+					있습니다.</p>
+				<p>필요한 자료를 추가하면 분석·요약·비교와 <strong>보고서·데이터표·차트·퀴즈</strong> 등 다양한 작업 결과물 생성에 함께 활용할 수 있습니다.</p>
+				<div class="work-suggestions">
+					<button type="button" class="work-suggestion" data-work-action="suggestion"
+						data-work-value='"선택 자료의 핵심 근거만 다시 정리해줘"'>↳　선택 자료의 핵심 근거만 다시 정리해줘</button>
+					<button type="button" class="work-suggestion" data-work-action="suggestion"
+						data-work-value='"자료별 주요 내용을 표로 비교해줘"'>↳　자료별 주요 내용을 표로 비교해줘</button>
+					<button type="button" class="work-suggestion" data-work-action="suggestion"
+						data-work-value='"이 내용으로 내부 검토 보고서를 작성해줘"'>↳　이 내용으로 내부 검토 보고서를 작성해줘</button>
+				</div>
+			</div>
+		</template>
+		<!-- End: panel.js 공통 정적 UI 템플릿 -->
+
+		<!-- Start: 준비중 안내 모달 -->
+		<div class="hidden modal" id="preparingServiceModal" data-component="modal" data-modal="">
+			<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+			<section class="modal-contents modal-medium modal-variant-alert" role="dialog" aria-modal="true"
+				data-modal-variant="alert" aria-labelledby="preparingServiceModal-title"
+				aria-describedby="preparingServiceModal-description">
+				<div class="modal-variant-panel" data-modal-panel="content">
+					<div class="modal-icon alert" data-modal-icon="alert" aria-hidden="true">!</div>
+					<div class="modal-title" id="preparingServiceModal-title" data-slot="title">준비중</div>
+					<div class="modal-msg" id="preparingServiceModal-description" data-slot="description">
+						해당 서비스는 준비 중 입니다.
+					</div>
+					<div class="modal-actions" data-slot="actions">
+						<button type="button" class="btn-confirm" data-modal-close="">확인</button>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- End: 준비중 안내 모달 -->
+	</div>
+
+</body>
+
+</html>

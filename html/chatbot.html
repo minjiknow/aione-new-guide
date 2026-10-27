@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<!--
+[파일 요약]
+일반 챗봇 화면: html/chatbot.html.
+연결 파일: js/chat.js, css/chat.css. 공통 답변 액션·모드 이동은 common.js에서 처리합니다.
+데이터 관리: js/dummy/dummy-data.js, js/dummy/dummy-api.js. 실제 연결은 AIOneChatConfig를 사용합니다.
+UI 관리: 고정 UI는 이 페이지의 template, 데이터 바인딩·이벤트는 chat.js에서 처리합니다.
+
+[변경 내용]
+- 261026 수정 - 챗봇 목록·프로젝트 메뉴의 삭제 아이콘을 다른 페이지와 동일한 delete.svg로 통일
+- 추가: 모바일 채팅 메뉴 헤더와 배경 닫기 영역
+- 수정: 공통 점 배경·flare, 모델·작업 선택 메뉴 및 공통 답변 액션
+- 수정: 접힌 사이드바에서 기존 사용자 아바타와 계정 메뉴 유지
+- 정리: 사용자 예시를 js/dummy/dummy-data.js의 chat.user로 이동
+
+[주요 구성]
+- 261021 - 홈 전용 order 영향을 분리하고 입력창·첨부 목록·하단 버튼은 HTML 순서로 표시
+- 261021 - 접힌 검색은 툴팁·검색창·목록을 제공하며 일반 메뉴와 활성 표시를 함께 사용하지 않음
+- 261021 - 새 채팅 클릭 시 접힘 유지, 검색을 닫으면 기존 일반 메뉴 활성 표시 복원
+- 261021 - 접힌 Work·Chat 모드를 세로로 표시
+- 261021 - Work·Chat 모드 클릭 시 사이드바 펼치기
+- 261021 - 일반 홈 메뉴 이동 시에도 사이드바 접힘 상태 유지
+- 메시지·오류신고 템플릿과 채팅 입력 영역
+- 261020 - 기존 nav-mode 재사용. Chat 선택 상태이며 Work는 home.html로 이동(common.js의 bindNavModes에서 이동·키보드 제어)
+- 채팅 사이드바 및 사용자 메뉴
+- 대화·프로젝트 목록과 메시지·첨부·내부자료 검색
+- 작업 모달 및 정적 UI 템플릿
+
+[개발 연동 안내]
+실제 연동 시 아래 더미 스크립트 3개를 제거하고 AIOneChatConfig.user에 로그인 사용자 정보를 전달합니다.
+대화 목록: loadHistory / ND_conversationList.do. 대화 내용: loadConversation / ND_conversation.do.
+사용자 입력·서버 응답은 escapeHtml 또는 sanitizeHtml을 거쳐 표시합니다.
+답변서 화면 ai-answer.html의 채팅 목록은 panel-conversation.js와 common.js에서 별도로 처리합니다.
+답변 액션은 common.js의 AIOneChatMessageActions를 사용합니다. chat.js는 버튼 이벤트와 API 요청을 연결합니다.
+오류신고 첨부는 챗봇 ND_uploadFile.do, 접수는 답변서 ND_customer.do로 요청합니다.
+
+[주석 표기]
+기본 구간 형식: Start: 기능명 / End: 기능명
+변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+신규 구간 형식: Start: 신규 - 기능명 / End: 신규 - 기능명
+
+[주석 정리 내역]
+- 261016 주석 정리 - 현재 구현을 기준으로 수정·추가 내용과 연결 위치를 보완합니다.
+- 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+-->
+<html lang="ko" data-theme-preference="light" data-theme="light" data-accent-color="default"
+	style="color-scheme: light; --ui-font-scale: 1;">
+
+
+
+<head>
+	<!-- Start: 261016 수정 - 더미 데이터 연동 -->
+	<script src="../js/dummy/preview-config.js"></script>
+	<script src="../js/dummy/dummy-data.js" defer></script>
+	<script src="../js/dummy/dummy-api.js" defer></script>
+	<!-- End: 261016 수정 - 더미 데이터 연동 -->
+	<meta charset="utf-8">
+	<!-- 	<meta http-equiv="X-UA-Compatible" content="IE=edge"> -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="주식회사 아이디알소프트 기술연구소">
+	<meta name="description" content="Openworks 포털관리 시스템">
+	<link rel="icon" href="../assets/icons/ai-one-logo.svg" type="image/svg+xml">
+
+	<title>AI-ONE 챗봇</title>
+
+	<script type="text/javascript">var CTX_PATH = "";</script>
+
+	<!-- jquery core -->
+	<script src="../js/libs/jquery/jquery-1.11.2.min.js"></script>
+	<script src="../js/libs/jquery/jquery-ui-1.11.3.min.js"></script>
+
+
+	<!-- <link rel="stylesheet" href="../css/pretendardvariable-dynamic-subset.min.css" /> -->
+	<!-- Pretendard 폰트는 현재 비활성 상태입니다. -->
+	<link rel="stylesheet" href="../css/common.css">
+	<!-- Start: 토스트 알림 스타일 -->
+	<link rel="stylesheet" href="../css/toastify.min.css">
+	<!-- End: 토스트 알림 스타일 -->
+
+	<!-- Start: 토스트 알림 기능 -->
+	<script src="../js/toastify.js" defer=""></script>
+	<!-- End: 토스트 알림 기능 -->
+	<script src="../js/common.js" defer=""></script>
+
+	<script src="../js/ai-theme.js"></script>
+	<link rel="stylesheet" href="../css/ai-theme.css">
+
+	<link rel="stylesheet" href="../css/ai-home.css">
+	<link rel="stylesheet" href="../css/chat.css">
+
+
+</head>
+
+<body data-page="chatbot">
+
+	<div class="app">
+
+		<!-- div class="main-wrap" 부터 각 페이지에서 구현 -->
+
+		<div class="chatbot-app" data-chat-root="">
+
+			<!-- Start: 261016 추가 - 모바일 채팅 메뉴 -->
+			<!-- 모바일에서는 기존 채팅 메뉴를 햄버거 버튼으로 엽니다. -->
+			<header class="chatbot-mobile-header">
+				<a class="chatbot-brand-link" href="home.html" aria-label="AI-ONE 홈">
+					<img class="brand-symbol" src="../assets/icons/ai-one-logo.svg" alt="">
+					<span class="chatbot-brand-text"><strong>AI-ONE</strong></span>
+				</a>
+				<button type="button" class="icon-button icon-button-ghost chatbot-mobile-toggle"
+					id="chatbotMobileToggle" aria-controls="chatbotSidebar" aria-expanded="false" aria-label="채팅 메뉴 열기"
+					data-tooltip="채팅 메뉴 열기" data-tooltip-auto data-tooltip-placement="bottom">
+					<img class="icon icon-text" src="../assets/icons/menu.svg" alt="" aria-hidden="true">
+				</button>
+			</header>
+			<div class="chatbot-sidebar-backdrop" id="chatbotSidebarBackdrop" aria-hidden="true" hidden></div>
+
+			<!-- End: 261016 추가 - 모바일 채팅 메뉴 -->
+			<!-- Start: 왼쪽: 채팅 메뉴 -->
+			<aside class="chatbot-sidebar" id="chatbotSidebar" aria-label="채팅 메뉴">
+				<div class="chatbot-brand">
+					<a class="chatbot-brand-link" href="home.html" data-tooltip="AI-ONE 홈">
+						<span class="brand-logo">
+							<img class="brand-symbol" src="../assets/icons/ai-one-logo.svg" alt="AI-ONE"
+								data-icon="ai-one-logo">
+						</span>
+						<span class="chatbot-brand-text"><strong>AI-ONE</strong><small>재정경제부 AI 플랫폼</small></span>
+					</a>
+					<!-- Start: 261016 수정 - 사이드바 접기 버튼 -->
+					<button type="button" class="icon-button icon-button-ghost sidebar-collapse-btn"
+						id="chatbotSidebarToggle" aria-controls="chatbotSidebar" aria-expanded="true"
+						aria-label="사이드바 접기" data-tooltip="사이드바 접기">
+						<img class="collapse-icon icon icon-text" src="../assets/icons/sidebar-collapse.svg"
+							data-icon="sidebar-collapse" alt="" aria-hidden="true">
+					</button>
+					<!-- End: 261016 수정 - 사이드바 접기 버튼 -->
+				</div>
+
+				<!-- Start: 261020 추가 - Work·Chat 모드 화면 바로 이동 -->
+				<div class="nav-mode" role="tablist" aria-label="사이드바 모드">
+					<button type="button" class="nav-link" id="navModeWork" data-tooltip="업무 특화서비스 워크스페이스"
+						data-tooltip-auto role="tab" aria-selected="false" data-nav-mode-href="home.html"
+						aria-label="업무 특화서비스 워크스페이스" tabindex="-1">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-mode-work.svg" width="17"
+								height="17" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-mode-work-hover.svg" width="17"
+								height="17" alt="">
+						</span>
+						<span class="nav-text">Work</span>
+					</button>
+					<button type="button" class="nav-link active" id="navModeChat" data-tooltip="대화형 챗봇"
+						data-tooltip-auto role="tab" aria-selected="true" aria-controls="navModeChatPanel"
+						aria-label="대화형 챗봇">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-chatbot.svg" width="17"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-chatbot-hover.svg" width="17"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">Chat</span>
+					</button>
+				</div>
+				<!-- End: 261020 추가 - Work·Chat 모드 화면 바로 이동 -->
+				<!-- Start: 261021 수정 - 챗봇 일반 메뉴 및 검색 -->
+				<nav class="chatbot-nav" id="navModeChatPanel" role="tabpanel" aria-labelledby="navModeChat">
+					<a class="chatbot-nav-item" href="home.html" data-tooltip="AI-ONE 홈" data-tooltip-auto>
+						<span class="chatbot-nav-icon" aria-hidden="true">
+							<img class="chatbot-nav-icon-default" src="../assets/icons/home.svg" alt="">
+							<img class="chatbot-nav-icon-hover" src="../assets/icons/home-hover.svg" alt="">
+						</span>
+						<span>AI-ONE 홈</span>
+					</a>
+					<button type="button" class="chatbot-nav-item is-primary" id="chatNewBtn" data-tooltip="새 채팅"
+						data-tooltip-auto>
+						<span class="chatbot-nav-icon" aria-hidden="true">
+							<svg class="chatbot-nav-icon-default" xmlns="http://www.w3.org/2000/svg" width="17"
+								height="17" viewBox="0 0 17 17" fill="none">
+								<path d="M10.9985 2V10" stroke="#656D76" stroke-width="1.4" stroke-linecap="round"
+									stroke-linejoin="round" />
+								<path d="M6.99854 6H14.9985" stroke="#656D76" stroke-width="1.4" stroke-linecap="round"
+									stroke-linejoin="round" />
+								<path
+									d="M8.5 2.00159H5C3.34315 2.00159 2 3.34473 2 5.00159V12.0016C2 13.6584 3.34315 15.0016 5 15.0016H12C13.6569 15.0016 15 13.6584 15 12.0016V8.50159"
+									stroke="#656D76" stroke-width="1.25" stroke-linecap="round" />
+							</svg>
+							<img class="chatbot-nav-icon-hover" src="../assets/icons/new-chat-hover.svg" alt="">
+						</span>
+						<span>새 채팅</span>
+					</button>
+					<label class="chatbot-search" data-tooltip="채팅 검색" data-tooltip-auto data-tooltip-placement="right">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<circle cx="11" cy="11" r="7"></circle>
+							<path d="m20 20-3.6-3.6"></path>
+						</svg>
+						<span class="sr-only">채팅 검색</span>
+						<input type="search" id="chatHistorySearch" placeholder="채팅 검색" autocomplete="off">
+					</label>
+				</nav>
+				<!-- End: 261021 수정 - 챗봇 일반 메뉴 및 검색 -->
+				<!-- Start: 261016 추가 - 프로젝트 버튼 및 스크롤 영역 -->
+				<div class="chatbot-scroll-area">
+					<section class="chatbot-projects">
+						<div class="chatbot-section-head">
+							<h2 class="chatbot-history-title" id="chatbotProjectTitle">
+								<button type="button" class="chatbot-section-toggle" id="projectSectionToggle"
+									aria-expanded="true" aria-controls="projectList" data-tooltip="프로젝트 목록 접기 · 펴기">
+									<span>프로젝트</span>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path d="m6 9 6 6 6-6"></path>
+									</svg>
+								</button>
+							</h2>
+							<button type="button" class="chatbot-section-add" id="projectNewBtn" aria-label="새 프로젝트"
+								data-tooltip="새 프로젝트">
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path d="M12 5v14M5 12h14"></path>
+								</svg>
+							</button>
+						</div>
+						<ul class="chatbot-project-list" id="projectList" aria-label="프로젝트 목록"></ul>
+					</section>
+
+				</div>
+
+				<!-- End: 261016 추가 - 프로젝트 버튼 및 스크롤 영역 -->
+
+				<section class="chatbot-history" aria-labelledby="chatbotHistoryTitle">
+					<h2 class="chatbot-history-title">
+						<button type="button" class="chatbot-section-toggle" id="chatbotHistoryTitle"
+							aria-expanded="true" aria-controls="chatHistoryList" data-tooltip="채팅 목록 접기 · 펴기">
+							<span>채팅</span>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="m6 9 6 6 6-6"></path>
+							</svg>
+						</button>
+					</h2>
+					<!-- Start: 261015 수정 - 일반 챗봇 채팅 목록 안내 -->
+					<!--
+					[데이터 표시 영역] 일반 챗봇의 왼쪽 채팅 목록. 예시 데이터는 ../js/dummy/dummy-data.js에서 관리합니다.
+					[API 연결 위치] ../js/chat.js: loadHistory() / ND_conversationList.do.
+					초기화 시 API 목록을 조회하고 제목 검색·고정·이름 변경·삭제·프로젝트 이동을 지원합니다.
+					agent가 report_generator인 항목은 기존 답변서 배지와 제목을 표시합니다.
+					이력 클릭 시 기존 안내문·질문·답변·참고 파일을 표시하고 파일 클릭 시 오른쪽 PDF 미리보기를 엽니다.
+					-->
+					<ul class="chatbot-history-list" id="chatHistoryList" aria-label="채팅 목록"></ul>
+					<!-- End: 261015 수정 - 일반 챗봇 채팅 목록 안내 -->
+				</section>
+
+				<!-- Start: 261016 수정 - 접힌 사이드바 사용자 메뉴 및 데이터 연결 -->
+				<div class="sidebar-footer line">
+					<div class="user-card">
+						<button type="button" class="user-avatar" data-sidebar-account-toggle="" aria-label="담당자 정보"
+							aria-haspopup="menu" aria-expanded="false" aria-controls="sidebarAccountMenu"
+							data-tooltip="담당자 정보">
+							<img class="icon icon-text" src="../assets/icons/user.svg" data-icon="user" alt=""
+								aria-hidden="true">
+						</button>
+						<button type="button" class="user-info" data-sidebar-account-toggle="" aria-label="사용자 계정 메뉴"
+							aria-haspopup="menu" aria-expanded="false" aria-controls="sidebarAccountMenu"
+							data-tooltip="사용자 계정 메뉴">
+							<span class="user-name" data-chat-user="name">사용자</span>
+							<span class="user-meta-row">
+								<span class="user-dept" data-chat-user="department"></span>
+
+								<span class="user-role-badge" data-chat-user="role"></span>
+							</span>
+						</button>
+					</div>
+				</div>
+				<div class="sidebar chatbot-account-host">
+					<div class="user-account-menu user-account-menu-detached hidden" id="sidebarAccountMenu" role="menu"
+						aria-label="사용자 계정 메뉴" data-sidebar-account-menu="detached" hidden="">
+						<div class="user-account-summary">
+							<strong data-chat-user="name">사용자</strong>
+							<span data-chat-user="department"></span>
+						</div>
+						<button type="button" role="menuitem" data-sidebar-account-action="profile"
+							data-modal-open="sidebarProfileModal" aria-haspopup="dialog" aria-expanded="false">
+							<img src="../assets/icons/user.svg" data-icon="user" alt="" aria-hidden="true">
+							<span>내 정보</span>
+						</button>
+						<button type="button" role="menuitem" data-sidebar-account-action="settings"
+							data-modal-open="sidebarSettingsModal" aria-haspopup="dialog" aria-expanded="false">
+							<img src="../assets/icons/settings-alt.svg" data-icon="settings-alt" alt=""
+								aria-hidden="true">
+							<span>환경설정</span>
+						</button>
+						<button type="button" class="danger" role="menuitem" data-sidebar-account-action="logout"
+							data-modal-open="sidebarLogoutModal" aria-haspopup="dialog" aria-expanded="false">
+							<img src="../assets/icons/logout.svg" data-icon="logout" alt="" aria-hidden="true">
+							<span>로그아웃</span>
+						</button>
+					</div>
+				</div>
+				<!-- End: 261016 수정 - 접힌 사이드바 사용자 메뉴 및 데이터 연결 -->
+			</aside>
+
+			<!-- End: 왼쪽: 채팅 메뉴 -->
+
+			<!-- Start: 가운데: 대화 -->
+			<main class="chatbot-main">
+				<!-- Start: 261016 수정 - 공통 점 배경 및 flare -->
+				<div class="ai-one-background ai-one-background-particles" aria-hidden="true">
+					<!-- 261016 수정 - 인라인 SVG 배경 제거. 점 효과는 ai-one-background-particles 클래스만으로 적용 (JS 불필요) -->
+					<!-- 로그인과 같은 flare: common.css의 공통 스타일과 모션을 재사용 -->
+					<span class="ai-one-background-part ai-one-background-login-flare"></span>
+
+				</div>
+				<!-- End: 261016 수정 - 공통 점 배경 및 flare -->
+				<section class="chatbot-hero" data-chat-hero="">
+					<h1 class="chatbot-hero-title"><span data-chat-user="greeting" hidden></span><br class="mo-block"
+							data-chat-user-greeting-break hidden>무엇을 도와드릴까요?</h1>
+				</section>
+
+				<!--
+				[API 연결 위치] ../js/chat.js: loadConversation() / ND_conversation.do로 기존 메시지 조회.
+				새 질문은 send() / ND_send.do로 전송하고 readStream()에서 답변 스트림을 표시합니다.
+				-->
+				<section class="project-view" id="projectView" aria-labelledby="projectViewName" hidden="">
+					<header class="project-view-head">
+						<span class="project-view-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24">
+								<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z">
+								</path>
+							</svg>
+						</span>
+						<div class="project-view-titles">
+							<h1 class="project-view-name" id="projectViewName"></h1>
+							<p class="project-view-desc" id="projectViewDesc" hidden=""></p>
+						</div>
+						<div class="project-view-actions">
+							<button type="button" class="project-btn" data-project-action="edit">세부사항 수정</button>
+							<button type="button" class="project-btn is-danger" data-project-action="delete">삭제</button>
+						</div>
+					</header>
+
+					<div class="project-view-body">
+						<section class="project-panel project-chats" aria-labelledby="projectChatsTitle">
+							<div class="project-panel-head">
+								<h2 id="projectChatsTitle">대화 <span class="project-count" id="projectChatCount"></span>
+								</h2>
+							</div>
+							<p class="project-hint">아래 입력창에서 질문하면 이 프로젝트의 지침과 파일을 참고해 답합니다.</p>
+							<ul class="project-chat-list" id="projectChatList"></ul>
+						</section>
+
+						<div class="project-side">
+							<section class="project-panel" aria-labelledby="projectInstructionsTitle">
+								<div class="project-panel-head">
+									<h2 id="projectInstructionsTitle">맞춤형 지침</h2>
+									<span class="project-panel-state" id="projectInstructionsState"></span>
+								</div>
+								<textarea class="project-instructions" id="projectInstructions" maxlength="8000"
+									rows="6" placeholder="이 프로젝트의 모든 대화에 적용할 지침을 적어 주세요.
+예) 답변은 개조식으로, 근거 법령 조문을 함께 적어 줘."></textarea>
+								<div class="project-panel-foot">
+									<span class="project-panel-meta" id="projectInstructionsCount">0 / 8,000</span>
+									<button type="button" class="project-btn is-primary" id="projectInstructionsSave"
+										disabled="">저장</button>
+								</div>
+							</section>
+
+							<section class="project-panel" aria-labelledby="projectFilesTitle">
+								<div class="project-panel-head">
+									<h2 id="projectFilesTitle">파일</h2>
+									<button type="button" class="project-btn" id="projectFileAddBtn">+ 파일 추가</button>
+									<input type="file" id="projectFileInput" multiple="" hidden=""
+										accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif,.bmp">
+								</div>
+								<ul class="project-file-list" id="projectFileList"></ul>
+								<p class="project-hint" id="projectFileHint">"사용 가능" 상태의 파일을 참고해 답변합니다.</p>
+							</section>
+						</div>
+					</div>
+				</section>
+				<div class="chat-project-crumb" id="chatProjectCrumb" hidden="">
+					<button type="button" data-project-back="" data-tooltip="프로젝트 화면으로">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+						</svg>
+						<span id="chatProjectCrumbName">이름 없는 프로젝트</span>
+					</button>
+					<span class="chat-project-crumb-note">프로젝트 지침 · 파일이 적용되는 대화입니다</span>
+				</div>
+				<section class="chat-messages" id="chatMessages" aria-label="대화" aria-live="polite" hidden=""></section>
+
+				<div class="chatbot-composer">
+					<div class="home-prompt-composer">
+						<div class="prompt-composer-shell chat-drop-zone" id="chatComposer"
+							data-chat-task-current="chat" data-chat-model="">
+							<form class="prompt-composer" id="chatComposerForm" novalidate="">
+								<!-- Start: 261015 수정 - 채팅 입력 위치 -->
+								<label for="chatInput" class="sr-only">AI-ONE에게 요청할 내용</label>
+								<textarea class="prompt-composer-input" id="chatInput" name="prompt" rows="2"
+									maxlength="20000" placeholder="AI-ONE에게 요청해 보세요: 관련 법령과 근거 자료를 찾아줘"></textarea>
+								<ul class="chat-attach-list" id="chatAttachList" aria-label="첨부 파일" hidden=""></ul>
+								<!-- End: 261015 수정 - 채팅 입력 위치 -->
+								<div class="prompt-composer-tools">
+									<input class="prompt-composer-file-input" id="chatFileInput" type="file" multiple=""
+										hidden=""
+										accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif,.bmp">
+									<button type="button" class="icon-button icon-button-ghost prompt-composer-attach"
+										id="chatAttachBtn" aria-label="파일 첨부" data-tooltip="파일 첨부">
+										<img class="icon icon-small" data-icon="plus" alt="" aria-hidden="true"
+											src="../assets/icons/plus.svg">
+									</button>
+								</div>
+								<div class="prompt-composer-bar">
+									<div class="prompt-composer-actions">
+										<!-- 모델 선택 (AI 서버 모델명은 하단 스크립트의 MODEL_MAP 에서 연결) -->
+										<div class="dropdown-menu-component" data-dropdown-menu=""
+											data-chat-menu="model">
+											<button type="button" class="button dropdown-menu-model-trigger"
+												data-dropdown-trigger="" aria-haspopup="menu" aria-expanded="false"
+												aria-controls="chatModelMenu">
+												<span data-chat-model-label="" class="chat-tit">AI-ONE AI</span>
+												<span class="chat-middot" aria-hidden="true"></span>
+												<span data-chat-task-label="" class="chat-desc">일반 대화</span>
+												<img class="icon icon-xsmall" data-icon="chevron-down" alt=""
+													aria-hidden="true" src="../assets/icons/chevron-down.svg">
+											</button>
+											<div class="chat-menu-panels">
+												<!-- 옵션은 HTML에서 관리하며 aria-controls로 모델과 작업 메뉴를 연결합니다. -->
+												<div class="dropdown-menu dropdown-menu-model" id="chatModelMenu"
+													role="menu" data-placement="bottom-end" hidden="">
+													<span class="dropdown-menu-label">모델 선택</span>
+													<button type="button" class="dropdown-menu-item"
+														role="menuitemradio" aria-checked="true"
+														data-menu-value="default" data-menu-label="AI-ONE AI"
+														data-menu-keep-open="" aria-haspopup="menu"
+														aria-expanded="false" aria-controls="chatTaskMenu">
+														<span class="dropdown-model-name">AI-ONE AI</span>
+														<span class="dropdown-model-check" aria-hidden="true">✓</span>
+													</button>
+													<button type="button" class="dropdown-menu-item"
+														role="menuitemradio" aria-checked="false"
+														data-menu-value="government" data-menu-label="범정부 AI"
+														data-menu-keep-open="" aria-haspopup="menu"
+														aria-expanded="false" aria-controls="chatGovernmentTaskMenu">
+														<span class="dropdown-model-name">범정부 AI</span>
+														<span class="dropdown-model-check" aria-hidden="true">✓</span>
+													</button>
+												</div>
+												<div class="dropdown-menu dropdown-menu-model chat-task-submenu"
+													id="chatTaskMenu" role="menu" data-chat-menu="task" hidden="">
+													<button type="button" class="dropdown-menu-item"
+														role="menuitemradio" aria-checked="false" data-menu-value="chat"
+														data-menu-label="일반 대화">
+														<span class="dropdown-model-name">일반 대화</span>
+														<span class="dropdown-model-check" aria-hidden="true">✓</span>
+													</button>
+													<button type="button" class="dropdown-menu-item"
+														role="menuitemradio" aria-checked="false"
+														data-menu-value="search" data-menu-label="내부자료 검색">
+														<span class="dropdown-model-name">내부자료 검색</span>
+														<span class="dropdown-model-check" aria-hidden="true">✓</span>
+													</button>
+												</div>
+												<div class="dropdown-menu dropdown-menu-model chat-task-submenu"
+													id="chatGovernmentTaskMenu" role="menu" data-chat-menu="task"
+													hidden="">
+													<button type="button" class="dropdown-menu-item"
+														role="menuitemradio" aria-checked="false"
+														data-menu-value="document-summary" data-menu-label="문서생성요약">
+														<span class="dropdown-model-name">문서생성요약</span>
+														<span class="dropdown-model-check" aria-hidden="true">✓</span>
+													</button>
+													<button type="button" class="dropdown-menu-item"
+														role="menuitemradio" aria-checked="false"
+														data-menu-value="public-search" data-menu-label="공개자료 검색">
+														<span class="dropdown-model-name">공개자료 검색</span>
+														<span class="dropdown-model-check" aria-hidden="true">✓</span>
+													</button>
+													<button type="button" class="dropdown-menu-item"
+														role="menuitemradio" aria-checked="false"
+														data-menu-value="law-search" data-menu-label="법령 검색">
+														<span class="dropdown-model-name">법령 검색</span>
+														<span class="dropdown-model-check" aria-hidden="true">✓</span>
+													</button>
+												</div>
+											</div>
+											<button type="submit"
+												class="icon-button icon-button-primary prompt-composer-submit"
+												id="chatSendBtn" aria-label="보내기" disabled="" data-tooltip="보내기">
+												<img class="icon icon-text" data-icon="send" alt="" aria-hidden="true"
+													src="../assets/icons/send.svg">
+											</button>
+										</div>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+					<p class="chatbot-disclaimer">AI 답변은 부정확할 수 있으니 중요한 내용은 원문으로 확인해 주세요.</p>
+				</div>
+			</main>
+			<!-- End: 가운데: 대화 -->
+		</div>
+
+		<div id="aiOneTooltip" class="ai-one-tooltip" role="tooltip" hidden=""></div>
+
+
+		<script>
+			window.AIOneChatConfig = {
+				baseUrl: '/intra/ai/chat/',
+				mode: 'inline',
+				chatbotUrl: 'chatbot.html',
+				sidebarToggleIcon: false,
+				sidebarRail: false,
+				composerControls: {
+					// 빈 모델명은 AI 서버 기본 모델을 사용합니다.
+					modelMap: { default: '' },
+					taskRoutes: {},
+					placeholders: {
+						chat: 'AI-ONE에게 요청해 보세요: 관련 법령과 근거 자료를 찾아줘',
+						answer: '국회 질의 내용을 입력하면 답변서 초안 작성을 도와드립니다',
+						search: '찾을 내부 업무자료를 입력해 보세요'
+					},
+					maxInputHeight: 200,
+					maxPromptLength: 2000
+				}
+			};
+		</script>
+		<script src="../js/marked.min.js" defer></script>
+		<script src="../js/chat.js" defer></script>
+
+
+		<!-- Start: 준비중 안내 모달 -->
+		<div class="hidden modal" id="preparingServiceModal" data-component="modal" data-modal="">
+			<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+			<section class="modal-contents modal-medium modal-variant-alert" role="dialog" aria-modal="true"
+				data-modal-variant="alert" aria-labelledby="preparingServiceModal-title"
+				aria-describedby="preparingServiceModal-description">
+				<div class="modal-variant-panel" data-modal-panel="content">
+					<div class="modal-icon alert" data-modal-icon="alert" aria-hidden="true">!</div>
+					<div class="modal-title" id="preparingServiceModal-title" data-slot="title">준비중</div>
+					<div class="modal-msg" id="preparingServiceModal-description" data-slot="description">
+						해당 서비스는 준비 중 입니다.
+					</div>
+					<div class="modal-actions" data-slot="actions">
+						<button type="button" class="btn-confirm" data-modal-close="">확인</button>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- End: 준비중 안내 모달 -->
+	</div>
+
+	<!-- Start: 261016 수정 - 채팅 정적 UI 템플릿 -->
+	<!--
+	고정 구조는 아래 template에서 관리합니다. chat.js의 getChatTemplateHtml이 innerHTML로 읽고,
+	메시지·파일명·검색 옵션은 각 렌더러에서 채웁니다. 예시 데이터는 js/dummy에서만 관리합니다.
+	
+	-->
+	<template id="chatPreviewPanelTemplate">
+		<header class="chat-preview-head">
+			<span class="chat-preview-icon"><svg viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+					<path d="M14 3v5h5M9 13h6M9 17h6" />
+				</svg></span>
+			<div class="chat-preview-heading">
+				<strong class="chat-preview-title"></strong>
+				<span class="chat-preview-sub"></span>
+			</div>
+			<div class="chat-preview-tools">
+				<a class="chat-preview-btn" data-preview-open target="_blank" rel="noopener noreferrer"
+					aria-label="새 창에서 열기" data-tooltip="새 창에서 열기"><svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M14 4h6v6M20 4l-9 9" />
+						<path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+					</svg></a>
+				<select class="chat-preview-zoom" aria-label="배율"></select>
+				<a class="chat-preview-btn" data-preview-download aria-label="내려받기" data-tooltip="내려받기 (PDF)"><svg
+						viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M12 4v11m0 0 4-4m-4 4-4-4M5 20h14" />
+					</svg></a>
+				<button type="button" class="chat-preview-btn" data-preview-full aria-label="전체 화면"
+					data-tooltip="전체 화면"><svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+					</svg></button>
+				<button type="button" class="chat-preview-btn" data-preview-close aria-label="미리보기 닫기"
+					data-tooltip="닫기 (Esc)"><svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M6 6l12 12M18 6 6 18" />
+					</svg></button>
+			</div>
+		</header>
+		<div class="chat-preview-body" tabindex="0"></div>
+	</template>
+
+	<template id="chatAssistantMessageTemplate">
+		<div class="chat-stage" aria-live="polite"><span class="chat-stage-dot" aria-hidden="true"></span><span
+				class="chat-stage-text">답변을 준비하고 있습니다</span></div>
+		<div class="chat-sources-slot" hidden></div>
+		<div class="chat-bubble chat-content"></div>
+		<div class="chat-msg-actions msg-actions chat-copy-actions" hidden></div>
+	</template>
+
+	<template id="chatSearchMessageTemplate">
+		<div class="chat-bubble chat-search-card">
+			<div class="chat-search-head">
+				<strong class="chat-search-title">내부자료 검색</strong>
+				<span class="chat-search-count" data-search-count>검색 중…</span>
+				<label class="chat-search-sort"><span class="sr-only">정렬</span>
+					<select data-search-sort></select>
+				</label>
+			</div>
+			<ul class="chat-search-list" data-search-list></ul>
+			<p class="chat-search-notice" data-search-notice hidden></p>
+			<div class="chat-search-foot">
+				<button type="button" class="chat-search-more" data-search-more hidden>더 보기</button>
+				<span class="chat-search-hint">검색 결과는 채팅 목록에 저장되지 않습니다.</span>
+			</div>
+		</div>
+	</template>
+
+	<template id="chatUserMessageTemplate">
+		<div class="chat-bubble"></div>
+		<ul class="chat-msg-files" hidden></ul>
+	</template>
+	<!-- End: 261016 수정 - 채팅 정적 UI 템플릿 -->
+
+	<template id="chatAnswerGuideTemplate">
+		<p>국회 질의를 입력해 보세요!<br>국회질의 답변서 작성을 도와드립니다.</p>
+		<p><strong>한 채팅에서는 국회질의 한 건만 다룹니다. 다른 질의는 새 채팅을 열어 입력해 주세요.</strong></p>
+		<p>채팅창에 국회질의 원문을 붙여넣으시면 유사 답변서를 참고하여 답변서 초안을 만들어 드립니다.</p>
+		<p>
+			<strong class="chat-guide-step">step1. 첨부파일 업로드 (선택)</strong><br>
+			입력창 왼쪽의 [+] 버튼을 누르거나 파일을 입력창으로 끌어다 놓아 참고 자료를 첨부합니다.<br>
+			첨부는 <strong>질의를 보내기 전에</strong> 해야 초안에 함께 반영됩니다.<br>
+			<strong>20000 토큰 제한이 있으니 작성에 필요한 내용만 선별하여 업로드하세요!</strong>
+		</p>
+		<p>
+			<strong class="chat-guide-step">step2. 질의 입력</strong><br>
+			하단 입력창에 국회질의 원문을 복사하여 그대로 붙여넣어 주세요.<br>
+			<strong>AI에게 보내는 첫 채팅은 반드시 국회질의만 넣어 주어야 합니다.</strong>
+		</p>
+		<p>
+			<strong class="chat-guide-step">step3. 수정</strong><br>
+			AI와 채팅을 이어가며 작성된 답변서를 수정할 수 있습니다.<br>
+			예) "두 번째 항목을 더 간결하게 고쳐줘", "추진 일정을 표로 정리해줘"
+		</p>
+		<p>
+			<strong class="chat-guide-step">step4. 답변서 활용</strong><br>
+			답변 아래 [복사] 버튼을 눌러 작성된 답변서를 복사해 사용하세요.<br>
+			<strong>생성된 답변은 제출 전에 <span class="chat-guide-warn">반드시 내용과 근거를 확인</span>하고 <span
+					class="chat-guide-warn">필요한 내용을 수정</span>하여 사용하시기 바랍니다.</strong>
+		</p>
+	</template>
+
+	<div class="chat-more-menu" id="chatHistoryActionMenu" role="menu" aria-label="대화 작업 메뉴" hidden="">
+
+		<button type="button" class="chat-more-item" role="menuitem" data-chat-list-action="pin">
+			<img class="icon drawer-list-action-icon" src="../assets/icons/pin.svg" data-icon="pin" alt=""
+				aria-hidden="true">
+			<span>고정하기</span>
+		</button><button type="button" class="chat-more-item" role="menuitem" data-chat-list-action="rename">
+			<img class="icon drawer-list-action-icon" src="../assets/icons/edit-compact.svg" data-icon="edit-compact"
+				alt="" aria-hidden="true">
+			<span>이름 바꾸기</span>
+		</button>
+		<button type="button" class="chat-more-item" role="menuitem" data-chat-list-action="move" hidden="">
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+				<path d="M10 13h6M13 10l3 3-3 3"></path>
+			</svg>
+			<span>프로젝트로 이동</span>
+		</button>
+		<div class="chat-more-sep" role="separator"></div>
+		<button type="button" class="chat-more-item danger" role="menuitem" data-chat-list-action="delete">
+			<!-- Start: 261026 수정 - 공통 삭제 아이콘 적용 -->
+			<img class="icon drawer-list-action-icon" src="../assets/icons/delete.svg" data-icon="delete" alt=""
+				aria-hidden="true">
+			<!-- End: 261026 수정 - 공통 삭제 아이콘 적용 -->
+			<span>삭제</span>
+		</button>
+	</div>
+
+	<div class="chat-action-modal" id="chatRenameModal" hidden="">
+		<div class="chat-action-modal-bg" data-chat-modal-close=""></div>
+		<section class="chat-action-modal-box" role="dialog" aria-modal="true" aria-labelledby="chatRenameModalTitle">
+			<h2 class="chat-action-modal-title" id="chatRenameModalTitle">채팅 이름 변경</h2>
+			<p class="chat-action-modal-msg">목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.</p>
+			<label class="chat-action-modal-field" for="chatRenameInput">
+				<span>대화 이름</span>
+				<input type="text" id="chatRenameInput" maxlength="60" autocomplete="off">
+			</label>
+			<p class="chat-action-modal-error" id="chatRenameError" hidden="">대화 이름을 입력해 주세요.</p>
+			<div class="chat-action-modal-actions">
+				<button type="button" data-chat-modal-close="">취소</button>
+				<button type="button" class="is-confirm" id="chatRenameConfirm">저장</button>
+			</div>
+		</section>
+	</div>
+
+	<div class="modal hidden chatbot-raised" data-component="modal" data-modal="" id="chatDeleteModal" hidden="">
+		<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+		<section class="modal-contents modal-medium" data-modal-variant="content" role="dialog" aria-modal="true" aria-labelledby="chatDeleteModalTitle">
+			<div class="modal-icon danger" data-modal-icon="default" aria-hidden="true">⚠</div>
+			<h2 class="modal-title" id="chatDeleteModalTitle">대화 삭제</h2>
+			<p class="modal-msg">해당 대화를 삭제하시겠습니까?</p>
+			<div class="modal-actions">
+				<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+				<button type="button" class="btn-confirm danger" id="chatDeleteConfirm">삭제</button>
+			</div>
+		</section>
+	</div>
+
+	<div class="chat-action-toast" id="chatActionToast" role="status" aria-live="polite" hidden="">대화를 고정했습니다.</div>
+
+	<div class="chat-more-menu" id="projectActionMenu" role="menu" aria-label="프로젝트 작업 메뉴" hidden="">
+		<button type="button" class="chat-more-item" role="menuitem" data-project-menu-action="edit">
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16v4z"></path>
+				<path d="m13.5 6.5 4 4"></path>
+			</svg>
+			<span>프로젝트 설정</span>
+		</button>
+		<button type="button" class="chat-more-item" role="menuitem" data-project-menu-action="rename">
+			<img class="icon drawer-list-action-icon" src="../assets/icons/edit-compact.svg" data-icon="edit-compact"
+				alt="" aria-hidden="true">
+			<span>이름 바꾸기</span>
+		</button>
+		<div class="chat-more-sep" role="separator"></div>
+		<button type="button" class="chat-more-item danger" role="menuitem" data-project-menu-action="delete">
+			<!-- Start: 261026 수정 - 공통 삭제 아이콘 적용 -->
+			<img class="icon drawer-list-action-icon" src="../assets/icons/delete.svg" data-icon="delete" alt=""
+				aria-hidden="true">
+			<!-- End: 261026 수정 - 공통 삭제 아이콘 적용 -->
+			<span>삭제</span>
+		</button>
+	</div>
+
+	<div class="chat-more-menu" id="projectChatActionMenu" role="menu" aria-label="프로젝트 대화 작업 메뉴" hidden="">
+		<button type="button" class="chat-more-item" role="menuitem" data-project-chat-action="pin">
+			<img class="icon drawer-list-action-icon" src="../assets/icons/pin.svg" data-icon="pin" alt=""
+				aria-hidden="true">
+			<span>고정하기</span>
+		</button>
+		<button type="button" class="chat-more-item" role="menuitem" data-project-chat-action="rename">
+			<img class="icon drawer-list-action-icon" src="../assets/icons/edit-compact.svg" data-icon="edit-compact"
+				alt="" aria-hidden="true">
+			<span>이름 바꾸기</span>
+		</button>
+		<button type="button" class="chat-more-item" role="menuitem" data-project-chat-action="remove">
+			<svg viewBox="0 0 24 24" aria-hidden="true">
+				<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+				<path d="M9 13h6"></path>
+			</svg>
+			<span>프로젝트에서 제거</span>
+		</button>
+		<div class="chat-more-sep" role="separator"></div>
+		<button type="button" class="chat-more-item danger" role="menuitem" data-project-chat-action="delete">
+			<!-- Start: 261026 수정 - 공통 삭제 아이콘 적용 -->
+			<img class="icon drawer-list-action-icon" src="../assets/icons/delete.svg" data-icon="delete" alt=""
+				aria-hidden="true">
+			<!-- End: 261026 수정 - 공통 삭제 아이콘 적용 -->
+			<span>삭제</span>
+		</button>
+	</div>
+
+	<div class="chat-action-modal" id="projectFormModal" hidden="">
+		<div class="chat-action-modal-bg" data-chat-modal-close=""></div>
+		<section class="chat-action-modal-box" role="dialog" aria-modal="true" aria-labelledby="projectFormModalTitle">
+			<h2 class="chat-action-modal-title" id="projectFormModalTitle">새 프로젝트</h2>
+			<p class="chat-action-modal-msg" id="projectFormMsg">관련 대화 · 파일 · 맞춤형 지침을 한곳에 모아 이어서 작업할 수 있습니다.</p>
+			<label class="chat-action-modal-field" for="projectFormName">
+				<span>프로젝트 이름</span>
+				<input type="text" id="projectFormName" maxlength="255" autocomplete="off"
+					placeholder="예) 2027년 세법개정안 검토">
+			</label>
+			<p class="chat-action-modal-error" id="projectFormError" hidden="">프로젝트 이름을 입력해 주세요.</p>
+			<label class="chat-action-modal-field" for="projectFormDesc">
+				<span>설명 (선택)</span>
+				<textarea id="projectFormDesc" maxlength="1000" rows="3"
+					placeholder="어떤 작업을 하는 프로젝트인지 적어 두세요."></textarea>
+			</label>
+			<label class="chat-action-modal-field" for="projectFormInstructions">
+				<span>맞춤형 지침 (선택)</span>
+				<textarea id="projectFormInstructions" maxlength="8000" rows="4" placeholder="이 프로젝트의 모든 대화에 적용할 지침
+예) 답변은 개조식으로, 근거 법령 조문을 함께 적어 줘."></textarea>
+			</label>
+			<div class="chat-action-modal-actions">
+				<button type="button" data-chat-modal-close="">취소</button>
+				<button type="button" class="is-confirm" id="projectFormConfirm">만들기</button>
+			</div>
+		</section>
+	</div>
+
+
+	<div class="chat-action-modal" id="projectRenameModal" hidden>
+		<div class="chat-action-modal-bg" data-chat-modal-close></div>
+		<section class="chat-action-modal-box" role="dialog" aria-modal="true" aria-labelledby="projectRenameTitle">
+			<h2 class="chat-action-modal-title" id="projectRenameTitle">프로젝트 이름 바꾸기</h2>
+			<label class="chat-action-modal-field" for="projectRenameInput">
+				<span>프로젝트 이름</span>
+				<input type="text" id="projectRenameInput" maxlength="255" autocomplete="off">
+			</label>
+			<p class="chat-action-modal-error" id="projectRenameError" hidden>프로젝트 이름을 입력해 주세요.</p>
+			<div class="chat-action-modal-actions">
+				<button type="button" data-chat-modal-close>취소</button>
+				<button type="button" class="is-confirm" id="projectRenameConfirm">저장</button>
+			</div>
+		</section>
+	</div>
+
+	<div class="modal hidden chatbot-raised" data-component="modal" data-modal="" id="projectConfirmModal" hidden="">
+		<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+		<section class="modal-contents modal-medium" data-modal-variant="content" role="dialog" aria-modal="true"
+			aria-labelledby="projectConfirmModalTitle">
+			<div class="modal-icon danger" data-modal-icon="default" aria-hidden="true">⚠</div>
+			<h2 class="modal-title" id="projectConfirmModalTitle">확인</h2>
+			<p class="modal-msg" id="projectConfirmMsg"></p>
+			<div class="modal-actions">
+				<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+				<button type="button" class="btn-confirm danger" id="projectConfirmOk">확인</button>
+			</div>
+		</section>
+	</div>
+
+	<div class="chat-action-modal" id="chatMoveModal" hidden="">
+		<div class="chat-action-modal-bg" data-chat-modal-close=""></div>
+		<section class="chat-action-modal-box" role="dialog" aria-modal="true" aria-labelledby="chatMoveModalTitle">
+			<h2 class="chat-action-modal-title" id="chatMoveModalTitle">프로젝트로 이동</h2>
+			<p class="chat-action-modal-msg"><strong id="chatMoveTitle">선택한 대화</strong>를 옮길 프로젝트를 고르세요.<br>옮긴 뒤 보내는 질문부터
+				프로젝트 지침 · 파일이 적용됩니다.</p>
+			<div class="project-move-list" id="chatMoveList" role="radiogroup" aria-label="프로젝트"></div>
+			<div class="chat-action-modal-actions">
+				<button type="button" class="project-move-create" id="chatMoveCreate">+ 새 프로젝트</button>
+				<button type="button" data-chat-modal-close="">취소</button>
+				<button type="button" class="is-confirm" id="chatMoveConfirm">이동</button>
+			</div>
+		</section>
+	</div>
+
+	<div class="hidden modal chatbot-raised" id="sidebarProfileModal" data-component="modal" data-modal="">
+		<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+		<section class="modal-contents modal-medium modal-variant-account-profile account-profile-modal" role="dialog"
+			aria-modal="true" data-modal-variant="account-profile" aria-label="내 정보">
+			<div class="modal-variant-panel" data-modal-panel="account-profile" data-account-modal-panel="">
+				<div class="account-modal-head">
+					<div class="modal-title">내 정보</div>
+					<button type="button" class="query-edit-modal-close" data-modal-close="" aria-label="닫기">×</button>
+				</div>
+				<div class="account-modal-body account-profile-content">
+					<div class="account-profile-summary">
+						<span class="account-profile-avatar" aria-hidden="true">
+							<svg viewBox="0 0 24 24">
+								<circle cx="12" cy="8" r="4"></circle>
+								<path d="M5 21a7 7 0 0 1 14 0"></path>
+							</svg>
+						</span>
+						<div>
+							<strong data-account-profile-name="" data-chat-user="name">사용자</strong>
+							<span data-account-profile-dept="" data-chat-user="department"></span>
+						</div>
+					</div>
+					<dl class="account-profile-list">
+						<div>
+							<dt>이름·직위</dt>
+							<dd data-account-profile-name="" data-chat-user="name">사용자</dd>
+						</div>
+						<div>
+							<dt>소속 부서</dt>
+							<dd data-account-profile-dept="" data-chat-user="department"></dd>
+						</div>
+						<div>
+							<dt>사용자 권한</dt>
+
+							<dd><span class="account-role-tag" data-account-profile-role=""
+									data-chat-user="role"></span></dd>
+						</div>
+						<!-- 								<div> -->
+						<!-- 									<dt>로그인 방식</dt> -->
+						<!-- 									<dd>통합 ID · SSO</dd> -->
+						<!-- 								</div> -->
+					</dl>
+				</div>
+				<div class="modal-actions account-modal-actions">
+					<button type="button" class="btn-cancel" data-modal-close="" hidden="">취소</button>
+					<button type="button" class="btn-confirm" data-modal-close="">확인</button>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<div class="hidden modal chatbot-raised" id="sidebarSettingsModal" data-component="modal" data-modal="">
+		<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+		<section class="modal-contents modal-medium modal-variant-account-settings account-settings-modal" role="dialog"
+			aria-modal="true" data-modal-variant="account-settings" aria-label="환경설정">
+			<div class="modal-variant-panel" data-modal-panel="account-settings" data-account-modal-panel="">
+				<div class="account-modal-head">
+					<div class="modal-title">환경설정</div>
+					<button type="button" class="query-edit-modal-close" data-modal-close="" aria-label="닫기">×</button>
+				</div>
+				<div class="account-modal-body account-settings-content" data-settings-panel="">
+					<section class="account-settings-section">
+						<div class="settings-section-title">화면 모드</div>
+						<div class="theme-option-list" role="radiogroup" aria-label="화면 모드 선택">
+							<button type="button" class="theme-option" data-theme-value="system" role="radio"
+								aria-checked="false">
+								<span class="theme-option-icon">
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<rect x="3" y="4" width="18" height="14" rx="2"></rect>
+										<path d="M8 21h8M12 18v3"></path>
+									</svg>
+								</span>
+								<span class="theme-option-text"><strong>시스템</strong><small>기기 설정에 맞춤</small></span>
+								<span class="theme-option-check" aria-hidden="true"></span>
+							</button>
+							<button type="button" class="theme-option" data-theme-value="dark" role="radio"
+								aria-checked="false">
+								<span class="theme-option-icon">
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.5 6.5 0 0 0 21 12.8z"></path>
+									</svg>
+								</span>
+								<span class="theme-option-text"><strong>다크 모드</strong><small>어두운 화면</small></span>
+								<span class="theme-option-check" aria-hidden="true"></span>
+							</button>
+							<button type="button" class="theme-option active" data-theme-value="light" role="radio"
+								aria-checked="true">
+								<span class="theme-option-icon">
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<circle cx="12" cy="12" r="4"></circle>
+										<path
+											d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42">
+										</path>
+									</svg>
+								</span>
+								<span class="theme-option-text"><strong>라이트 모드</strong><small>밝은 화면</small></span>
+								<span class="theme-option-check" aria-hidden="true">✓</span>
+							</button>
+						</div>
+					</section>
+					<section class="account-settings-section">
+						<div class="settings-section-title">강조 컬러</div>
+						<div class="settings-accent-control" data-accent-control="" data-accent-value="default">
+							<button type="button" class="settings-accent-trigger" data-accent-trigger=""
+								aria-haspopup="listbox" aria-expanded="false" aria-label="강조 컬러 선택">
+								<span class="settings-accent-swatch" aria-hidden="true" data-accent-value="default"
+									aria-selected="true"></span>
+								<span data-accent-label="">기본값</span>
+								<span class="settings-accent-arrow" aria-hidden="true"></span>
+							</button>
+							<div class="settings-accent-options" data-accent-listbox="" role="listbox"
+								aria-label="강조 컬러 옵션" hidden="">
+								<button type="button" class="settings-accent-option" role="option"
+									data-accent-value="default" aria-selected="true">
+									<span class="settings-accent-option-dot"
+										aria-hidden="true"></span><span>기본값</span><span
+										class="settings-accent-option-check" aria-hidden="true">✓</span>
+								</button>
+								<button type="button" class="settings-accent-option" role="option"
+									data-accent-value="blue" aria-selected="false">
+									<span class="settings-accent-option-dot"
+										aria-hidden="true"></span><span>블루</span><span
+										class="settings-accent-option-check" aria-hidden="true">✓</span>
+								</button>
+								<button type="button" class="settings-accent-option" role="option"
+									data-accent-value="green" aria-selected="false">
+									<span class="settings-accent-option-dot"
+										aria-hidden="true"></span><span>그린</span><span
+										class="settings-accent-option-check" aria-hidden="true">✓</span>
+								</button>
+								<button type="button" class="settings-accent-option" role="option"
+									data-accent-value="yellow" aria-selected="false">
+									<span class="settings-accent-option-dot"
+										aria-hidden="true"></span><span>옐로</span><span
+										class="settings-accent-option-check" aria-hidden="true">✓</span>
+								</button>
+								<button type="button" class="settings-accent-option" role="option"
+									data-accent-value="pink" aria-selected="false">
+									<span class="settings-accent-option-dot"
+										aria-hidden="true"></span><span>핑크</span><span
+										class="settings-accent-option-check" aria-hidden="true">✓</span>
+								</button>
+								<button type="button" class="settings-accent-option" role="option"
+									data-accent-value="orange" aria-selected="false">
+									<span class="settings-accent-option-dot"
+										aria-hidden="true"></span><span>오렌지</span><span
+										class="settings-accent-option-check" aria-hidden="true">✓</span>
+								</button>
+								<button type="button" class="settings-accent-option" role="option"
+									data-accent-value="purple" aria-selected="false">
+									<span class="settings-accent-option-dot"
+										aria-hidden="true"></span><span>퍼플</span><span
+										class="settings-accent-option-check" aria-hidden="true">✓</span>
+								</button>
+							</div>
+						</div>
+					</section>
+					<section class="account-settings-section">
+						<div class="settings-section-title">알림</div>
+						<div class="notification-setting-row">
+							<div class="notification-setting-text">
+								<strong>응답 완료 알림</strong>
+								<small>시간이 걸리는 요청에 응답할 때 알림을 받습니다.</small>
+								<span class="notification-setting-status" aria-live="polite">알림이 켜져 있습니다.</span>
+							</div>
+							<button type="button" class="notification-toggle active" role="switch" aria-checked="true"
+								aria-label="응답 완료 알림 설정"><span></span></button>
+						</div>
+					</section>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<div class="hidden modal chatbot-raised" id="sidebarLogoutModal" data-component="modal" data-modal="">
+		<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+		<section class="modal-contents modal-medium modal-variant-logout" role="dialog" aria-modal="true"
+			data-modal-variant="logout" aria-label="로그아웃 확인">
+			<div class="modal-variant-panel" data-modal-panel="content">
+				<div class="modal-icon logout" data-modal-icon="logout" aria-hidden="true">
+					<img src="../assets/icons/logout.svg" alt="">
+				</div>
+				<div class="modal-title" id="sidebarLogoutModal-title" data-slot="title">로그아웃</div>
+				<div class="modal-msg" id="sidebarLogoutModal-description" data-slot="description">
+					AI-ONE에서 로그아웃하시겠습니까?
+				</div>
+				<div class="modal-actions" data-slot="actions">
+					<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+
+					<button type="button" class="btn-confirm danger" data-sidebar-logout-confirm=""
+						data-modal-close="">로그아웃</button>
+				</div>
+			</div>
+		</section>
+	</div>
+	<!-- Start: 261016 수정 - 공통 오류신고 템플릿 연결 -->
+	<!--
+	화면 구조는 이 템플릿, 스타일은 common.css, 모달·첨부 검증은 common.js에서 관리합니다.
+	chat.js의 openChatIssue가 업로드·접수 API를 연결합니다. data-issue-* 속성은 공통 동작에서 사용합니다.
+	
+	-->
+	<template id="chatIssueModalTemplate">
+		<div class="chat-issue-backdrop">
+			<section class="chat-issue-modal" role="dialog" aria-modal="true" aria-labelledby="chatIssueTitle">
+				<header class="chat-issue-head">
+					<div class="chat-issue-title-wrap">
+						<strong id="chatIssueTitle">오류 신고</strong>
+						<p>응답에서 발견된 문제를 알려주시면 개선에 활용하겠습니다.</p>
+					</div>
+					<button type="button" class="chat-issue-close" data-issue-close="" aria-label="닫기">×</button>
+				</header>
+				<div class="chat-issue-body">
+					<div class="chat-issue-field">
+						<span class="chat-issue-legend">문제 유형</span>
+						<div class="chat-issue-types">
+							<label class="chat-issue-type">
+								<input type="radio" name="chatIssueType" value="inaccurate" checked="">
+								<span>부정확하거나 잘못된 정보</span>
+							</label>
+							<label class="chat-issue-type">
+								<input type="radio" name="chatIssueType" value="harmful">
+								<span>유해하거나 안전하지 않은 내용</span>
+							</label>
+							<label class="chat-issue-type">
+								<input type="radio" name="chatIssueType" value="unhelpful">
+								<span>도움이 되지 않는 응답</span>
+							</label>
+							<label class="chat-issue-type">
+								<input type="radio" name="chatIssueType" value="legal">
+								<span>법적 문제</span>
+							</label>
+							<label class="chat-issue-type">
+								<input type="radio" name="chatIssueType" value="other">
+								<span>기타</span>
+							</label>
+						</div>
+					</div>
+					<div class="chat-issue-field">
+						<label for="chatIssueContent">상세 설명 (선택)</label>
+						<textarea id="chatIssueContent" maxlength="2000" placeholder="문제 상황을 자세히 설명해 주세요"></textarea>
+					</div>
+					<div class="chat-issue-field">
+						<label>파일 첨부 (선택)</label>
+						<label class="chat-issue-upload" for="chatIssueFiles">
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M12 16V4m0 0-4 4m4-4 4 4"></path>
+								<path d="M5 15v4h14v-4"></path>
+							</svg>
+							<span>클릭하거나 파일을 드래그하세요</span>
+							<small>스크린샷 등 최대 5개, 각 10MB 이내</small>
+						</label>
+						<input type="file" id="chatIssueFiles" multiple="" accept="image/*,.pdf,.txt" hidden="">
+						<div class="chat-issue-file-list" data-issue-file-list=""></div>
+					</div>
+				</div>
+				<div class="chat-issue-actions">
+					<button type="button" data-issue-close="">취소</button>
+					<button type="button" data-issue-submit="">제출</button>
+				</div>
+			</section>
+		</div>
+	</template>
+	<!-- End: 261016 수정 - 공통 오류신고 템플릿 연결 -->
+</body>
+
+</html>

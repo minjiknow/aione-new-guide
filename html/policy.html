@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<!--
+[파일 요약]
+정책변경보고서 검증 화면: html/policy.html.
+연결 파일: js/policy.js, css/policy.css. 공통 UI·목록·보조도구는 common.js/common.css를 재사용합니다.
+
+[변경 내용]
+- 신규: 보고서 업로드 목록에 공통 drawer-list-sort 적용
+- 신규: Work·Chat 사이드바·사용자 메뉴 및 상단 분석 도구 연결
+- 신규: 보고서 업로드 목록, 원본 미리보기 및 정책과제 검색·필터
+- 신규: 체크리스트 결과·충족 건수·검증 의견 및 결과 템플릿
+- 신규: 실행 목록 검색·정렬·고정·타이틀 변경·삭제 모달
+- 신규: 새 분석 빈 화면, 예시 결과 CSV 다운로드 및 공통 알림 연결
+
+[개발 연동 안내]
+원본·정책과제·검증 결과와 실행 목록은 화면 확인용 예시입니다.
+실제 업로드·분석·이력 API는 연결하지 않았으며, 실행 목록 변경은 메모리에만 반영됩니다.
+이 페이지는 신규 제작이며 공통 컴포넌트 재사용 구간도 신규 페이지 구성에 포함합니다.
+
+[주석 표기]
+기본 구간 형식: Start: 기능명 / End: 기능명
+변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+신규 구간 형식: Start: 신규 - 기능명 / End: 신규 - 기능명
+-->
+
+<html lang="ko" style="--ui-font-scale: 1;">
+
+
+
+<head>
+	<meta charset="utf-8">
+	<!-- 	<meta http-equiv="X-UA-Compatible" content="IE=edge"> -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="author" content="주식회사 아이디알소프트 기술연구소">
+	<meta name="description" content="Openworks 포털관리 시스템">
+	<link rel="icon" href="../assets/icons/ai-one-logo.svg" type="image/svg+xml">
+
+	<title>정책변경보고서 검증 AI 워크스페이스 — AI-ONE</title>
+
+	<!-- Start: 신규 - 스크립트 및 공통 스타일 연결 -->
+	<script type="text/javascript">var CTX_PATH = "";</script>
+
+	<!-- jquery core -->
+	<script src="../js/libs/jquery/jquery-1.11.2.min.js"></script>
+	<script src="../js/libs/jquery/jquery-ui-1.11.3.min.js"></script>
+
+	<!-- 설정 동기화 -->
+
+	<!-- <link rel="stylesheet" href="../css/pretendardvariable-dynamic-subset.min.css" /> -->
+	<!-- Pretendard 폰트는 현재 비활성 상태입니다. -->
+	<link rel="stylesheet" href="../css/common.css">
+	<!-- Start: 신규 - 토스트 알림 스타일 -->
+	<link rel="stylesheet" href="../css/toastify.min.css">
+	<!-- End: 신규 - 토스트 알림 스타일 -->
+
+	<!-- Start: 신규 - 토스트 알림 기능 -->
+	<script src="../js/toastify.js" defer=""></script>
+	<!-- End: 신규 - 토스트 알림 기능 -->
+	<script src="../js/common.js" defer=""></script>
+
+	<link rel="stylesheet" href="../css/ai-theme.css">
+	<link rel="stylesheet" href="../css/policy.css">
+	<script src="../js/panel.js" defer></script>
+	<script src="../js/policy.js" defer></script>
+
+	<script src="../js/ai-theme.js"></script>
+	<!-- End: 신규 - 스크립트 및 공통 스타일 연결 -->
+</head>
+
+<body data-page="policy-verify">
+
+	<div class="app">
+		<!-- Start: 신규 - 사이드바 -->
+		<aside class="sidebar app-sidebar collapsed" id="sidebar" aria-label="주요 메뉴">
+
+			<div class="sidebar-top-bar">
+				<a class="sidebar-brand" id="sidebarBrandButton" href="home.html" aria-label="사이드바 펼치기"
+					data-tooltip="사이드바 펼치기">
+					<span class="brand-logo">
+						<img class="brand-symbol" src="../assets/icons/ai-one-logo.svg" alt="AI-ONE"
+							data-icon="ai-one-logo">
+					</span>
+					<span class="brand-text">
+						<span class="brand-name">AI-ONE</span>
+						<span class="brand-sub">재정경제부 AI 플랫폼</span>
+					</span>
+				</a>
+				<button type="button" class="icon-button icon-button-ghost sidebar-collapse-btn" id="sidebarCollapseBtn"
+					aria-label="사이드바 펼치기" aria-expanded="false" data-tooltip="사이드바 펼치기">
+					<img class="collapse-icon icon icon-text" src="../assets/icons/sidebar-collapse.svg"
+						data-icon="sidebar-collapse" alt="" aria-hidden="true">
+				</button>
+			</div>
+			<!-- Start: 신규 - Work·Chat 모드 화면 바로 이동 -->
+			<div class="nav-mode" role="tablist" aria-label="사이드바 모드">
+				<button type="button" class="nav-link active" id="navModeWork" data-tooltip="업무 특화서비스 워크스페이스" role="tab"
+					aria-selected="true" aria-controls="navModeWorkPanel" aria-label="업무 특화서비스 워크스페이스">
+					<span class="nav-service-icon" aria-hidden="true">
+						<img class="nav-service-icon-default" src="../assets/icons/nav-mode-work.svg" width="17"
+							height="17" alt="">
+						<img class="nav-service-icon-hover" src="../assets/icons/nav-mode-work-hover.svg" width="17"
+							height="17" alt="">
+					</span>
+					<span class="nav-text">Work</span>
+				</button>
+				<button type="button" class="nav-link" id="navModeChat" data-tooltip="대화형 챗봇" role="tab"
+					aria-selected="false" data-nav-mode-href="chatbot.html" aria-label="대화형 챗봇" tabindex="-1">
+					<span class="nav-service-icon" aria-hidden="true">
+						<img class="nav-service-icon-default" src="../assets/icons/nav-chatbot.svg" width="17"
+							height="18" alt="">
+						<img class="nav-service-icon-hover" src="../assets/icons/nav-chatbot-hover.svg" width="17"
+							height="18" alt="">
+					</span>
+					<span class="nav-text">Chat</span>
+				</button>
+			</div>
+			<!-- End: 신규 - Work·Chat 모드 화면 바로 이동 -->
+
+			<nav class="sidebar-nav" aria-label="메인 네비게이션">
+				<!-- 
+				<button class="nav-btn"  id="home" data-tooltip="홈">
+					<svg viewBox="0 0 24 24">
+						<path d="M3 11.5 12 4l9 7.5" />
+						<path d="M5.5 10.5V20h13v-9.5" />
+						<path d="M9.5 20v-6h5v6" />
+					</svg>
+				</button>
+				 -->
+				<div class="nav-group">
+					<a class="nav-link" href="home.html" data-route="home" data-page="home" data-tooltip="AI-ONE 홈"
+						aria-label="AI-ONE 홈">
+						<span class="nav-service-icon" aria-hidden="true"><img class="nav-service-icon-default"
+								src="../assets/icons/home.svg" data-icon="home" width="18" height="16" alt=""><img
+								class="nav-service-icon-hover" src="../assets/icons/home-hover.svg" width="18"
+								height="16" alt=""></span>
+						<span class="nav-text">AI-ONE 홈</span>
+					</a>
+				</div>
+
+
+				<div class="nav-group" id="navModeWorkPanel" data-nav-mode-panel role="tabpanel"
+					aria-labelledby="navModeWork">
+					<span class="nav-group-label">AI 서비스</span>
+					<a class="nav-link" href="classifcation.html?newChat=Y" data-route="intake" data-page="intake"
+						data-tooltip="국회질의분류" aria-label="국회질의분류">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-classification.svg"
+								width="17" height="17" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-classification-hover.svg"
+								width="17" height="17" alt="">
+						</span>
+						<span class="nav-text">국회질의분류</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="ai-answer.html?newChat=Y" data-route="answer" data-page="answer"
+						data-tooltip="국회 답변서 초안" aria-label="국회 답변서 초안">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">국회 답변서 초안</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="sale-review.html" data-route="asset" data-page="asset"
+						data-tooltip="매각표준검토서 검증" aria-label="매각표준검토서 검증">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-sale.svg" width="17"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-sale-hover.svg" width="17"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">매각표준검토서 검증</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link active" href="policy.html" aria-current="page" data-route="policy-verify"
+						data-page="policy-verify" data-tooltip="정책변경보고서 검증" aria-label="정책변경보고서 검증">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-policy.svg" width="17"
+								height="18" alt="">
+							<!-- Start: 신규 - 정책변경보고서 검증 아이콘 이미지 태그 적용 -->
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-policy-hover.svg" width="17"
+								height="18" alt="">
+							<!-- End: 신규 - 정책변경보고서 검증 아이콘 이미지 태그 적용 -->
+						</span>
+						<span class="nav-text">정책변경보고서 검증</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="work-support.html" data-route="searchwrite" data-page="searchwrite"
+						data-tooltip="내부 자료 검색 · 업무 지원" aria-label="내부 자료 검색 · 업무 지원" aria-expanded="false">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-search.svg" width="17"
+								height="17" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-search-hover.svg" width="17"
+								height="17" alt="">
+						</span>
+						<span class="nav-text">내부 자료 검색 · 업무 지원</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+				</div>
+				<!-- <div class="nav-group" id="navModeChatPanel" data-nav-mode-panel role="tabpanel" aria-labelledby="navModeChat" hidden>
+					<a class="nav-link" href="chatbot.html?newChat=Y" data-route="chatbot" data-page="chatbot"
+						data-tooltip="챗봇" aria-label="챗봇">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-chatbot.svg" width="17"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-chatbot-hover.svg" width="17"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">챗봇</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음" data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+				</div> -->
+			</nav>
+			<div class="sidebar-footer">
+				<div class="user-card">
+					<button type="button" class="user-avatar" data-sidebar-account-toggle="" aria-label="담당자 정보"
+						data-tooltip="담당자 정보" aria-haspopup="menu" aria-expanded="false"
+						aria-controls="sidebarAccountMenu">
+						<img class="icon icon-text" src="../assets/icons/user.svg" data-icon="user" alt=""
+							aria-hidden="true">
+					</button>
+					<button type="button" class="user-info" data-sidebar-account-toggle="" aria-label="사용자 계정 메뉴"
+						aria-haspopup="menu" aria-expanded="false" aria-controls="sidebarAccountMenu"
+						data-tooltip="사용자 계정 메뉴">
+						<span class="user-name">일반담당자 </span>
+						<span class="user-meta-row">
+							<span class="user-dept">시스템운영팀</span>
+
+							<span class="user-role-badge">일반담당자</span>
+						</span>
+					</button>
+				</div>
+			</div>
+			<!-- Start: 신규 - 내 정보 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarProfileModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-account-profile account-profile-modal"
+					role="dialog" aria-modal="true" data-modal-variant="account-profile" aria-label="내 정보">
+					<div class="modal-variant-panel" data-modal-panel="account-profile" data-account-modal-panel="">
+						<div class="account-modal-head">
+							<div class="modal-title">내 정보</div>
+							<button type="button" class="query-edit-modal-close" data-modal-close=""
+								aria-label="닫기">×</button>
+						</div>
+						<div class="account-modal-body account-profile-content">
+							<div class="account-profile-summary">
+								<span class="account-profile-avatar" aria-hidden="true">
+									<svg viewBox="0 0 24 24">
+										<circle cx="12" cy="8" r="4"></circle>
+										<path d="M5 21a7 7 0 0 1 14 0"></path>
+									</svg>
+								</span>
+								<div>
+									<strong data-account-profile-name="">일반담당자</strong>
+									<span data-account-profile-dept="">시스템운영팀</span>
+								</div>
+							</div>
+							<dl class="account-profile-list">
+								<div>
+									<dt>이름·직위</dt>
+									<dd data-account-profile-name="">일반담당자</dd>
+								</div>
+								<div>
+									<dt>소속 부서</dt>
+									<dd data-account-profile-dept="">시스템운영팀</dd>
+								</div>
+								<div>
+									<dt>사용자 권한</dt>
+
+									<dd><span class="account-role-tag" data-account-profile-role="">일반담당자</span></dd>
+								</div>
+								<!-- 								<div> -->
+								<!-- 									<dt>로그인 방식</dt> -->
+								<!-- 									<dd>통합 ID · SSO</dd> -->
+								<!-- 								</div> -->
+							</dl>
+						</div>
+						<div class="modal-actions account-modal-actions">
+							<button type="button" class="btn-cancel" data-modal-close="" hidden="">취소</button>
+							<button type="button" class="btn-confirm" data-modal-close="">확인</button>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 신규 - 내 정보 클릭 시 나오는 프로필 모달 -->
+			<!-- Start: 신규 - 환경설정 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarSettingsModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-account-settings account-settings-modal"
+					role="dialog" aria-modal="true" data-modal-variant="account-settings" aria-label="환경설정">
+					<div class="modal-variant-panel" data-modal-panel="account-settings" data-account-modal-panel="">
+						<div class="account-modal-head">
+							<div class="modal-title">환경설정</div>
+							<button type="button" class="query-edit-modal-close" data-modal-close=""
+								aria-label="닫기">×</button>
+						</div>
+						<div class="account-modal-body account-settings-content" data-settings-panel="">
+							<section class="account-settings-section">
+								<div class="settings-section-title">화면 모드</div>
+								<div class="theme-option-list" role="radiogroup" aria-label="화면 모드 선택">
+									<button type="button" class="theme-option" data-theme-value="system" role="radio">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<rect x="3" y="4" width="18" height="14" rx="2"></rect>
+												<path d="M8 21h8M12 18v3"></path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>시스템</strong><small>기기 설정에
+												맞춤</small></span>
+										<span class="theme-option-check" aria-hidden="true"></span>
+									</button>
+									<button type="button" class="theme-option" data-theme-value="dark" role="radio">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.5 6.5 0 0 0 21 12.8z"></path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>다크 모드</strong><small>어두운
+												화면</small></span>
+										<span class="theme-option-check" aria-hidden="true"></span>
+									</button>
+									<button type="button" class="theme-option" data-theme-value="light" role="radio">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<circle cx="12" cy="12" r="4"></circle>
+												<path
+													d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42">
+												</path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>라이트 모드</strong><small>밝은
+												화면</small></span>
+										<span class="theme-option-check" aria-hidden="true"></span>
+									</button>
+								</div>
+							</section>
+							<section class="account-settings-section">
+								<div class="settings-section-title">강조 컬러</div>
+								<div class="settings-accent-control" data-accent-control="">
+									<button type="button" class="settings-accent-trigger" data-accent-trigger=""
+										aria-haspopup="listbox" aria-expanded="false" aria-label="강조 컬러 선택">
+										<span class="settings-accent-swatch" aria-hidden="true"></span>
+										<span data-accent-label="">기본값</span>
+										<span class="settings-accent-arrow" aria-hidden="true"></span>
+									</button>
+									<div class="settings-accent-options" data-accent-listbox="" role="listbox"
+										aria-label="강조 컬러 옵션" hidden="">
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="default" aria-selected="true">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>기본값</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="blue" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>블루</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="green" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>그린</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="yellow" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>옐로</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="pink" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>핑크</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="orange" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>오렌지</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="purple" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>퍼플</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+									</div>
+								</div>
+							</section>
+							<section class="account-settings-section">
+								<div class="settings-section-title">알림</div>
+								<div class="notification-setting-row">
+									<div class="notification-setting-text">
+										<strong>응답 완료 알림</strong>
+										<small>시간이 걸리는 요청에 응답할 때 알림을 받습니다.</small>
+										<span class="notification-setting-status" aria-live="polite">알림이 켜져 있습니다.</span>
+									</div>
+									<button type="button" class="notification-toggle active" role="switch"
+										aria-checked="true" aria-label="응답 완료 알림 설정"><span></span></button>
+								</div>
+							</section>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 신규 - 환경설정 클릭 시 나오는 프로필 모달 -->
+
+			<!-- Start: 신규 - 로그아웃 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarLogoutModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-logout" role="dialog" aria-modal="true"
+					data-modal-variant="logout" aria-label="로그아웃 확인">
+					<div class="modal-variant-panel" data-modal-panel="content">
+						<div class="modal-icon logout" data-modal-icon="logout" aria-hidden="true">
+							<img src="../assets/icons/logout.svg" alt="">
+						</div>
+						<div class="modal-title" id="sidebarLogoutModal-title" data-slot="title">로그아웃</div>
+						<div class="modal-msg" id="sidebarLogoutModal-description" data-slot="description">
+							AI-ONE에서 로그아웃하시겠습니까?
+						</div>
+						<div class="modal-actions" data-slot="actions">
+							<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+
+							<button type="button" class="btn-confirm danger" data-sidebar-logout-confirm=""
+								data-modal-close="">로그아웃</button>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 신규 - 로그아웃 클릭 시 나오는 프로필 모달 -->
+
+			<!-- Start: 신규 - 사이드 바 하단 클릭 시 나오는 프로필 메뉴 -->
+
+			<div class="user-account-menu user-account-menu-detached hidden" id="sidebarAccountMenu" role="menu"
+				aria-label="사용자 계정 메뉴" data-sidebar-account-menu="detached" hidden="">
+				<div class="user-account-summary">
+					<strong>일반담당자</strong>
+					<span>시스템운영팀</span>
+				</div>
+				<button type="button" role="menuitem" data-sidebar-account-action="profile"
+					data-modal-open="sidebarProfileModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/user.svg" data-icon="user" alt="" aria-hidden="true">
+					<span>내 정보</span>
+				</button>
+				<button type="button" role="menuitem" data-sidebar-account-action="settings"
+					data-modal-open="sidebarSettingsModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/settings-alt.svg" data-icon="settings-alt" alt="" aria-hidden="true">
+					<span>환경설정</span>
+				</button>
+				<button type="button" class="danger" role="menuitem" data-sidebar-account-action="logout"
+					data-modal-open="sidebarLogoutModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/logout.svg" data-icon="logout" alt="" aria-hidden="true">
+					<span>로그아웃</span>
+				</button>
+			</div>
+			<!-- End: 신규 - 사이드 바 하단 클릭 시 나오는 프로필 메뉴 -->
+		</aside>
+		<!-- End: 신규 - 사이드바 -->
+		<!-- div class="main-wrap" 부터 각 페이지에서 구현 -->
+
+
+		<div class="main-wrap policy-app publisher-workspace-shell" id="policyApp">
+
+			<!-- Start: 신규 - 워크스페이스 상단 바 -->
+			<div class="topbar-area">
+				<header class="topbar app-topbar">
+					<div class="topbar-title">
+						<h1 class="topbar-maintit">정책변경보고서 검증 AI 워크스페이스</h1>
+						<p class="topbar-subtit">보고서 업로드 · 분석 대상 식별 · AI 분석 · 검증결과 확인</p>
+					</div>
+					<div class="topbar-workspace-slot">
+						<div class="workspace-input-count">
+							<button type="button" class="workspace-edit-button" id="policyWorkspaceTitleBtn"
+								aria-label="정책변경보고서 제목 수정" data-tooltip="클릭하여 제목 수정" data-tooltip-auto=""
+								data-tooltip-placement="bottom">
+								<span id="policyWorkspaceTitle" data-workspace-title-text
+									data-tooltip="클릭하여 제목 수정">2026년 하반기_이렇게 달라집니다.</span>
+								<img class=" icon icon-small workspace-topbar-edit"
+									src="../assets/icons/edit-compact.svg" data-icon="edit-compact" alt=""
+									aria-hidden="true">
+							</button>
+							<input type="text" class="workspace-topbar-input hidden" id="policyWorkspaceTitleInput"
+								maxlength="60" aria-label="정책변경보고서 제목 입력">
+						</div>
+					</div>
+					<div class="topbar-right app-topbar-actions">
+						<button aria-label="새 분석" class="button button-soft-primary" id="policyReset" type="button"
+							data-tooltip="새 분석" data-tooltip-auto="" data-tooltip-placement="bottom">
+							<img alt="" aria-hidden="true" class="icon icon-small" data-icon="plus"
+								src="../assets/icons/plus.svg">
+							<span>새 분석</span>
+						</button>
+						<button aria-label="실행 목록" class="icon-button icon-button-purple" id="runDrawerBtn"
+							type="button" data-sidepop-open="runDrawer" data-sidepop-size="medium"
+							data-sidepop-variant="chat-list" aria-haspopup="dialog" aria-expanded="false"
+							data-tooltip="실행 목록" data-tooltip-auto="" data-tooltip-placement="bottom">
+							<img alt="" aria-hidden="true" class="icon" data-icon="list" src="../assets/icons/list.svg">
+						</button>
+						<div class="accessory-tool" data-accessory-tools="">
+							<button type="button" class="accessory-trigger" aria-label="보조도구 모음" aria-haspopup="true"
+								aria-expanded="false" data-tooltip="보조도구 모음" data-tooltip-auto=""
+								data-tooltip-placement="bottom">
+								<span class="accessory-icon-closed" aria-hidden="true"><svg viewBox="0 0 24 24">
+										<rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect>
+										<rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect>
+										<rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect>
+										<path d="M17 14v6M14 17h6"></path>
+									</svg></span>
+								<span class="accessory-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24">
+										<path d="M6 6l12 12M18 6 6 18"></path>
+									</svg></span>
+							</button>
+							<div class="accessory-rail" role="toolbar" aria-label="보조도구 기능">
+								<button type="button" class="accessory-action" data-accessory-action="font"
+									aria-label="전체 글자크기" aria-haspopup="dialog" aria-expanded="false"
+									data-tooltip="전체 글자크기" data-tooltip-auto="" data-tooltip-placement="bottom">
+									<span class="accessory-action-icon"><span class="accessory-font-symbol"
+											aria-hidden="true"><small>A</small><strong>A</strong></span></span>
+								</button>
+								<button type="button" class="accessory-action" data-accessory-action="fullscreen"
+									id="fullscreenBtn" aria-label="전체화면 전환" aria-pressed="false" data-tooltip="전체화면 전환"
+									data-tooltip-auto="" data-tooltip-placement="bottom">
+									<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+											width="14" height="14">
+											<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
+												stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+												stroke-linejoin="round"></path>
+										</svg></span>
+								</button>
+								<button type="button" class="accessory-action" data-accessory-action="panel-size"
+									id="panelSizeBtn" aria-label="패널 위치 순환" aria-pressed="false" data-tooltip="패널 위치 순환"
+									data-tooltip-auto="" data-tooltip-placement="bottom">
+									<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
+											<path d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4"></path>
+										</svg></span>
+								</button>
+								<button type="button" class="accessory-action" data-accessory-action="layout"
+									id="layoutResetBtn" aria-label="레이아웃 초기화" data-tooltip="레이아웃 초기화"
+									data-tooltip-auto="" data-tooltip-placement="bottom">
+									<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
+											<rect x="3" y="3" width="18" height="18" rx="2"></rect>
+											<path d="M9 3v18M15 3v18"></path>
+										</svg></span>
+								</button>
+							</div>
+							<div class="accessory-font-panel hidden" role="dialog" aria-label="전체 글자크기">
+								<div class="accessory-font-head"><strong>전체 글자크기</strong><span>100~150%</span></div>
+								<div class="accessory-font-control">
+									<button type="button" data-accessory-font-decrease="" aria-label="글자 작게" disabled=""
+										data-tooltip="글자 작게" data-tooltip-auto=""
+										data-tooltip-placement="bottom">−</button>
+									<span data-accessory-font-value="" aria-live="polite">100%</span>
+									<button type="button" data-accessory-font-increase="" aria-label="글자 크게"
+										data-tooltip="글자 크게" data-tooltip-auto=""
+										data-tooltip-placement="bottom">＋</button>
+								</div>
+								<button type="button" class="accessory-font-default" data-tooltip="기본 크기로"
+									data-tooltip-auto="" data-tooltip-placement="bottom">기본 크기로</button>
+							</div>
+						</div>
+					</div>
+				</header>
+			</div>
+			<!-- End: 신규 - 워크스페이스 상단 바 -->
+			<div class="three-panel-area">
+				<main class="three-panel left-small right-large" data-component="three-panel">
+					<!-- Start: 신규 - 보고서 업로드 및 파일 목록 -->
+					<section class="panel panel-left upload-panel-area" data-panel="left" data-slot="left"
+						aria-labelledby="uploadTitle">
+						<header class="panel-head">
+							<h2 class="panel-title" id="uploadTitle"><img class="icon icon-small"
+									src="../assets/icons/upload-tray.svg" alt="">보고서 업로드</h2>
+							<button type="button"
+								class="icon-button icon-button-ghost icon-button-sm panel-collapse-btn"
+								aria-expanded="true" aria-label="보고서 업로드 패널 접기" data-tooltip="보고서 업로드 패널 접기"
+								draggable="false">
+								<img class="icon icon-small" src="../assets/icons/panel-collapse.svg"
+									data-icon="panel-collapse" alt="" aria-hidden="true">
+							</button>
+						</header>
+						<div class="file-upload-area">
+							<div class="upload-zone upload-zone-type1 compact" role="button" tabindex="0"
+								id="policyUpload" aria-label="보고서 파일 업로드">
+								<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt="">
+								<p class="upload-text">보고서 파일을 드롭하거나 클릭하여 업로드</p><span class="upload-hint">PDF · HWP ·
+									HWPX / 다중 파일 가능</span>
+								<input type="file" id="policyFileInput" accept=".pdf,.hwp,.hwpx" multiple hidden>
+							</div>
+						</div>
+						<section class="file-list-section workspace-file-section">
+							<div class="file-list-header">
+								<div class="file-list-heading">
+									<h3 class="file-list-title">보고서 업로드 목록</h3>
+								</div>
+								<!-- Start: 신규 - 보고서 업로드 목록 공통 정렬 -->
+								<select class="drawer-list-sort" id="policyFileSort" aria-label="보고서 업로드 목록 정렬">
+									<option value="latest">최신 순</option>
+									<option value="oldest">과거 순</option>
+								</select>
+								<!-- End: 신규 - 보고서 업로드 목록 공통 정렬 -->
+								<span class="visually-hidden" id="policyFileCount">1건</span>
+							</div>
+							<ul class="file-list workspace-file-list upload-panel-scroll-list" id="policyFiles">
+								<li class="active">
+									<button class="file-item-main" type="button" aria-current="true"
+										aria-label="고용노동부 보고서 파일 보기">
+										<span class="file-index">1</span>
+										<span class="file-type-dot pdf" aria-hidden="true"></span>
+										<span class="file-icon file-icon-collapsed pdf" aria-hidden="true">PDF</span>
+										<span class="file-info">
+											<span class="file-name" title="고용노동부_2026년 하반기부터 이렇게 달라집니다">고용노동부_2026년
+												하반기부터 이렇게 달라집니다</span>
+											<span class="file-meta">고용노동부 · 예시</span>
+										</span>
+									</button>
+									<span class="file-item-side"><span class="file-status-group final"><span
+												class="status-badge type1 purple file-status-badge done">과제
+												1건</span></span></span>
+								</li>
+							</ul>
+						</section>
+					</section>
+					<!-- End: 신규 - 보고서 업로드 및 파일 목록 -->
+					<div class="panel-resize-handle" aria-hidden="true"></div>
+					<!-- Start: 신규 - 보고서 원본 및 정책과제 검색·필터 -->
+					<section class="panel panel-center" id="policyDocumentViewer" data-panel="center" data-slot="center"
+						aria-labelledby="documentTitle">
+						<header class="panel-head">
+							<h2 class="panel-title" id="documentTitle"><img class="icon icon-small"
+									src="../assets/icons/nav-policy.svg" alt="">보고서 원본 · 정책과제</h2>
+							<div class="panel-actions">
+								<button type="button"
+									class="icon-button icon-button-ghost icon-button-sm panel-switch-btn"
+									aria-label="패널 전환" draggable="false" data-tooltip="패널 전환">
+									<img class="icon icon-small" data-icon="switch" src="../assets/icons/switch.svg"
+										alt="" aria-hidden="true">
+								</button>
+							</div>
+						</header>
+						<div class="policy-document-split split-handler" data-component="split-handler"
+							data-split-min="160">
+							<section class="policy-document-pane split-handler-pane" aria-label="원본 미리보기">
+								<div class="center-sub-head">
+									<h3 class="sub-title">원본 미리보기</h3><span class="sub-badge blue">고용노동부 · 예시</span>
+								</div>
+								<div class="policy-document-scroll">
+									<article class="policy-paper" id="policyDocument">
+										<h2>회사가 도산하여도 근로자의 체불임금이<br>최대 6개월분까지 지원됩니다.</h2>
+										<p class="policy-paper-meta">도산 사업장의 체불근로자 보호 강화<br>고용노동부 퇴직연금복지과</p>
+										<p># 체불임금, # 도산, # 대지급금</p>
+										<section>
+											<h3>도산 사업장의 체불근로자 보호 강화</h3>
+											<p>도산 사업장에서 퇴직한 근로자의 체불임금 지원을 확대합니다.</p>
+											<p>시행일: 2026년 8월 20일</p>
+										</section>
+										<h3>Q. 누가 지원받을 수 있나요?</h3>
+										<p>도산한 사업장에서 임금 및 퇴직급여 등을 받지 못한 채 퇴직한 근로자</p>
+										<h3>Q. 어떤 혜택을 받을 수 있나요?</h3>
+										<p>최종 6개월분의 임금 및 최종 3년분의 퇴직급여 등을 지원합니다.</p>
+										<h3>Q. 예전과 달라지는 것은 무엇인가요?</h3>
+										<table class="table">
+											<thead>
+												<tr>
+													<th>구분</th>
+													<th>시행 전</th>
+													<th>시행 후</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr>
+													<td>체불임금 지원</td>
+													<td>최종 3개월분</td>
+													<td>최종 6개월분</td>
+												</tr>
+											</tbody>
+										</table>
+										<p class="rec-meta">첨부 화면을 바탕으로 구성한 미리보기 예시입니다.</p>
+									</article>
+								</div>
+							</section>
+							<div class="split-handler-handle" role="separator" tabindex="0" aria-orientation="vertical"
+								aria-label="원본 미리보기와 정책과제 목록 너비 조절"></div>
+							<section class="policy-task-pane split-handler-pane" aria-labelledby="taskTitle">
+								<div class="center-sub-head">
+									<h3 class="sub-title" id="taskTitle">정책과제 목록</h3><span
+										class="selected-ref-count">1건</span>
+								</div>
+								<div class="filter-bar" aria-label="정책과제 필터">
+									<button type="button" class="filter-btn active" data-policy-filter="all"
+										aria-pressed="true">전체 1</button><button type="button" class="filter-btn"
+										data-policy-filter="review" aria-pressed="false">확인 필요 1</button><button
+										type="button" class="filter-btn" data-policy-filter="pass"
+										aria-pressed="false">충족 0</button>
+									<div class="drawer-list-search">
+										<svg aria-hidden="true" viewBox="0 0 24 24">
+											<circle cx="11" cy="11" r="7"></circle>
+											<path d="m20 20-3.6-3.6"></path>
+										</svg>
+										<input id="policySearch" type="search" placeholder="정책명·부서 검색"
+											aria-label="정책명·부서 검색">
+									</div>
+								</div>
+								<div class="policy-task-list">
+									<article class="rec-card active" id="policyTask">
+										<div class="rec-card-head"><span class="rec-card-num">01</span><strong
+												class="rec-title">도산 사업장의 체불근로자 보호 강화</strong><span
+												class="status-badge type1 red">확인 필요</span></div>
+										<div class="policy-task-details">
+											<p class="rec-meta">퇴직연금복지과 ·</p>
+											<p class="rec-meta">보건·복지·고용</p>
+											<div class="policy-task-footer">
+												<p class="rec-meta">2026년 8월 20일 · 1쪽</p>
+												<p class="rec-meta">체크리스트 10/14</p>
+											</div>
+										</div>
+									</article>
+									<div id="policyTaskEmpty" hidden>검색 조건에 맞는 정책과제가 없습니다.</div>
+								</div>
+							</section>
+						</div>
+						<div class="document-statusbar-area">
+							<footer class="document-statusbar" data-component="document-statusbar"
+								data-document-fullscreen-target="#policyDocumentViewer" data-document-max-zoom="200"
+								data-document-min-zoom="50"
+								data-document-scroll-target="#policyDocumentViewer .policy-document-scroll"
+								data-document-statusbar="" data-document-target="#policyDocument"
+								data-document-zoom="100" data-document-zoom-step="10">
+								<div class="document-statusbar-stats" data-slot="stats">
+									<span class="document-statusbar-stat">관련자료 <strong
+											id="policyFooterCount">0건</strong></span>
+									<span aria-hidden="true" class="document-statusbar-separator">|</span>
+									<span class="document-statusbar-stat">글자 수 <strong id="policyCharCount"
+											data-document-character-count="">0</strong>자</span>
+									<span aria-hidden="true" class="document-statusbar-separator">|</span>
+									<span class="document-statusbar-stat">페이지 <strong id="policyPageCurrent"
+											data-document-page-current="">1</strong>/<strong id="policyPageTotal"
+											data-document-page-total="">1</strong></span>
+								</div>
+
+								<!-- Start: 신규 - 문서 확대 축소 및 전체보기 영역 -->
+								<div aria-label="문서 확대 축소 및 전체보기" class="document-statusbar-controls">
+									<button aria-label="문서 축소"
+										class="icon-button icon-button-sm document-statusbar-button"
+										data-document-statusbar-action="zoom-out" id="policyZoomOut" type="button"
+										data-tooltip="문서 축소">−</button>
+									<strong class="document-statusbar-zoom" data-document-statusbar-zoom-value=""
+										id="policyZoomPercent">100%</strong>
+									<button aria-label="문서 확대"
+										class="icon-button icon-button-sm document-statusbar-button"
+										data-document-statusbar-action="zoom-in" id="policyZoomIn" type="button"
+										data-tooltip="문서 확대">＋</button>
+									<button aria-label="문서 전체보기" aria-pressed="false"
+										class="icon-button icon-button-sm document-statusbar-button document-statusbar-fullscreen-button"
+										data-document-statusbar-action="fullscreen" id="policyFullscreenBtn"
+										type="button" data-tooltip="문서 전체보기">
+										<img alt="" aria-hidden="true"
+											class="icon icon-small document-statusbar-expand-icon"
+											src="../assets/icons/fullscreen-expand.svg">
+										<img alt="" aria-hidden="true"
+											class="icon icon-small document-statusbar-shrink-icon"
+											src="../assets/icons/fullscreen-shrink.svg">
+									</button>
+								</div>
+								<!-- End: 신규 - 문서 확대 축소 및 전체보기 영역 -->
+							</footer>
+						</div>
+					</section>
+					<div class="panel-resize-handle" aria-hidden="true"></div>
+					<!-- End: 신규 - 보고서 원본 및 정책과제 검색·필터 -->
+					<!-- Start: 신규 - 체크리스트 검증 결과 -->
+					<section class="panel panel-right" data-panel="right" data-slot="right"
+						aria-labelledby="resultTitle">
+						<header class="panel-head">
+							<h2 class="panel-title" id="resultTitle"><img class="icon icon-small"
+									src="../assets/icons/list.svg" alt="">체크리스트 검증 결과</h2><button type="button"
+								class="icon-button icon-button-ghost icon-button-sm" id="policyExport"
+								aria-label="체크리스트 결과 다운로드" data-tooltip="체크리스트 결과 다운로드"><img class="icon icon-small"
+									src="../assets/icons/download.svg" alt="" aria-hidden="true"></button>
+						</header>
+						<div class="policy-result-body" id="resultBody">
+							<section class="rec-card policy-summary" aria-labelledby="summaryTitle">
+								<h3 class="rec-title" id="summaryTitle">도산 사업장의 체불근로자 보호 강화</h3>
+								<p class="rec-meta">퇴직연금복지과 · 보건·복지·고용 · 시행 2026년 8월 20일 · 원문 1쪽</p>
+								<dl class="policy-stat-row">
+									<div class="policy-stat">
+										<dt>전체 항목</dt>
+										<dd id="policyTotal">14</dd>
+									</div>
+									<div class="policy-stat">
+										<dt>충족</dt>
+										<dd class="policy-good" id="policyPassed">10</dd>
+									</div>
+									<div class="policy-stat">
+										<dt>미흡·누락</dt>
+										<dd class="policy-bad" id="policyFailed">4</dd>
+									</div>
+								</dl>
+							</section>
+							<section class="policy-checklist" aria-labelledby="checklistTitle">
+								<header class="center-sub-head">
+									<h3 class="sub-title" id="checklistTitle">정책변경보고서 체크리스트</h3><span
+										class="rec-meta">필수·권장 기준 자동 검증</span>
+								</header>
+								<ol class="policy-check-list" id="policyChecklist"></ol>
+							</section>
+						</div>
+					</section>
+					<!-- End: 신규 - 체크리스트 검증 결과 -->
+				</main>
+			</div>
+			<p class="visually-hidden" id="policyAnnouncement" role="status" aria-live="polite"></p>
+		</div>
+	</div>
+
+	<!-- Start: 신규 - 보고서 검증 실행 목록 -->
+	<!-- 실행 목록은 공통 Sidepop의 열기·닫기·포커스 관리를 사용합니다. -->
+	<div aria-hidden="true" class="drawer" hidden="" id="runDrawer" data-component="sidepop" data-sidepop=""
+		data-sidepop-action-modal="policyRunActionModal" data-sidepop-rename-modal="policyRunRenameModal"
+		data-sidepop-delete-modal="policyRunDeleteModal">
+		<button aria-label="보고서 검증 목록 닫기" class="drawer-backdrop" data-sidepop-close="" type="button"></button>
+		<aside aria-labelledby="runDrawerTitle" aria-modal="true"
+			class="drawer-contents drawer-medium drawer-variant-chat-list" data-sidepop-size="medium"
+			data-sidepop-variant="chat-list" role="dialog">
+			<section class="drawer-variant-panel" data-sidepop-panel="chat-list">
+				<header class="drawer-header">
+					<div class="drawer-heading">
+						<h2 class="drawer-title" id="runDrawerTitle">보고서 검증 목록</h2>
+						<p class="drawer-description">타이틀을 선택하면 해당 타이틀에 포함된 부처별 보고서 업로드 목록을 불러옵니다.</p>
+					</div>
+					<button aria-label="보고서 검증 목록 닫기" class="icon-button icon-button-ghost" data-sidepop-close=""
+						type="button" data-tooltip="보고서 검증 목록 닫기">×</button>
+				</header>
+				<div class="drawer-list-position">
+					<button type="button" class="drawer-position-button" id="runDrawerPositionBtn"
+						data-sidepop-position-toggle aria-label="보고서 검증 목록 좌측으로 이동" data-tooltip="보고서 검증 목록 좌측으로 이동">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<rect x="3.5" y="4" width="17" height="16" rx="2"></rect>
+							<path d="M16 5.5V18.5M14 12H7M9.5 9.5 7 12l2.5 2.5"></path>
+						</svg>
+						<span>좌측으로 이동</span>
+					</button>
+				</div>
+				<div class="drawer-list-body">
+					<div class="drawer-list-search">
+						<svg aria-hidden="true" viewBox="0 0 24 24">
+							<circle cx="11" cy="11" r="7"></circle>
+							<path d="m20 20-3.6-3.6"></path>
+						</svg>
+						<input aria-label="보고서 검증 목록 검색" autocomplete="off" id="runListSearch" placeholder="타이틀 검색"
+							type="search">
+						<button type="button" id="runListSearchClear" class="drawer-search-clear hidden"
+							aria-label="검색어 지우기">×</button>
+					</div>
+					<button type="button" id="runListSearchBtn" hidden="" aria-hidden="true" tabindex="-1"></button>
+					<div class="drawer-list-meta">
+						<span>전체 <strong id="runListTotal">0</strong>건</span>
+						<select aria-label="보고서 검증 목록 정렬" class="drawer-list-sort" id="runListSort"
+							style="width: 70px;">
+							<option value="latest">최신순</option>
+							<option value="oldest">과거순</option>
+						</select>
+					</div>
+
+					<div aria-live="polite" class="drawer-chat-list drawer-scroll-list" id="policyRunList">
+					</div>
+					<div class="draft-history-pagination" id="draftHistoryPagination" hidden=""></div>
+				</div>
+			</section>
+		</aside>
+	</div>
+	<!-- End: 신규 - 보고서 검증 실행 목록 -->
+	<!-- Start: 신규 - 실행 목록 작업 메뉴 -->
+	<div class="hidden modal modal-menu-backdrop" id="policyRunActionModal" data-component="modal" data-modal="">
+		<section class="modal-contents modal-small" role="dialog" aria-modal="true" aria-label="보고서 검증 작업 메뉴">
+			<div class="modal-action-menu" role="menu">
+				<!--        <button type="button" class="modal-action-item" role="menuitem" data-sidepop-list-action="share">
+                        <img class="modal-action-icon" src="../assets/icons/share.svg" alt="" aria-hidden="true" />
+                        <span data-sidepop-action-label>보고서 검증 공유</span>
+                        </button> -->
+				<button type="button" class="modal-action-item" role="menuitem" data-sidepop-list-action="pin"
+					aria-pressed="false">
+					<img class="modal-action-icon" src="../assets/icons/pin.svg" alt="" aria-hidden="true">
+					<span data-sidepop-action-label="">고정</span>
+				</button>
+				<button type="button" class="modal-action-item" role="menuitem" data-sidepop-list-action="rename">
+					<img class="modal-action-icon" src="../assets/icons/edit.svg" alt="" aria-hidden="true">
+					<span data-sidepop-action-label="">타이틀 변경</span>
+				</button>
+				<button type="button" class="modal-action-item danger" role="menuitem"
+					data-sidepop-list-action="delete">
+					<img class="modal-action-icon" src="../assets/icons/delete.svg" alt="" aria-hidden="true">
+					<span data-sidepop-action-label="">삭제</span>
+				</button>
+			</div>
+		</section>
+	</div>
+	<!-- End: 신규 - 실행 목록 작업 메뉴 -->
+	<!-- Start: 신규 - 실행 목록 타이틀 변경 모달 -->
+	<div class="hidden modal" id="policyRunRenameModal" data-component="modal" data-modal="" aria-hidden="true">
+		<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+		<section class="modal-contents modal-medium modal-variant-rename" role="dialog" aria-modal="true"
+			data-modal-variant="rename" aria-label="타이틀 변경">
+			<div class="modal-variant-panel" data-modal-panel="content">
+				<div class="modal-icon rename" data-modal-icon="rename" aria-hidden="true">
+					<img src="../assets/icons/edit.svg" alt="">
+				</div>
+				<div class="modal-title" id="policyRunRenameModal-title">타이틀 변경</div>
+				<div class="modal-msg" id="policyRunRenameModal-description">
+					<p class="modal-rename-helper">목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.</p>
+					<label class="modal-rename-field" for="policyRunRenameInput">
+						<span class="modal-rename-label">타이틀</span>
+						<input type="text" class="form-input" id="policyRunRenameInput" maxlength="60"
+							autocomplete="off" data-sidepop-rename-input="">
+					</label>
+					<p class="modal-rename-error" data-sidepop-rename-error="" hidden="">타이틀을 입력해 주세요.</p>
+				</div>
+				<div class="modal-actions">
+					<button type="button" class="btn-cancel" data-modal-close="" data-chat-rename-close="">취소</button>
+					<button type="button" class="btn-confirm" data-sidepop-rename-confirm="">저장</button>
+				</div>
+			</div>
+		</section>
+	</div>
+	<!-- End: 신규 - 실행 목록 타이틀 변경 모달 -->
+	<!-- Start: 신규 - 실행 목록 삭제 확인 모달 -->
+	<div class="hidden modal" id="policyRunDeleteModal" data-component="modal" data-modal="" aria-hidden="true">
+		<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+		<section class="modal-contents modal-medium modal-variant-content" role="dialog" aria-modal="true"
+			data-modal-variant="content" aria-label="보고서 검증 삭제 확인">
+			<div class="modal-variant-panel" data-modal-panel="content">
+				<div class="modal-icon danger" data-modal-icon="default" aria-hidden="true">⚠</div>
+				<div class="modal-title" id="policyRunDeleteModal-title">보고서 검증 삭제</div>
+				<div class="modal-msg" id="policyRunDeleteModal-description">
+					<strong data-sidepop-delete-title="">선택한 보고서 검증</strong>를 삭제하시겠습니까?
+				</div>
+				<div class="modal-actions">
+					<button type="button" class="btn-cancel" data-modal-close="" data-chat-delete-close="">취소</button>
+					<button type="button" class="btn-confirm danger" data-sidepop-delete-confirm="">삭제</button>
+				</div>
+			</div>
+		</section>
+	</div>
+	<!-- End: 신규 - 실행 목록 삭제 확인 모달 -->
+	<!-- Start: 신규 - 체크리스트 항목 템플릿 -->
+	<template id="policyCheckTemplate">
+		<li class="policy-check-item">
+			<div class="rec-card-head"><span class="rec-card-num" data-check-number></span>
+				<h4 class="rec-title" data-check-title></h4><span class="status-badge" data-check-level>필수</span><span
+					class="status-badge" data-check-status></span>
+			</div>
+			<div class="policy-opinion"><strong class="policy-opinion-label">AI 검증 의견</strong>
+				<p data-check-opinion></p>
+			</div>
+			<p class="policy-guide" data-check-guide></p>
+		</li>
+	</template>
+	<!-- End: 신규 - 체크리스트 항목 템플릿 -->
+	<!-- Start: 신규 - 공통 토스트 알림 -->
+	<div class="ai-one-toast" data-toast id="toast" role="status" hidden><span class="ai-one-toast-message"
+			data-toast-message></span></div>
+	<!-- End: 신규 - 공통 토스트 알림 -->
+	<div id="commonSidepopActionPrototype" class="drawer-list-action dropdown-menu-component" data-dom-prototype=""
+		hidden="">
+		<div class="dropdown-menu drawer-list-action-menu" role="menu" hidden="">
+			<button type="button" class="dropdown-menu-item" data-menu-value="pin" role="menuitem" aria-pressed="false">
+				<img class="icon drawer-list-action-icon" alt="" aria-hidden="true" data-icon="pin"
+					src="../assets/icons/pin.svg">
+				<span class="drawer-list-action-label">고정</span>
+			</button>
+			<button type="button" class="dropdown-menu-item" data-menu-value="rename" role="menuitem">
+				<img class="icon drawer-list-action-icon" alt="" aria-hidden="true" data-icon="edit-compact"
+					src="../assets/icons/edit-compact.svg">
+				<span class="drawer-list-action-label">이름 변경</span>
+			</button>
+			<button type="button" class="dropdown-menu-item danger" data-menu-value="delete" role="menuitem">
+				<img class="icon drawer-list-action-icon" alt="" aria-hidden="true" data-icon="delete"
+					src="../assets/icons/delete.svg">
+				<span class="drawer-list-action-label">삭제</span>
+			</button>
+		</div>
+	</div>
+
+</body>
+
+</html>

@@ -1,0 +1,660 @@
+@charset "utf-8";
+
+/*
+ * 로그인 전용 스타일.
+ * 적용 페이지: html/login.html. 아이디 저장 동작은 js/login.js에서 관리합니다.
+ * 공통 기본형은 common.css, 색상 토큰은 ai-theme.css를 사용합니다.
+ * 주요 구성: 로그인 배경 이미지·장식, 입력 폼 및 반응형 배치.
+ * 데이터·템플릿 연결: 정적 로그인 폼은 login.html, 미리보기 연결은 js/dummy/login-preview.js.
+ *
+ * 최근 변경 내용
+ * - 261023 추가 - 비밀번호 표시 전환
+ *
+ * 기본 구간 형식: Start: 기능명 / End: 기능명
+ * 변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+ * 주석 정리 내역
+ * - 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+ */
+
+/* Start: 기본 스타일 */
+
+.ai-one-background-login {
+    position: fixed;
+    /* 투명 배경 이미지 아래 색상을 라이트 모드와 동일하게 유지합니다. */
+    background: #f6f8fa url(../assets/images/bg-login.png) no-repeat;
+    background-size: cover;
+}
+
+/* 261016 수정 - 흩날리는 점과 키프레임은 common.css의 공통 particle 효과로 이동 */
+
+.ai-one-background-login-orb {
+    border-radius: 50%;
+    opacity: 0.7;
+    filter: blur(60px);
+    animation: login-background-float 16s ease-in-out infinite;
+}
+
+.ai-one-background-login-ring {
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    margin-top: -100px;
+    margin-left: -100px;
+    border: 1.5px solid rgba(var(--primary-rgb), 0.2);
+    border-radius: 50%;
+    opacity: 0;
+    animation: login-background-ring 6s ease-out infinite;
+}
+
+.ai-one-background-login-ring-two {
+    border-color: rgba(77, 217, 192, 0.2);
+    animation-delay: -2s;
+}
+
+.ai-one-background-login-ring-three {
+    border-color: rgba(130, 80, 223, 0.15);
+    animation-delay: -4s;
+}
+
+/* 261016 수정 - flare 스타일과 login-background-flare 키프레임은
+   로그인/채팅 공용으로 common.css의 공통 배경 영역으로 이동했습니다. */
+
+@keyframes login-background-float {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+    }
+
+    25% {
+        transform: translate(40px, -30px) scale(1.1) rotate(3deg);
+    }
+
+    50% {
+        transform: translate(-30px, 50px) scale(0.9) rotate(-2deg);
+    }
+
+    75% {
+        transform: translate(30px, 20px) scale(1.05) rotate(1deg);
+    }
+}
+
+@keyframes login-background-ring {
+    0% {
+        transform: scale(0.5);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: scale(3.5);
+        opacity: 0;
+    }
+}
+
+html,
+body {
+    font-size: calc(14px * var(--ui-font-scale));
+    overflow: hidden;
+}
+
+/* End: 기본 스타일 */
+
+/* Start: Login Layout */
+
+.login-wrap {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+}
+
+/* End: Login Layout */
+
+/* Start: Glass Card */
+
+.login-card {
+    width: 100%;
+    max-width: 380px;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 20px;
+    padding: 40px 32px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+        0 8px 40px rgba(var(--primary-rgb), 0.06),
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* End: Glass Card */
+
+/* Start: Logo */
+
+.login-logo {
+    text-align: center;
+    margin-bottom: 28px;
+}
+.login-symbol {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 5px;
+}
+.login-title {
+    font-size: calc(26px * var(--ui-font-scale));
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+}
+.login-subtitle {
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-sub);
+    margin-top: 4px;
+    font-weight: 400;
+}
+
+/* End: Logo */
+
+/* Start: Form */
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.form-input {
+    padding: 11px 14px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(209, 217, 224, 0.8);
+    border-radius: var(--radius);
+    font-size: calc(14px * var(--ui-font-scale));
+    color: var(--text);
+    transition:
+        background 0.15s,
+        border-color 0.15s;
+}
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08);
+    background-color: var(--surface);
+}
+
+/* Start: 261023 추가 - 비밀번호 표시 전환 */
+.login-password-field {
+    position: relative;
+}
+
+.login-password-field .form-input {
+    padding-right: 48px;
+}
+
+.login-password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    transform: translateY(-50%);
+}
+
+.login-password-toggle img {
+    display: block;
+    width: 16px;
+    height: 16px;
+}
+
+.login-password-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+/* End: 261023 추가 - 비밀번호 표시 전환 */
+
+/* End: Form */
+
+/* Start: Options */
+
+.form-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.login-form .checkbox-label {
+    display: flex;
+    align-items: center;
+    min-height: 17px;
+    gap: 4px;
+    font-size: calc(14px * var(--ui-font-scale));
+    color: var(--text-sub);
+    cursor: pointer;
+}
+.forgot-link {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--primary);
+    font-weight: 500;
+}
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+/* End: Options */
+
+/* Start: Button */
+
+.login-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    font-size: calc(14px * var(--ui-font-scale));
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform 0.15s,
+        box-shadow 0.15s,
+        background 0.15s,
+        border-color 0.15s;
+}
+.login-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(var(--primary-rgb), 0.2);
+}
+.login-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* SSO 로그인 · 로그인 버튼을 한 줄에 동일한 크기로 배치 */
+.form-actions-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+.form-actions-row .login-btn {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+}
+
+/* SSO 로그인(보조) 버튼: 크기·패딩·폰트는 기본 버튼과 동일, 톤만 아웃라인으로 구분 */
+.login-btn-secondary {
+    background: var(--surface);
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+}
+.login-btn-secondary:hover {
+    background: rgba(var(--primary-rgb), 0.08);
+    box-shadow: none;
+}
+.login-btn-secondary:active {
+    background: rgba(var(--primary-rgb), 0.14);
+}
+
+/* End: Button */
+
+/* Start: Footer */
+
+.login-footer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin-top: 20px;
+    min-height: 20px;
+    text-align: center;
+    flex-wrap: nowrap;
+    font-size: calc(10px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.login-footer-mofe {
+    display: block;
+    order: 2;
+    width: auto;
+    height: 17px;
+    max-width: 112px;
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+/* End: Footer */
+
+/* Start: 다크 모드 로그인 카드 */
+
+html[data-theme="dark"] .login-card {
+    --bg: #f6f8fa;
+    --surface: #fff;
+    --surface-el: #f0f3f6;
+    --border: #d1d9e0;
+    --text: #1f2328;
+    --text-sub: #656d76;
+    --text-muted: #8b949e;
+    --primary: #156edd;
+    --primary-dark: #0550ae;
+    --primary-rgb: 21, 110, 221;
+    color-scheme: light;
+}
+
+html[data-theme="dark"] .login-card .form-input {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+html[data-theme="dark"] .login-card .form-input:focus {
+    background-color: var(--surface) !important;
+}
+
+/* End: 다크 모드 로그인 카드 */
+
+/* Start: 서비스 이용 안내 팝업 */
+/* 로그인 화면 전용 정적 안내 모달. 항상 라이트 톤으로 고정(로그인 카드와 동일 정책). */
+
+.service-notice-modal {
+    width: 512px;
+    max-width: 100%;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #e3e9f2;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(15, 41, 82, 0.22);
+}
+
+.service-notice-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 2;
+    display: flex;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #1f2937;
+    font-size: 22px;
+    line-height: 1;
+    transition: background-color var(--transition, 0.15s ease);
+}
+
+.service-notice-close:hover,
+.service-notice-close:focus-visible {
+    background: rgba(15, 41, 82, 0.08);
+    outline: 0;
+}
+
+.service-notice-header {
+    position: relative;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 22px 52px 22px 24px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #eaf2ff 0%, #dfeafc 55%, #eef6ff 100%);
+}
+
+.service-notice-header-text {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    margin-left: 20px;
+}
+
+.service-notice-header::before,
+.service-notice-header::after {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    content: "";
+}
+
+.service-notice-header::before {
+    top: -60px;
+    right: -50px;
+    width: 160px;
+    height: 160px;
+}
+
+.service-notice-header::after {
+    top: 40px;
+    right: 60px;
+    width: 70px;
+    height: 70px;
+    background: rgba(21, 110, 221, 0.1);
+}
+
+.service-notice-icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex: 0 0 auto;
+    width: 52px;
+    height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(15, 41, 82, 0.14);
+}
+
+.service-notice-icon svg {
+    width: 26px;
+    height: 26px;
+}
+
+.service-notice-icon-badge {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    display: flex;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #156edd;
+}
+
+.service-notice-icon-badge svg {
+    width: 14px;
+    height: 14px;
+}
+
+.service-notice-eyebrow {
+    display: block;
+    margin-bottom: 3px;
+    color: #156edd;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.service-notice-title {
+    color: #0b1d3a;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.32;
+}
+
+.service-notice-body {
+    padding: 24px 28px 28px;
+}
+
+.service-notice-banner {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #eef5fd;
+}
+
+.service-notice-banner-icon {
+    display: flex;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    color: #156edd;
+}
+
+.service-notice-banner-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.service-notice-banner p {
+    margin: 0;
+    color: #1f2937;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.service-notice-banner p strong {
+    display: block;
+    margin-bottom: 6px;
+    color: #0b1d3a;
+    font-weight: 700;
+}
+
+.service-notice-section-title {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 22px 0 12px;
+    color: #0b1d3a;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.service-notice-warn-icon {
+    display: flex;
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #156edd;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.service-notice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: #f6f8fb;
+    list-style: none;
+}
+
+.service-notice-list li {
+    position: relative;
+    padding-left: 16px;
+    color: #374151;
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+.service-notice-list li::before {
+    position: absolute;
+    top: 7px;
+    left: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #156edd;
+    content: "";
+}
+
+.service-notice-accent {
+    color: #156edd;
+}
+
+.service-notice-dismiss-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.service-notice-dismiss-link {
+    padding: 2px;
+    color: var(--text-sub, #656d76);
+    font-size: 12.5px;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.service-notice-dismiss-link:hover,
+.service-notice-dismiss-link:focus-visible {
+    color: #156edd;
+    outline: 0;
+}
+
+.service-notice-dismiss-divider {
+    width: 1px;
+    height: 10px;
+    background: #d1d9e0;
+}
+
+.service-notice-confirm {
+    display: block;
+    width: auto;
+    min-width: 120px;
+    margin: 14px auto 0;
+    padding: 8px 28px;
+    border-radius: 8px;
+    background: #156edd;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    transition: background-color var(--transition, 0.15s ease);
+}
+
+.service-notice-confirm:hover,
+.service-notice-confirm:focus-visible {
+    background: #0550ae;
+    outline: 0;
+}
+
+@media (max-width: 560px) {
+    .service-notice-header {
+        padding: 24px 48px 24px 20px;
+    }
+
+    .service-notice-body {
+        padding: 20px 20px 24px;
+    }
+
+    .service-notice-title {
+        font-size: 20px;
+    }
+}
+
+/* End: 서비스 이용 안내 팝업 */

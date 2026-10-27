@@ -1,0 +1,917 @@
+@charset "utf-8";
+/*
+ * 정책변경보고서 검증 AI 워크스페이스
+ * - 공통 레이아웃(topbar, three-panel, panel, drawer, modal, filter-bar, document-statusbar)은 ai-workspace.css 를 따른다.
+ * - 이 파일은 정책변경보고서 화면 전용 요소만 policy-* 접두어로 정의한다.
+ * - 색·간격은 ai-theme.css 토큰(--primary, --border, --surface, --text, --ui-font-scale 등)을 사용한다.
+ *
+ * 기본 구간 형식: Start: 기능명 / End: 기능명
+ * 변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+ * 주석 정리 내역
+ * - 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+ */
+
+body[data-page="policy-verify"] {
+    --policy-danger: var(--red, #cf222e);
+    --policy-danger-bg: color-mix(in srgb, var(--red, #cf222e) 8%, var(--surface, #fff));
+    --policy-success: var(--green, #1a7f37);
+    --policy-success-bg: color-mix(in srgb, var(--green, #1a7f37) 8%, var(--surface, #fff));
+    --policy-purple: var(--purple, #8250df);
+    --policy-purple-bg: color-mix(in srgb, var(--purple, #8250df) 9%, var(--surface, #fff));
+    --policy-fs: var(--ui-font-scale, 1);
+}
+
+/* ==================== 상단 바 ==================== */
+.policy-topbar {
+    position: relative;
+}
+
+.policy-workspace-title {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 40%;
+}
+
+.policy-workspace-title .workspace-edit-button {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: var(--radius-sm, 6px);
+    background: transparent;
+    color: var(--text, #1f2328);
+    font: inherit;
+    font-size: calc(15px * var(--policy-fs));
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.policy-workspace-title .workspace-edit-button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.policy-workspace-title .workspace-edit-button:hover {
+    background: var(--surface-el, #f0f3f6);
+}
+
+.policy-workspace-title .workspace-topbar-edit {
+    display: none;
+    width: 13px;
+    height: 13px;
+}
+
+.policy-workspace-title .workspace-edit-button:hover .workspace-topbar-edit {
+    display: block;
+}
+
+.policy-workspace-title .workspace-topbar-input {
+    width: 320px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--primary, #0969da);
+    border-radius: var(--radius-sm, 6px);
+    font: inherit;
+    font-size: calc(14px * var(--policy-fs));
+    font-weight: 700;
+    outline: 0;
+}
+
+/* ==================== 공통 조각 ==================== */
+.policy-svg-icon {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.policy-pill {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: calc(10px * var(--policy-fs));
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+.policy-pill-danger { border-color: color-mix(in srgb, var(--policy-danger) 28%, transparent); background: var(--policy-danger-bg); color: var(--policy-danger); }
+.policy-pill-success { border-color: color-mix(in srgb, var(--policy-success) 28%, transparent); background: var(--policy-success-bg); color: var(--policy-success); }
+.policy-pill-purple { border-color: color-mix(in srgb, var(--policy-purple) 24%, transparent); background: var(--policy-purple-bg); color: var(--policy-purple); }
+.policy-pill-info { border-color: rgba(var(--primary-rgb, 9, 105, 218), 0.24); background: rgba(var(--primary-rgb, 9, 105, 218), 0.07); color: var(--primary, #0969da); }
+.policy-pill-muted { border-color: var(--border, #d1d9e0); background: var(--surface-elevated, #f0f3f6); color: var(--text-sub, #656d76); }
+
+.policy-count-badge {
+    padding: 1px 8px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 999px;
+    background: var(--surface-elevated, #f0f3f6);
+    color: var(--text-sub, #656d76);
+    font-size: calc(10px * var(--policy-fs));
+    font-weight: 700;
+}
+
+body[data-page="policy-verify"] .report-empty-state {
+    display: flex;
+    min-height: 140px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 24px 16px;
+    color: var(--text-muted, #8b949e);
+    font-size: calc(11px * var(--policy-fs));
+    text-align: center;
+    word-break: keep-all;
+}
+
+body[data-page="policy-verify"] .report-empty-state strong {
+    color: var(--text-sub, #656d76);
+    font-size: calc(12px * var(--policy-fs));
+}
+
+#policyConfirmMsg {
+    white-space: pre-line;
+}
+
+/* ==================== 왼쪽: 보고서 업로드 ==================== */
+.policy-upload-zone {
+    display: flex;
+    min-height: 120px;
+    margin: 12px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px dashed var(--border, #d1d9e0);
+    border-radius: var(--radius, 10px);
+    background: var(--surface, #fff);
+    color: var(--text-sub, #656d76);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.policy-upload-zone:hover,
+.policy-upload-zone:focus-visible,
+.policy-upload-zone.dragover {
+    border-color: var(--primary, #0969da);
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.04);
+    outline: none;
+}
+
+.policy-upload-icon {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.policy-upload-zone .upload-text {
+    margin: 0;
+    font-size: calc(11px * var(--policy-fs));
+}
+
+.policy-upload-zone .upload-hint {
+    color: var(--text-muted, #8b949e);
+    font-size: calc(9.5px * var(--policy-fs));
+}
+
+.policy-file-section {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    border-top: 1px solid var(--border, #d1d9e0);
+}
+
+.policy-file-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 12px 8px;
+}
+
+.policy-file-head h3 {
+    margin: 0;
+    color: var(--text, #1f2328);
+    font-size: calc(12px * var(--policy-fs));
+    font-weight: 700;
+}
+
+.policy-file-head-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.policy-sort-select {
+    border: 0;
+    background: transparent;
+    color: var(--text-sub, #656d76);
+    font: inherit;
+    font-size: calc(10px * var(--policy-fs));
+    cursor: pointer;
+}
+
+.policy-file-list {
+    min-height: 0;
+    flex: 1;
+    margin: 0;
+    padding: 0 12px 12px;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.policy-file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 12px 10px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: var(--radius, 10px);
+    background: var(--surface, #fff);
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.policy-file-item:hover,
+.policy-file-item:focus-visible {
+    border-color: rgba(var(--primary-rgb, 9, 105, 218), 0.5);
+    outline: none;
+}
+
+.policy-file-item.is-active {
+    border-color: var(--primary, #0969da);
+    box-shadow: 0 0 0 1px var(--primary, #0969da);
+}
+
+.policy-file-no {
+    display: inline-flex;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 4px;
+    color: var(--text-muted, #8b949e);
+    font-size: calc(9px * var(--policy-fs));
+}
+
+.policy-file-name {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    color: var(--text, #1f2328);
+    font-size: calc(11.5px * var(--policy-fs));
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.policy-file-action {
+    position: relative;
+}
+
+.policy-more-btn {
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted, #8b949e);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.policy-more-btn:hover {
+    background: var(--surface-elevated, #f0f3f6);
+}
+
+.policy-file-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 20;
+    min-width: 96px;
+    padding: 4px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.12);
+}
+
+.policy-file-menu button {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--policy-danger);
+    font-size: calc(11px * var(--policy-fs));
+    text-align: left;
+    cursor: pointer;
+}
+
+.policy-file-menu button:hover {
+    background: var(--policy-danger-bg);
+}
+
+/* 업로드 패널 접힘 상태 (common .panel.panel-collapsed 위에 이 패널 내용만 숨김 — search.css 와 같은 방식) */
+.policy-upload-panel.panel-collapsed > :not(.panel-head) {
+    display: none !important;
+}
+
+.policy-upload-panel.panel-collapsed .panel-head {
+    border-bottom: 0;
+}
+
+/* 3단 패널 너비 조절 핸들 (드래그 처리는 common.js AIOneSplitHandler — search.css 와 같은 방식) */
+.policy-app .three-panel > .panel-resize-handle {
+    z-index: 2;
+}
+
+.policy-app .three-panel > .panel-resize-handle::before {
+    left: -5px;
+    right: -5px; /* 잡기 쉬운 영역 12px */
+}
+
+.policy-app .three-panel.panel-resize-mode > .panel-resize-handle {
+    background: var(--primary, #0969da);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 9, 105, 218), 0.18);
+}
+
+/* 업로드 패널이 접혀 있으면 왼쪽 핸들은 쓰지 않는다 */
+/* (위치를 바꿔 업로드 패널이 가운데/오른쪽에 있을 때는 앞쪽 핸들도 막는다) */
+.policy-app .policy-upload-panel.panel-collapsed + .panel-resize-handle,
+.policy-app .three-panel > .panel-resize-handle:has(+ .policy-upload-panel.panel-collapsed) {
+    pointer-events: none;
+    opacity: 0;
+}
+
+/* 패널 위치 바꾸기 (헤더 드래그 — AIOneWorkspaceUi.initPanelDragDrop) */
+.policy-app .three-panel > .panel > .panel-head[draggable="true"] {
+    user-select: none;
+}
+
+.policy-app .three-panel > .panel > .panel-head[draggable="true"]:active {
+    cursor: grabbing !important;
+}
+
+.policy-app .three-panel.panel-dragging > .panel:not(.drag-over) .panel-head {
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.025);
+}
+
+/* ==================== 가운데: 원본 · 정책과제 ==================== */
+.policy-center-panel {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.policy-split {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.policy-split.is-swapped {
+    flex-direction: row-reverse;
+}
+
+.policy-preview-pane,
+.policy-task-pane {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.policy-preview-pane {
+    flex: 1.35;
+    background: var(--bg, #f6f8fa);
+}
+
+.policy-task-pane {
+    flex: 1;
+    border-left: 1px solid var(--border, #d1d9e0);
+}
+
+.policy-split .doc-split-head {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border, #d1d9e0);
+    background: var(--surface, #fff);
+}
+
+.policy-split .doc-split-title {
+    color: var(--text-sub, #656d76);
+    font-size: calc(11px * var(--policy-fs));
+    font-weight: 700;
+}
+
+.policy-file-chip {
+    max-width: 70%;
+    padding: 3px 10px;
+    overflow: hidden;
+    border: 1px solid rgba(var(--primary-rgb, 9, 105, 218), 0.2);
+    border-radius: 999px;
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.06);
+    color: var(--primary, #0969da);
+    font-size: calc(10.5px * var(--policy-fs));
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.policy-preview {
+    min-height: 0;
+    flex: 1;
+    padding: 16px;
+    overflow: auto;
+}
+
+.policy-pdf-pages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.policy-pdf-page {
+    min-width: 200px;
+    min-height: 280px;
+    border: 1px solid #d8dee9;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(31, 35, 40, 0.06);
+}
+
+.policy-pdf-page canvas {
+    display: block;
+}
+
+.policy-pdf-page.is-focus {
+    animation: policyPageFocus 1.2s ease;
+}
+
+@keyframes policyPageFocus {
+    0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb, 9, 105, 218), 0.45); }
+    40% { box-shadow: 0 0 0 6px rgba(var(--primary-rgb, 9, 105, 218), 0.15); }
+    100% { box-shadow: 0 2px 8px rgba(31, 35, 40, 0.06); }
+}
+
+.policy-html-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 600px;
+    border: 1px solid var(--border, #d1d9e0);
+    background: #fff;
+}
+
+.policy-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 12px;
+    border-top: 1px solid var(--border, #d1d9e0);
+    background: var(--surface, #fff);
+    color: var(--text-sub, #656d76);
+    font-size: calc(10.5px * var(--policy-fs));
+}
+
+.policy-statusbar .document-statusbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.policy-preview-pane:fullscreen {
+    background: var(--bg, #f6f8fa);
+}
+
+/* 정책과제 목록 */
+.policy-task-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border, #d1d9e0);
+    flex-wrap: wrap;
+}
+
+.policy-task-filter {
+    display: flex;
+    gap: 4px;
+}
+
+.policy-task-filter .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-sub, #656d76);
+    font-size: calc(10.5px * var(--policy-fs));
+    cursor: pointer;
+}
+
+.policy-task-filter .filter-btn.active {
+    border-color: rgba(var(--primary-rgb, 9, 105, 218), 0.24);
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.08);
+    color: var(--primary, #0969da);
+    font-weight: 700;
+}
+
+.policy-search {
+    display: flex;
+    min-width: 140px;
+    flex: 1;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+}
+
+.policy-search svg {
+    width: 13px;
+    height: 13px;
+    fill: none;
+    stroke: var(--text-muted, #8b949e);
+    stroke-width: 2;
+}
+
+.policy-search input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text, #1f2328);
+    font: inherit;
+    font-size: calc(10.5px * var(--policy-fs));
+}
+
+.policy-task-list {
+    min-height: 0;
+    flex: 1;
+    padding: 10px 12px 16px;
+    overflow-y: auto;
+}
+
+.policy-task-card {
+    margin-bottom: 10px;
+    padding: 14px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: var(--radius, 10px);
+    background: var(--surface, #fff);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.policy-task-card:hover,
+.policy-task-card:focus-visible {
+    border-color: rgba(var(--primary-rgb, 9, 105, 218), 0.5);
+}
+
+.policy-task-card.is-active {
+    border-color: var(--primary, #0969da);
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.035);
+    box-shadow: 0 0 0 1px var(--primary, #0969da);
+}
+
+.policy-task-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.policy-task-no {
+    display: inline-flex;
+    min-width: 24px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 6px;
+    color: var(--text-sub, #656d76);
+    font-size: calc(10px * var(--policy-fs));
+    font-weight: 700;
+    flex: 0 0 auto;
+}
+
+.policy-task-card.is-active .policy-task-no {
+    border-color: var(--primary, #0969da);
+    background: var(--primary, #0969da);
+    color: #fff;
+}
+
+.policy-task-title {
+    min-width: 0;
+    flex: 1;
+    color: var(--text, #1f2328);
+    font-size: calc(12.5px * var(--policy-fs));
+    font-weight: 700;
+    line-height: 1.45;
+    word-break: keep-all;
+}
+
+.policy-task-dept,
+.policy-task-cat {
+    padding-left: 32px;
+    color: var(--text-muted, #8b949e);
+    font-size: calc(10.5px * var(--policy-fs));
+    line-height: 1.7;
+}
+
+.policy-task-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+    padding-left: 32px;
+    color: var(--text-muted, #8b949e);
+    font-size: calc(10px * var(--policy-fs));
+}
+
+/* ==================== 오른쪽: 체크리스트 검증 결과 ==================== */
+.policy-result-head-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.policy-result-body {
+    min-height: 0;
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.policy-summary-card {
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: var(--radius, 10px);
+    background: var(--surface, #fff);
+}
+
+.policy-summary-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.policy-summary-head h3 {
+    margin: 0;
+    color: var(--text, #1f2328);
+    font-size: calc(13.5px * var(--policy-fs));
+    font-weight: 700;
+    line-height: 1.45;
+    word-break: keep-all;
+}
+
+.policy-summary-meta {
+    margin: 6px 0 0;
+    color: var(--text-sub, #656d76);
+    font-size: calc(10.5px * var(--policy-fs));
+    line-height: 1.6;
+}
+
+.policy-summary-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 8px 0 0;
+    color: var(--text-muted, #8b949e);
+    font-size: calc(9.5px * var(--policy-fs));
+}
+
+.policy-summary-sub b {
+    margin-right: 4px;
+    color: var(--text-sub, #656d76);
+}
+
+.policy-stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.policy-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 6px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 8px;
+    color: var(--text-sub, #656d76);
+    font-size: calc(10px * var(--policy-fs));
+}
+
+.policy-stat strong {
+    color: var(--text, #1f2328);
+    font-size: calc(15px * var(--policy-fs));
+}
+
+.policy-stat.is-good strong { color: var(--policy-success); }
+.policy-stat.is-bad strong { color: var(--policy-danger); }
+
+.policy-checklist {
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: var(--radius, 10px);
+    background: var(--surface, #fff);
+    overflow: hidden;
+}
+
+.policy-checklist-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border, #d1d9e0);
+    background: var(--bg, #f6f8fa);
+}
+
+.policy-checklist-head h3 {
+    margin: 0;
+    color: var(--text, #1f2328);
+    font-size: calc(12px * var(--policy-fs));
+    font-weight: 700;
+}
+
+.policy-checklist-head span {
+    color: var(--text-muted, #8b949e);
+    font-size: calc(9.5px * var(--policy-fs));
+}
+
+.policy-check-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.policy-check-item {
+    padding: 14px;
+    border-bottom: 1px solid var(--border, #d1d9e0);
+}
+
+.policy-check-item:last-child {
+    border-bottom: 0;
+}
+
+.policy-check-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.policy-check-no {
+    display: inline-flex;
+    min-width: 24px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 6px;
+    color: var(--text-muted, #8b949e);
+    font-size: calc(9.5px * var(--policy-fs));
+}
+
+.policy-check-head strong {
+    color: var(--text, #1f2328);
+    font-size: calc(11.5px * var(--policy-fs));
+}
+
+.policy-level {
+    color: var(--policy-danger);
+    font-size: calc(9.5px * var(--policy-fs));
+    font-weight: 700;
+}
+
+.policy-level.recommended {
+    color: var(--text-muted, #8b949e);
+}
+
+.policy-result {
+    margin-left: auto;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: calc(9.5px * var(--policy-fs));
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.policy-result.satisfied,
+.policy-result.na { background: var(--policy-success-bg); color: var(--policy-success); }
+.policy-result.insufficient,
+.policy-result.missing { background: var(--policy-danger-bg); color: var(--policy-danger); }
+
+.policy-opinion {
+    margin: 10px 0 0 32px;
+    padding: 10px 12px;
+    border-left: 3px solid var(--primary, #0969da);
+    border-radius: 0 8px 8px 0;
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.05);
+}
+
+.policy-check-item.is-fail .policy-opinion {
+    border-left-color: var(--policy-danger);
+    background: var(--policy-danger-bg);
+}
+
+.policy-opinion-label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--primary, #0969da);
+    font-size: calc(9.5px * var(--policy-fs));
+    font-weight: 700;
+}
+
+.policy-check-item.is-fail .policy-opinion-label {
+    color: var(--policy-danger);
+}
+
+.policy-opinion p {
+    margin: 0;
+    color: var(--text, #1f2328);
+    font-size: calc(11px * var(--policy-fs));
+    font-weight: 600;
+    line-height: 1.65;
+    word-break: keep-all;
+}
+
+.policy-guide {
+    margin: 8px 0 0 32px;
+    color: var(--text-muted, #8b949e);
+    font-size: calc(9.5px * var(--policy-fs));
+    line-height: 1.6;
+    word-break: keep-all;
+}
+
+/* ==================== 반응형 / 다크 ==================== */
+@media (max-width: 1280px) {
+    .policy-workspace-title {
+        position: static;
+        max-width: none;
+        transform: none;
+    }
+}
+
+@container (max-width: 720px) {
+    .policy-split {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .policy-task-pane {
+        border-top: 1px solid var(--border, #d1d9e0);
+        border-left: 0;
+    }
+
+    .policy-split .doc-split-handle {
+        display: none;
+    }
+}
+
+.policy-center-panel {
+    container-type: inline-size;
+}
+
+html[data-theme="dark"] .policy-pdf-page {
+    border-color: #3a4655;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.32);
+}

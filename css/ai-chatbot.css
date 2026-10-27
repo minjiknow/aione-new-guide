@@ -1,0 +1,788 @@
+/**
+ * AI-ONE 챗봇 화면 스타일
+ * 기본 구간 형식: Start: 기능명 / End: 기능명
+ * 변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+ * 주석 정리 내역
+ * - 261023 주석 정리 - 파일 안내와 구간·변경 내용 작성 형식을 통일합니다.
+ */
+/* 파일 역할: ai-chatbot 화면 전용 스타일을 정의합니다. */
+
+/* Start: 기본 스타일 */
+
+:root {
+    --sidebar-w: 220px;
+}
+html,
+body {
+    font-size: calc(14px * var(--ui-font-scale));
+}
+body {
+    display: flex;
+}
+
+/* End: 기본 스타일 */
+
+/* Start: Main */
+
+.main-wrap {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+    position: relative;
+}
+
+/* End: Main */
+
+/* Start: Chat window actions */
+
+.chat-window-actions {
+    position: absolute;
+    top: 18px;
+    right: 20px;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.chat-window-open-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--text-sub);
+    box-shadow: 0 4px 14px rgba(31, 35, 40, 0.08);
+    backdrop-filter: blur(10px);
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+}
+.chat-window-open-btn:hover {
+    background: var(--surface);
+    color: var(--primary);
+    border-color: rgba(var(--primary-rgb), 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 7px 18px rgba(var(--primary-rgb), 0.14);
+}
+.chat-window-open-btn:active {
+    transform: translateY(0);
+}
+.chat-window-open-btn:focus-visible {
+    outline: 3px solid rgba(var(--primary-rgb), 0.18);
+    outline-offset: 2px;
+}
+.chat-window-open-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* End: Chat window actions */
+
+/* Start: Browser popup mode */
+
+body.chat-popup-mode .sidebar {
+    display: flex;
+}
+body.chat-popup-mode .main-wrap {
+    margin-left: var(--sidebar-w);
+    width: calc(100% - var(--sidebar-w));
+    min-height: 100vh;
+}
+body.chat-popup-mode .chatbot-sidebar.collapsed ~ .main-wrap {
+    width: calc(100% - 56px);
+    margin-left: 56px;
+}
+body.chat-popup-mode .chat-window-actions {
+    display: flex;
+}
+body.chat-popup-mode .chat-window-open-btn {
+    display: none;
+}
+
+/* End: Browser popup mode */
+
+/* Start: Background Graphics */
+
+.main-wrap::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.07) 0%, rgba(77, 217, 192, 0.05) 35%, transparent 65%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: bgPulse 8s ease-in-out infinite;
+}
+.main-wrap::after {
+    content: "";
+    position: absolute;
+    top: 25%;
+    right: 5%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.07) 0%, rgba(130, 80, 223, 0.03) 40%, transparent 60%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: bgFloat 12s ease-in-out infinite;
+}
+html[data-theme="dark"] body[data-page="chatbot"] .main-wrap {
+    background-color: var(--bg);
+}
+html[data-theme="dark"] body[data-page="chatbot"] .main-wrap::before {
+    background:
+        radial-gradient(620px 620px at 10% 20%, rgba(77, 217, 192, 0.11) 0%, transparent 62%),
+        radial-gradient(540px 540px at 82% 10%, rgba(var(--primary-rgb), 0.12) 0%, transparent 62%),
+        radial-gradient(480px 480px at 60% 80%, rgba(163, 113, 247, 0.1) 0%, transparent 62%),
+        radial-gradient(420px 420px at 30% 70%, rgba(56, 189, 248, 0.09) 0%, transparent 62%);
+}
+@keyframes bgPulse {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.15);
+        opacity: 1;
+    }
+}
+@keyframes bgFloat {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-30px) scale(1.05);
+    }
+}
+
+/* End: Background Graphics */
+
+/* Start: Decorative elements */
+
+.bg-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.bg-orb-1 {
+    width: 280px;
+    height: 280px;
+    top: 15%;
+    left: 10%;
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.08) 0%, rgba(var(--primary-rgb), 0.02) 50%, transparent 70%);
+    animation: orbDrift1 15s ease-in-out infinite;
+}
+.bg-orb-2 {
+    width: 220px;
+    height: 220px;
+    bottom: 20%;
+    right: 15%;
+    background: radial-gradient(circle, rgba(77, 217, 192, 0.1) 0%, rgba(77, 217, 192, 0.02) 50%, transparent 70%);
+    animation: orbDrift2 18s ease-in-out infinite;
+}
+.bg-orb-3 {
+    width: 160px;
+    height: 160px;
+    top: 55%;
+    left: 55%;
+    background: radial-gradient(circle, rgba(130, 80, 223, 0.07) 0%, rgba(130, 80, 223, 0.01) 50%, transparent 70%);
+    animation: orbDrift3 10s ease-in-out infinite;
+}
+.bg-orb-4 {
+    width: 120px;
+    height: 120px;
+    top: 70%;
+    left: 20%;
+    background: radial-gradient(circle, rgba(191, 135, 0, 0.06) 0%, transparent 60%);
+    animation: orbDrift2 14s ease-in-out infinite reverse;
+}
+.bg-orb-5 {
+    width: 180px;
+    height: 180px;
+    top: 10%;
+    right: 30%;
+    background: radial-gradient(circle, rgba(26, 127, 55, 0.06) 0%, transparent 60%);
+    animation: orbDrift1 20s ease-in-out infinite reverse;
+}
+html[data-theme="dark"] body[data-page="chatbot"] .bg-orb {
+    opacity: 0.9;
+}
+html[data-theme="dark"] body[data-page="chatbot"] .bg-orb-1 {
+    background: radial-gradient(circle, rgba(77, 217, 192, 0.24) 0%, transparent 66%);
+}
+html[data-theme="dark"] body[data-page="chatbot"] .bg-orb-2 {
+    background: radial-gradient(circle, rgba(var(--primary-rgb), 0.22) 0%, transparent 66%);
+}
+html[data-theme="dark"] body[data-page="chatbot"] .bg-orb-3 {
+    background: radial-gradient(circle, rgba(163, 113, 247, 0.2) 0%, transparent 66%);
+}
+@keyframes orbDrift1 {
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+    33% {
+        transform: translate(30px, -20px);
+    }
+    66% {
+        transform: translate(-15px, 15px);
+    }
+}
+@keyframes orbDrift2 {
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+    50% {
+        transform: translate(-20px, -25px);
+    }
+}
+@keyframes orbDrift3 {
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        transform: translate(15px, 20px) scale(1.3);
+    }
+}
+
+.chat-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+    min-height: 0;
+}
+
+/* End: Decorative elements */
+
+/* Start: Empty State */
+
+.chat-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    flex: 1;
+    width: 100%;
+    padding-top: 35vh;
+}
+.chat-empty-title {
+    font-size: calc(32px * var(--ui-font-scale));
+    font-weight: 700;
+    color: var(--text);
+    background: linear-gradient(135deg, #0969da 0%, #1b7c83 50%, #4dd9c0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: titleShimmer 4s ease-in-out infinite;
+    background-size: 200% auto;
+}
+@keyframes titleShimmer {
+    0%,
+    100% {
+        background-position: 0% center;
+    }
+    50% {
+        background-position: 100% center;
+    }
+}
+
+/* End: Empty State */
+
+/* Start: Messages */
+
+.chat-messages {
+    flex: 1;
+    max-width: 740px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 20px 0;
+}
+.chat-msg {
+    margin-bottom: 24px;
+    line-height: 1.8;
+    font-size: calc(14px * var(--ui-font-scale));
+}
+.chat-msg.user {
+    background: var(--surface-el);
+    padding: 14px 20px;
+    border-radius: var(--radius-lg);
+    max-width: 80%;
+    margin-left: auto;
+    color: var(--text);
+}
+.chat-msg.ai {
+    padding: 14px 0;
+    color: var(--text);
+}
+.chat-msg.ai .msg-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4dd9c0, var(--primary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+.chat-msg.ai .msg-avatar svg {
+    width: 14px;
+    height: 14px;
+    stroke: #fff;
+    fill: none;
+    stroke-width: 2;
+}
+
+.chatbot-message-copy {
+    white-space: pre-line;
+}
+
+/* End: Messages */
+
+/* Start: Input */
+
+.chat-input-wrapper {
+    position: relative;
+    z-index: 1;
+    padding: 16px 20px 32px;
+    display: flex;
+    justify-content: center;
+}
+.chat-prompt-composer {
+    width: 100%;
+}
+.chat-prompt-composer-center {
+    max-width: 580px;
+}
+.chat-prompt-composer-bottom {
+    max-width: 640px;
+}
+
+/* End: Input */
+
+/* Start: Messages - has conversation state */
+
+.chat-container.has-messages {
+    justify-content: flex-start;
+}
+.chat-container.has-messages .chat-empty {
+    display: none;
+}
+
+/* End: Messages - has conversation state */
+
+/* Start: Message Actions */
+
+.msg-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 8px;
+}
+.msg-action-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: calc(14px * var(--ui-font-scale));
+    transition: var(--transition);
+}
+.msg-action-btn:hover {
+    background: var(--surface-el);
+    color: var(--text);
+}
+.msg-action-btn.active {
+    color: var(--primary);
+}
+.msg-action-btn svg {
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* End: Message Actions */
+
+/* Start: Message More Menu */
+
+.msg-more-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.msg-more-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    width: 240px;
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 50;
+    padding: 8px;
+    border: 1px solid var(--border);
+}
+.msg-more-menu.hidden {
+    display: none;
+}
+.msg-more-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    font-size: calc(13px * var(--ui-font-scale));
+    color: var(--text);
+    transition: background 0.15s;
+    text-align: left;
+}
+.msg-more-item:hover {
+    background: var(--surface-el);
+}
+.msg-more-item.active {
+    background: var(--surface-el);
+}
+.msg-more-item svg {
+    stroke: var(--text-sub);
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+/* End: Message More Menu */
+
+/* Start: Report Button */
+
+.msg-report-btn:hover {
+    background: rgba(207, 34, 46, 0.08);
+    color: var(--red);
+}
+
+/* End: Report Button */
+
+/* Start: Drawer Backdrop (shared) */
+
+.drawer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 500;
+}
+.drawer-backdrop.hidden {
+    display: none;
+}
+.drawer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.drawer-title {
+    font-size: calc(15px * var(--ui-font-scale));
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+.drawer-desc {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+.drawer-close {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    font-size: calc(18px * var(--ui-font-scale));
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+.drawer-close:hover {
+    background: var(--surface-el);
+    color: var(--text);
+}
+.drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+/* End: Drawer Backdrop (shared) */
+
+/* Start: Report Drawer */
+
+.report-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 360px;
+    height: 100vh;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+    z-index: 501;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(0);
+    transition: transform 0.25s ease;
+}
+.report-drawer.hidden {
+    transform: translateX(100%);
+    pointer-events: none;
+}
+.report-section {
+    margin-bottom: 20px;
+}
+.report-label {
+    display: block;
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+}
+.report-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.report-type-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.report-type-item:hover {
+    background: var(--surface-el);
+}
+.report-type-item input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+.report-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: calc(12px * var(--ui-font-scale));
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    resize: vertical;
+}
+.report-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08);
+}
+.report-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.btn-cancel {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 600;
+    color: var(--text-sub);
+    border: 1px solid var(--border);
+}
+.btn-cancel:hover {
+    background: var(--surface-el);
+}
+.btn-confirm {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 600;
+    color: #fff;
+    background: var(--primary);
+    border: 1px solid var(--primary);
+}
+.btn-confirm:hover {
+    background: var(--primary-dark);
+}
+
+/* End: Report Drawer */
+
+/* Start: Report Upload */
+
+.report-upload-zone {
+    padding: 18px 12px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 8px;
+}
+.report-upload-zone:hover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.02);
+}
+.report-upload-zone.drag-over {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.04);
+}
+.report-upload-zone svg {
+    width: 20px;
+    height: 20px;
+    stroke: var(--primary);
+    fill: none;
+    stroke-width: 2;
+    margin: 0 auto 6px;
+    display: block;
+}
+.report-upload-zone p {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-sub);
+    line-height: 1.5;
+}
+.report-upload-hint {
+    font-size: calc(10px * var(--ui-font-scale));
+    color: var(--text-muted);
+    margin-top: 4px;
+    display: block;
+}
+.report-file-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.report-file-list:not(:empty) {
+    margin-top: 8px;
+}
+.report-file-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-sub);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+}
+.report-file-list .report-file-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(8px * var(--ui-font-scale));
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+    background: var(--text-muted);
+}
+.report-file-list .report-file-icon.pdf {
+    background: var(--red);
+}
+.report-file-list .report-file-icon.img {
+    background: var(--orange);
+}
+.report-file-list .report-file-icon.txt {
+    background: var(--text-muted);
+}
+.report-file-list .report-file-name {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+    color: var(--text);
+}
+.report-file-list .report-file-size {
+    font-size: calc(10px * var(--ui-font-scale));
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+.report-file-list .report-file-remove {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(12px * var(--ui-font-scale));
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+.report-file-list .report-file-remove:hover {
+    background: rgba(207, 34, 46, 0.08);
+    color: var(--red);
+}
+
+html[data-theme="dark"] .chat-window-open-btn,
+body.dark-mode .chat-window-open-btn,
+[data-theme="dark"] .chat-window-open-btn {
+    background: rgba(22, 27, 34, 0.88);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+}
+html[data-theme="dark"] .chat-window-open-btn:hover,
+body.dark-mode .chat-window-open-btn:hover,
+[data-theme="dark"] .chat-window-open-btn:hover {
+    background: var(--surface);
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.32);
+}
+
+@media (max-width: 720px) {
+    .chat-window-actions {
+        top: 12px;
+        right: 12px;
+    }
+    .chat-window-open-btn {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* End: Report Upload */

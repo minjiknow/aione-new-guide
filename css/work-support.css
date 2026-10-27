@@ -1,0 +1,460 @@
+@charset "utf-8";
+
+/**
+ * AI-ONE 내부자료 검색·업무지원 스타일
+ * 적용 화면: work-support.html
+ * 역할: 구조화 답변·검색 문서·생성 도구·결과 목록·업무지원 미리보기 배치
+ * 연결: panel.css 다음 로드. 공통 패널·채팅·참조소스는 panel.css
+ * - 261022 정리 - 공통 패널과 화면 전용 기능의 관리 범위를 분리합니다.
+ *
+ * 기본 구간 형식: Start: 기능명 / End: 기능명
+ * 변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+ * 주석 정리 내역
+ * - 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+ */
+
+/* Start: 261020 추가 - 내부자료 검색 페이지 */
+.panel-desc {
+    color: var(--text-muted);
+    font-size: calc(10px * var(--ui-font-scale));
+    font-weight: 450;
+    padding: 8px 12px 0;
+}
+.chat-messages.time-hidden .chat-time-divider {
+    display: none;
+}
+/* End: 261020 추가 - 내부자료 검색 페이지 */
+
+/* Start: 결과물 채팅 패널 */
+.three-panel [data-panel="result"] {
+    position: relative;
+    overflow: hidden;
+}
+.result-manage-section,
+.result-section {
+    padding: 15px 12px 8px;
+    overflow-y: auto;
+}
+.result-manage-section {
+    border-bottom: 1px solid var(--border);
+}
+
+.service-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0 24px;
+    list-style: none;
+}
+.service-item {
+    display: flex;
+    width: calc(50% - 5px);
+}
+.service-card {
+    position: relative;
+    display: flex;
+    width: 100%;
+    min-height: 104px;
+    flex-direction: column;
+    padding: 13px 12px;
+    overflow: hidden;
+    border: 1px solid;
+    border-color: var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    transition: transform 0.2s ease;
+}
+.service-card:hover {
+    border-color: rgba(var(--primary-rgb), 0.38);
+    background: rgba(var(--primary-rgb), 0.035);
+    transform: translateY(-1px);
+}
+
+.service-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 0;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.service-title {
+    color: var(--text);
+    font-size: calc(13px * var(--ui-font-scale));
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: keep-all;
+}
+
+.service-arrow {
+    flex: 0 0 auto;
+    color: var(--text);
+    font-size: calc(12px * var(--ui-font-scale));
+    line-height: 1;
+    transition: color 0.2s ease;
+    width: fit-content;
+    margin-left: auto;
+}
+
+.service-desc {
+    flex: 1;
+    color: var(--text-muted);
+    font-size: calc(11px * var(--ui-font-scale));
+    line-height: 1.6;
+    word-break: keep-all;
+    font-family: "Pretendard";
+}
+
+.service-icon {
+    width: 38px;
+    aspect-ratio: 1/1;
+    margin-left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+    transition: transform 0.2s ease;
+}
+.service-icon svg {
+    width: 19px;
+    aspect-ratio: 1/1;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.service-card[data-service-tone="red"] .service-icon {
+    color: #ef5da8;
+    background: rgba(239, 93, 168, 0.1);
+}
+.service-card[data-service-tone="blue"] .service-icon {
+    color: #4f7cff;
+    background: rgba(79, 124, 255, 0.1);
+}
+.service-card[data-service-tone="cyan"] .service-icon {
+    color: #26c6da;
+    background: rgba(38, 198, 218, 0.1);
+}
+.service-card[data-service-tone="purple"] .service-icon {
+    color: #9b5de5;
+    background: rgba(155, 93, 229, 0.1);
+}
+.result-section {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+.result-manage-section {
+    flex-shrink: 0;
+}
+.result-section > .result-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+/* Start: 생성결과 리스트 */
+[data-panel="result"].panel-collapsed :is(.result-title, .service-title, .service-arrow, .service-desc, .file-info, .generated-result-empty) {
+    display: none;
+}
+[data-panel="result"].panel-collapsed :is(.result-manage-section, .result-section) {
+    width: 100%;
+    padding: 8px 4px;
+}
+[data-panel="result"].panel-collapsed .service-cards {
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+}
+[data-panel="result"].panel-collapsed .service-item {
+    width: 100%;
+}
+[data-panel="result"].panel-collapsed .service-card {
+    min-height: 34px;
+    padding: 0;
+    border-color: transparent;
+}
+[data-panel="result"].panel-collapsed .service-card-top {
+    margin: 0;
+}
+[data-panel="result"].panel-collapsed .service-card .service-icon {
+    width: 32px;
+    height: 32px;
+}
+[data-panel="result"].panel-collapsed .generated-result-list .file-item-main {
+    justify-content: center;
+    padding: 0;
+}
+[data-panel="result"].panel-collapsed .generated-result-list {
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+.file-list.generated-result-list {
+    max-height: none;
+    margin: 0;
+}
+.file-list.generated-result-list > li {
+    padding: 0;
+}
+.file-list.generated-result-list > .ai-search-banner {
+    justify-content: center;
+    padding: 10px 4px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+}
+.file-list.generated-result-list .file-item-main {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: inherit;
+}
+.file-list.generated-result-list .file-item-main:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+.file-list.generated-result-list .service-icon {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    color: var(--primary);
+    background: var(--surface-elevated, #f0f3f6);
+}
+.panel-collapsed .file-list.generated-result-list .service-icon {
+    background: rgba(9, 105, 218, 0.08);
+    border-color: rgba(9, 105, 218, 0.16);
+}
+.file-list.generated-result-list .service-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.generated-result-empty[hidden] {
+    display: none;
+}
+/* End: 생성결과 리스트 */
+
+/* End: 결과물 채팅 패널 */
+
+/* Start: 261021 수정 - 업무지원 생성 상태·구조화 답변·미리보기 (패널 최소 폭은 기존 설정 사용) */
+.service-card .service-desc {
+    color: var(--text-muted);
+}
+.service-card {
+    text-align: left;
+    cursor: pointer;
+}
+.service-card.is-generating {
+    border: 1.5px solid;
+    border-color: transparent;
+    background:
+        linear-gradient(var(--surface, #fff), var(--surface, #fff)) padding-box,
+        linear-gradient(135deg, rgb(33, 145, 211) 33%, rgb(130, 80, 223) 100%) border-box;
+    animation: work-border-spin 1.6s linear infinite;
+}
+@property --work-border-angle {
+    syntax: "<angle>";
+    initial-value: 0deg;
+    inherits: false;
+}
+@keyframes work-border-spin {
+    to {
+        --work-border-angle: 360deg;
+    }
+}
+.is-generating .service-icon::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: work-spinner 0.8s linear infinite;
+}
+.is-generating:not(.service-card) .service-icon svg {
+    display: none;
+}
+.service-card.is-generating .service-icon {
+    position: relative;
+    border-radius: 50%;
+}
+.service-card.is-generating .service-icon::after {
+    position: absolute;
+    inset: 0;
+    width: 38px;
+    height: 38px;
+    margin: auto;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+@keyframes work-spinner {
+    to {
+        transform: rotate(360deg);
+    }
+}
+.is-generating .file-meta {
+    color: var(--primary);
+}
+/* Start: ai 채팅- ai가 답변시 내용요약 헤더 */
+.work-answer-heading {
+    padding: 12px;
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
+    border-radius: var(--radius);
+    background: rgba(var(--primary-rgb), 0.035);
+    margin-bottom: 14px;
+}
+.work-answer-heading strong {
+    color: var(--text);
+    font-size: 15px;
+}
+.work-answer-heading p {
+    margin: 8px 0 0;
+}
+/* End: ai 채팅- ai가 답변시 내용요약 헤더 */
+
+/* Start: ai 채팅 - ai 답변 시 각 문단 */
+.work-answer-section {
+    margin: 14px 0;
+}
+.work-answer-section p {
+    margin: 6px 0;
+}
+.work-answer-section,
+.work-answer-heading p {
+    color: var(--text-sub);
+}
+.work-answer-section .work-source {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--primary);
+    background: var(--surface);
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+}
+/* End: ai 채팅 - ai 답변 시 각 문단 */
+.work-suggestions {
+    display: grid;
+    gap: 4px;
+    margin-top: 16px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+.work-suggestion {
+    padding: 12px 8px;
+    border: 0;
+    border-radius: 6px;
+    text-align: left;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+.work-suggestion:hover,
+.work-suggestion:focus-visible {
+    background: rgba(var(--primary-rgb), 0.06);
+    color: var(--primary);
+}
+.work-search-count {
+    display: block;
+    margin: 18px 0 10px;
+    color: var(--text);
+}
+.work-search-file {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+.work-search-file .work-source {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    text-align: left;
+    cursor: pointer;
+}
+.work-search-file strong {
+    display: block;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+.work-search-file .work-source span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+.work-import {
+    flex-shrink: 0;
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.work-import:disabled {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: default;
+}
+/* //ai 채팅 답변시 첫 문구 */
+.work-document-preview:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 380px;
+    min-height: 300px;
+    overflow: hidden;
+}
+.work-document-preview .center-sub-head {
+    flex-shrink: 0;
+}
+.work-document-preview .center-sub-head strong {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.work-document-preview .doc-viewer-body {
+    flex: 1;
+    overflow: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+    .service-card.is-generating,
+    .is-generating .service-icon::after {
+        animation: none;
+    }
+}
+.work-search-file .file-icon {
+    width: 30px;
+    height: 32px;
+    border: 1px solid currentColor;
+    background: transparent;
+    color: var(--primary);
+}
+.work-search-file .file-icon.pdf {
+    color: var(--red);
+}
+.work-search-file .file-icon svg {
+    width: 24px;
+    height: 28px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* End: 261021 수정 - 업무지원 생성 상태·구조화 답변·미리보기 (패널 최소 폭은 기존 설정 사용) */

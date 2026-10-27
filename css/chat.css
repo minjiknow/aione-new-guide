@@ -1,0 +1,4469 @@
+@charset "utf-8";
+
+/*
+ * 홈·챗봇 공통 입력창과 일반 챗봇 전용 UI 및 레이아웃 보정.
+ * 적용 페이지: html/home.html, html/chatbot.html. 대화·메뉴 동작은 js/chat.js에서 관리합니다.
+ * 공통 기본형과 답변 액션·오류신고는 common.css, 페이지 전용 보정은 이 파일에서 관리합니다.
+ * - 261016 주석 정리 - 현재 구현을 기준으로 수정·추가 내용과 연결 위치를 보완합니다.
+ * - 261019 운영 합본 - 퍼블 261016판 + 파일 끝 "Start: 261019 운영 반영" 구간 (운영 JSP · 공통 레이아웃 보정)
+ * 261016 수정 - rem 폰트를 16px 기준의 calc(px * var(--ui-font-scale))로 환산합니다.
+ * 일반 UI 색상은 ai-theme.css 토큰을 사용하며 문서 바탕·반전 색상·브랜드 그라데이션은 유지합니다.
+ * 변경 내용
+ * - 261021 - 입력창 order는 홈에만 적용하고 챗봇은 HTML 순서(textarea·첨부 목록·하단 버튼)를 따릅니다.
+ * - 261021 - 접힌 검색은 활성 색상과 기존 검색창·목록을 옆에 표시하고 사이드바 폭을 유지합니다.
+ * - 261021 - 검색과 일반 메뉴의 활성 표시는 chat.js의 setSearchActive에서 상호 전환합니다.
+ * - 261021 - 접힌 채팅 검색 아이콘에 기존 navIconWiggle 호버 애니메이션을 적용합니다.
+ * - 261021 - 접힌 사이드바의 Work·Chat 모드를 세로로 표시합니다.
+ * - 261020 - 답변 표 격자·헤더 스타일과 공통 복사 도구줄 연결.
+ * - 수정: 공통 입력창, 모델·작업 메뉴의 배치와 선택값 표시
+ * - 수정: 공통 점 배경·flare 및 모바일 채팅 메뉴
+ * - 정리: 답변 액션·오류신고 및 계정 메뉴 기본형은 common.css를 재사용합니다.
+ * - 수정: 56px 접힘 상태에서 로고·메뉴·사용자 아바타 유지
+ * - 정리: HTML 정적 템플릿의 기존 클래스와 스타일 연결 유지
+ * 데이터·템플릿 연결: chatbot.html의 template과 js/chat.js의 렌더러.
+ * - 261022 주석 보완 - 운영 반영 구간의 시작·종료 제목을 일치시켰다.
+ * - 261022 - 모바일 모델·작업 메뉴 가로 배치.
+ * - 현재 구현: Work 기준의 26px 로고, 모바일 로고 정렬 및 스크롤 시 90% 불투명 헤더 배경.
+ * - 로고·스크롤 배경 구간 표시만 보완했으며 기존 CSS 값은 유지한다.
+ *
+ * 최근 변경 내용
+ * - 261023 추가 - 사이드바 접기 버튼 효과
+ *
+ * 기본 구간 형식: Start: 기능명 / End: 기능명
+ * 변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+ * 주석 정리 내역
+ * - 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+ */
+.chat-stopped {
+    margin: 6px 0px 0px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-sub);
+}
+
+@keyframes chat-pulse {
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+:root {
+    --chatbot-sidebar-motion-time: 0.25s;
+}
+.mo-block {
+    display: none;
+}
+.chatbot-app.is-rail-mode {
+    left: var(--chatbot-rail-w, 56px);
+}
+
+.chatbot-app > .chatbot-sidebar > * {
+    transition:
+        opacity 0.18s 0.12s,
+        visibility linear 0.12s;
+}
+
+.chatbot-app:is(.is-rail-mode, .is-sidebar-animating) > .chatbot-sidebar {
+    overflow: hidden;
+}
+
+.chatbot-app.is-rail-mode > .chatbot-sidebar > * {
+    min-width: 239px;
+}
+
+.chatbot-app.is-rail-mode > .chatbot-sidebar {
+    flex-basis: 0px;
+    width: 0px;
+    margin-left: 0px;
+    border-right-width: 0px;
+}
+
+.chatbot-app.is-sidebar-collapsed.is-rail-mode > .chatbot-sidebar > * {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity var(--chatbot-sidebar-motion-time) ease,
+        visibility 0s linear var(--chatbot-sidebar-motion-time);
+}
+
+.chatbot-app.is-sidebar-instant,
+.chatbot-app.is-sidebar-instant > .chatbot-sidebar,
+.chatbot-app.is-sidebar-instant > .chatbot-sidebar > * {
+    transition: none !important;
+}
+
+body.is-chatbot-rail-mode #sidebar.collapsed {
+    z-index: 950;
+    transition: z-index 0s linear var(--chatbot-sidebar-motion-time);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chatbot-app,
+    .chatbot-app > .chatbot-sidebar,
+    .chatbot-app > .chatbot-sidebar > * {
+        transition: none !important;
+    }
+}
+
+.chatbot-user-button {
+    flex: 1 1 0%;
+    min-width: 0px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border: 0px;
+    border-radius: 10px;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.chatbot-user-button:hover,
+.chatbot-user-button[aria-expanded="true"] {
+    background: var(--surface-el);
+}
+
+.chatbot-user-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0px;
+    line-height: 1.3;
+}
+
+.chatbot-user-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0px;
+}
+
+.chatbot-user-dept {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-sub);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chatbot-user-role {
+    flex: 0 0 auto;
+    padding: 0px 6px;
+    border: 1px solid rgba(var(--primary-rgb), 0.35);
+    border-radius: 999px;
+    font-size: calc(10px * var(--ui-font-scale));
+    color: var(--primary, #156edd);
+}
+
+.chatbot-user-dept:empty,
+.chatbot-user-role:empty {
+    display: none;
+}
+
+.chatbot-user-settings {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0px;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+}
+
+.chatbot-user-settings:hover,
+.chatbot-user-settings[aria-expanded="true"] {
+    background: var(--surface-el);
+    color: var(--text);
+}
+
+.chatbot-user-settings svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.home-prompt-composer .prompt-composer-shell {
+    position: relative;
+    z-index: 50;
+}
+
+.prompt-composer [data-chat-menu] {
+    position: relative;
+}
+
+.chatbot-history-list li.has-more-action {
+    position: relative;
+}
+
+.chatbot-history-list li.has-more-action > a,
+.chatbot-history-list li.has-more-action > button:not(.btn-more),
+.chatbot-history-list li.has-more-action > .chatbot-history-link {
+    padding-right: 34px;
+}
+
+.chatbot-history-list .btn-more {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    z-index: 1;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-sub, #64748b);
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 0.15s,
+        background-color 0.15s;
+}
+
+.chatbot-history-list li.has-more-action:hover > .btn-more,
+.chatbot-history-list li.has-more-action:focus-within > .btn-more,
+.chatbot-history-list li.has-more-action.is-active > .btn-more,
+.chatbot-history-list li.has-more-action > .is-active ~ .btn-more,
+.chatbot-history-list .btn-more[aria-expanded="true"],
+.chatbot-history-list .btn-more:focus-visible {
+    opacity: 1;
+}
+
+.chatbot-history-list .btn-more:hover,
+.chatbot-history-list .btn-more[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--text, #0f172a);
+}
+
+.chatbot-history-list .btn-more:focus-visible {
+    outline: var(--primary) solid 2px;
+    outline-offset: -2px;
+}
+
+.chatbot-history-list li.has-more-action > .is-active ~ .btn-more {
+    color: var(--primary);
+}
+
+.chatbot-history-list li.is-more-open > .chatbot-history-link:not(.is-active) {
+    background: var(--surface-el);
+}
+
+.chatbot-app.is-sidebar-collapsed .chatbot-history-list .btn-more {
+    display: none;
+}
+
+@media (hover: none) {
+    .chatbot-history-list .btn-more {
+        opacity: 1;
+    }
+}
+
+.chat-more-menu {
+    position: fixed;
+    z-index: 1300;
+    min-width: 190px;
+    margin: 0px;
+    padding: 7px;
+    box-sizing: border-box;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 11px;
+    background: var(--surface, #fff);
+    box-shadow: rgba(31, 35, 40, 0.18) 0px 14px 34px;
+}
+
+.chat-more-menu[hidden] {
+    display: none !important;
+}
+
+.chat-more-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    box-sizing: border-box;
+    border: 0px;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text, #1f2328);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    text-align: left;
+    cursor: pointer;
+}
+
+.chat-more-item svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.chat-more-item .drawer-list-action-icon {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    filter: var(--icon-filter-muted);
+}
+.chat-more-item.danger .drawer-list-action-icon {
+    filter: var(--icon-filter-red);
+}
+
+.chat-more-item:hover,
+.chat-more-item:focus-visible {
+    outline: 0px;
+    background: var(--surface-el, #f0f3f6);
+}
+
+.chat-more-item.danger {
+    color: var(--red, #cf222e);
+}
+
+.chat-more-item.danger:hover,
+.chat-more-item.danger:focus-visible {
+    background: color-mix(in srgb, var(--red) 6%, transparent);
+}
+
+.chat-more-sep {
+    height: 1px;
+    margin: 5px 3px;
+    background: var(--border, #d1d9e0);
+}
+
+.chat-action-modal {
+    position: fixed;
+    inset: 0px;
+    z-index: 1400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.chat-action-modal[hidden] {
+    display: none !important;
+}
+
+.chat-action-modal-bg {
+    position: absolute;
+    inset: 0px;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.chat-action-modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    padding: 24px;
+    box-sizing: border-box;
+    border-radius: 14px;
+    background: var(--surface, #fff);
+    color: var(--text, #1f2328);
+    box-shadow: rgba(15, 23, 42, 0.25) 0px 24px 60px;
+}
+
+.chat-action-modal-title {
+    margin: 0px 0px 8px;
+    font-size: calc(17px * var(--ui-font-scale));
+    font-weight: 700;
+}
+
+.chat-action-modal-msg {
+    margin: 0px 0px 16px;
+    font-size: calc(13px * var(--ui-font-scale));
+    line-height: 1.6;
+    color: var(--text-sub, #656d76);
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.chat-action-modal-msg strong {
+    color: var(--text, #1f2328);
+}
+
+.chat-action-modal-field {
+    display: block;
+}
+
+.chat-action-modal-field span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 600;
+    color: var(--text, #1f2328);
+}
+
+.chat-action-modal-field input {
+    width: 100%;
+    height: 38px;
+    padding: 0px 12px;
+    box-sizing: border-box;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: var(--text, #1f2328);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+}
+
+.chat-action-modal-field input:focus {
+    outline: 0px;
+    border-color: var(--primary);
+    box-shadow: rgba(var(--primary-rgb), 0.18) 0px 0px 0px 3px;
+}
+
+.chat-action-modal-error {
+    margin: 6px 0px 0px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--red, #cf222e);
+}
+
+.chat-action-modal-error[hidden] {
+    display: none;
+}
+
+.chat-action-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.chat-action-modal-actions button {
+    min-width: 72px;
+    height: 36px;
+    padding: 0px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border, #d1d9e0);
+    background: var(--surface, #fff);
+    color: var(--text, #1f2328);
+    font-style: inherit;
+    font-variant: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    font-weight: 600;
+}
+
+.chat-action-modal-actions button:hover {
+    background: var(--surface-el, #f0f3f6);
+}
+
+.chat-action-modal-actions .is-confirm {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: rgb(255, 255, 255);
+}
+
+.chat-action-modal-actions .is-confirm:hover {
+    background: var(--primary-dark);
+}
+
+.chat-action-modal-actions .is-danger {
+    border-color: var(--red, #cf222e);
+    background: var(--red, #cf222e);
+    color: rgb(255, 255, 255);
+}
+
+.chat-action-modal-actions .is-danger:hover {
+    background: var(--red, #cf222e);
+    filter: brightness(0.92);
+}
+
+.chat-action-modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.chat-action-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    z-index: 1500;
+    transform: translateX(-50%);
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.92);
+    color: rgb(255, 255, 255);
+    font-size: calc(13px * var(--ui-font-scale));
+    box-shadow: rgba(15, 23, 42, 0.25) 0px 8px 24px;
+}
+
+.chat-action-toast[hidden] {
+    display: none !important;
+}
+
+.chat-math {
+    font-family: inherit;
+    white-space: normal;
+}
+
+.chat-math sup,
+.chat-math sub {
+    font-size: 0.75em;
+    line-height: 0;
+}
+
+.chat-math-block {
+    display: block;
+    margin: 6px 0px;
+}
+
+.chatbot-history-link mark {
+    padding: 0px 1px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--orange) 28%, transparent);
+    color: inherit;
+    font-weight: 700;
+}
+
+.chat-drop-zone {
+    position: relative;
+}
+
+.chat-drop-zone.is-file-dragover {
+    outline: var(--primary) dashed 2px;
+    outline-offset: -2px;
+}
+
+.chat-drop-zone.is-file-dragover::after {
+    content: "여기에 파일을 놓으면 첨부됩니다";
+    position: absolute;
+    inset: 0px;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--surface) 90%, var(--primary));
+    color: var(--primary);
+    font-size: calc(14px * var(--ui-font-scale));
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.chatbot-history-badge {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 0px 6px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--purple) 30%, transparent);
+    background: color-mix(in srgb, var(--purple) 12%, transparent);
+    color: var(--purple);
+    font-size: calc(10px * var(--ui-font-scale));
+    font-weight: 600;
+    line-height: 1.6;
+    vertical-align: 1px;
+}
+
+.chat-guide {
+    align-self: stretch;
+    width: 100%;
+}
+
+.chat-msg-assistant .chat-bubble.chat-guide-card {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    padding: 18px 22px;
+    border-radius: 14px;
+    background: var(--surface-el, #f1f5f9);
+    color: var(--text, #1f2328);
+    font-size: calc(13px * var(--ui-font-scale));
+    line-height: 1.7;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.chat-guide-card p {
+    margin: 0px 0px 12px;
+}
+
+.chat-guide-card p:last-child {
+    margin-bottom: 0px;
+}
+
+.chat-guide-card .chat-guide-step {
+    color: var(--primary);
+}
+
+.chat-guide-card .chat-guide-warn {
+    color: var(--red, #cf222e);
+}
+
+.chat-sources-slot[hidden] {
+    display: none;
+}
+
+.chat-sources {
+    margin: 0px 0px 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 12px;
+    background: var(--surface, #fff);
+    font-size: calc(13px * var(--ui-font-scale));
+}
+
+.chat-sources-title {
+    margin: 0px 0px 8px;
+    font-weight: 700;
+    color: var(--text, #1f2328);
+}
+
+.chat-sources-count {
+    margin-left: 4px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.chat-sources-notice {
+    margin: 0px 0px 8px;
+    color: var(--text-sub, #656d76);
+}
+
+.chat-sources-list {
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chat-sources-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--surface-el, #f6f8fa);
+}
+
+.chat-sources-rank {
+    flex: 0 0 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 700;
+}
+
+.chat-sources-body {
+    flex: 1 1 0%;
+    min-width: 0px;
+}
+
+.chat-sources-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+}
+
+.chat-sources-name {
+    color: var(--text, #1f2328);
+    font-weight: 600;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+a.chat-sources-name:hover {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.chat-sources-score {
+    flex: 0 0 auto;
+    padding: 0px 8px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--purple) 12%, transparent);
+    color: var(--purple);
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 700;
+    line-height: 1.7;
+}
+
+.chat-sources-meta {
+    margin-top: 2px;
+    color: var(--text-sub, #656d76);
+    font-size: calc(12px * var(--ui-font-scale));
+}
+
+.chat-sources-sep {
+    margin: 0px 6px;
+    color: var(--border, #d1d9e0);
+}
+
+.chat-sources-total {
+    margin-left: 4px;
+    font-weight: 400;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-sub, #656d76);
+}
+
+.chat-sources-item.is-previewing {
+    background: rgba(var(--primary-rgb), 0.1);
+    box-shadow: rgba(var(--primary-rgb), 0.35) 0px 0px 0px 1px inset;
+}
+
+.chat-sources-item.is-previewing .chat-sources-name {
+    color: var(--primary);
+}
+
+.chat-preview {
+    position: relative;
+    flex: 0 0 min(48%, 880px);
+    min-width: 380px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border-left: 1px solid var(--border, #e5e7eb);
+    background: var(--surface-el);
+}
+
+.chat-preview[hidden] {
+    display: none;
+}
+
+.chat-preview-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    background: var(--surface, #fff);
+}
+
+.chat-preview-icon {
+    flex: 0 0 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+}
+
+.chat-preview-icon svg,
+.chat-preview-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.chat-preview-heading {
+    flex: 1 1 0%;
+    min-width: 0px;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.35;
+}
+
+.chat-preview-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: calc(14px * var(--ui-font-scale));
+    color: var(--text, #1f2328);
+}
+
+.chat-preview-sub {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-sub, #656d76);
+}
+
+.chat-preview-tools {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0 0 auto;
+}
+
+.chat-preview-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-sub, #475569);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.chat-preview-btn:hover {
+    background: var(--surface-el, #f1f5f9);
+    color: var(--text, #0f172a);
+}
+
+a.chat-preview-btn:not([href]) {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.chat-preview-zoom {
+    height: 30px;
+    padding: 0px 6px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: var(--text, #1f2328);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(12px * var(--ui-font-scale));
+}
+
+.chat-preview-body {
+    flex: 1 1 0%;
+    min-height: 0px;
+    overflow: auto;
+    padding: 24px;
+    outline: none;
+}
+
+.chat-preview-pages {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.chat-preview-page {
+    display: block;
+    background: rgb(255, 255, 255);
+    box-shadow: rgba(15, 23, 42, 0.12) 0px 2px 10px;
+}
+
+.chat-preview-frame {
+    width: 100%;
+    height: 100%;
+    min-height: 480px;
+    border: 0px;
+    background: rgb(255, 255, 255);
+}
+
+.chat-preview-state {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--text-sub, #656d76);
+    font-size: calc(13px * var(--ui-font-scale));
+}
+
+.chat-preview-state a {
+    color: var(--primary);
+}
+
+.chat-preview:fullscreen,
+.chat-preview.is-maximized {
+    position: fixed;
+    inset: 0px;
+    z-index: 1600;
+    min-width: 0px;
+    width: 100%;
+}
+
+@media (max-width: 1100px) {
+    .chat-preview {
+        position: fixed;
+        inset: 0px;
+        z-index: 1600;
+        min-width: 0px;
+        width: 100%;
+        flex: 0 0 auto;
+        border-left: 0px;
+    }
+}
+
+.chat-sources-item.is-clickable {
+    cursor: pointer;
+    transition:
+        background-color 0.15s,
+        box-shadow 0.15s;
+}
+
+.chat-sources-item.is-clickable:hover {
+    background: rgba(var(--primary-rgb), 0.1);
+    box-shadow: rgba(var(--primary-rgb), 0.35) 0px 0px 0px 1px inset;
+}
+
+.chat-sources-item.is-clickable:hover .chat-sources-name {
+    color: var(--primary);
+}
+
+.chat-sources-item.is-clickable:focus-visible {
+    outline: var(--primary) solid 2px;
+    outline-offset: 1px;
+}
+
+.chatbot-scroll-area {
+    display: flex;
+    flex-direction: column;
+    flex: 0 1 auto;
+    max-height: 45%;
+    min-height: 0;
+}
+
+.chatbot-projects {
+    flex: 0 1 auto;
+    min-height: 0px;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    border-top: 1px solid var(--surface-el);
+}
+
+.chatbot-section-head {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 4px;
+    padding-bottom: 4px;
+}
+.chatbot-projects.is-collapsed .chatbot-section-head {
+    padding-bottom: 0;
+}
+.chatbot-section-head .chatbot-history-title {
+    margin-bottom: 4px;
+}
+
+.chatbot-section-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0px;
+    border: 0px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+}
+
+.chatbot-section-add:hover {
+    background: var(--surface-el);
+    color: var(--primary);
+}
+
+.chatbot-section-add svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.chatbot-project-list {
+    list-style: none;
+    margin: 0px;
+    /* padding: 0px 0px 6px; */
+    overflow-y: auto;
+    min-height: 0px;
+}
+
+.chatbot-project-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    border: 0px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-sub);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    text-align: left;
+    cursor: pointer;
+}
+
+.chatbot-project-link:hover {
+    background: var(--surface-el);
+}
+
+.chatbot-project-link.is-active {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.chatbot-project-link svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.chatbot-project-name {
+    flex: 1 1 0%;
+    min-width: 0px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chatbot-project-name mark {
+    padding: 0px 1px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--orange) 28%, transparent);
+    color: inherit;
+    font-weight: 700;
+}
+
+.chatbot-project-count {
+    display: none !important;
+}
+
+.project-view[hidden],
+.chat-project-crumb[hidden] {
+    display: none !important;
+}
+
+.chatbot-app.is-project:not(.is-chatting) > .chatbot-main {
+    justify-content: flex-start;
+}
+
+.chatbot-app.is-project [data-chat-hero] {
+    display: none;
+}
+
+.chatbot-app.is-project.is-chatting .project-view {
+    display: none;
+}
+
+.chatbot-app.is-project:not(.is-chatting) .chat-project-crumb {
+    display: none;
+}
+
+.project-view {
+    flex: 1 1 auto;
+    min-height: 0px;
+    overflow-y: auto;
+    width: 100%;
+    max-width: 960px;
+    margin: 0px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    border-radius: 14px;
+    outline: transparent dashed 2px;
+}
+
+.project-view.is-file-dragover {
+    outline-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.04);
+}
+
+.project-view-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 4px 2px 0px;
+}
+
+.project-view-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 10px;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+}
+
+.project-view-icon svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.project-view-titles {
+    flex: 1 1 0%;
+    min-width: 0px;
+}
+
+.project-view-name {
+    margin: 0px;
+    font-size: calc(22px * var(--ui-font-scale));
+    font-weight: 800;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.project-view-desc {
+    margin: 4px 0px 0px;
+    font-size: calc(13px * var(--ui-font-scale));
+    line-height: 1.6;
+    color: var(--text-sub);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.project-view-actions {
+    display: flex;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.project-btn {
+    height: 30px;
+    padding: 0px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-sub);
+    font-style: inherit;
+    font-variant: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.project-btn:hover {
+    background: var(--surface-el);
+}
+
+.project-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.project-btn.is-primary {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: rgb(255, 255, 255);
+}
+
+.project-btn.is-primary:hover:not(:disabled) {
+    background: var(--primary-dark);
+}
+
+.project-btn.is-danger {
+    color: var(--red);
+}
+
+.project-btn.is-danger:hover {
+    background: color-mix(in srgb, var(--red) 6%, transparent);
+    border-color: var(--red);
+}
+
+.project-view-body {
+    display: grid;
+    grid-template-columns: minmax(0px, 1fr) 320px;
+    gap: 16px;
+    align-items: start;
+}
+
+@media (max-width: 960px) {
+    .project-view-body {
+        grid-template-columns: minmax(0px, 1fr);
+    }
+}
+
+.project-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0px;
+}
+
+.project-panel {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    min-width: 0px;
+}
+
+.project-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.project-panel-head h2 {
+    margin: 0px;
+    font-size: calc(14px * var(--ui-font-scale));
+    font-weight: 700;
+    color: var(--text);
+}
+
+.project-count {
+    margin-left: 2px;
+    color: var(--text-sub);
+    font-weight: 600;
+}
+
+.project-panel-state {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-sub);
+}
+
+.project-panel-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.project-panel-meta {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.project-hint {
+    margin: 0px 0px 8px;
+    font-size: calc(12px * var(--ui-font-scale));
+    line-height: 1.5;
+    color: var(--text-sub);
+}
+
+.project-panel .project-hint:last-child {
+    margin: 8px 0px 0px;
+}
+
+.project-empty {
+    padding: 14px 4px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-muted);
+    list-style: none;
+}
+
+.project-instructions {
+    display: block;
+    width: 100%;
+    min-height: 120px;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    resize: vertical;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    line-height: 1.6;
+}
+
+.project-instructions:focus {
+    outline: 0px;
+    border-color: var(--primary);
+    box-shadow: rgba(var(--primary-rgb), 0.18) 0px 0px 0px 3px;
+}
+
+.project-chat-list,
+.project-file-list {
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+}
+
+.project-chat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid var(--surface-el);
+}
+
+.project-chat-item:first-child {
+    border-top: 0px;
+}
+
+.project-chat-link {
+    flex: 1 1 0%;
+    min-width: 0px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 6px;
+    border: 0px;
+    border-radius: 8px;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.project-chat-link:hover {
+    background: var(--bg);
+}
+
+.project-chat-title {
+    font-size: calc(13px * var(--ui-font-scale));
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-chat-last {
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-sub);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-chat-date {
+    flex: 0 0 auto;
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.project-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    padding: 0px;
+    border: 0px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.project-icon-btn:hover {
+    background: var(--surface-el);
+    color: var(--text-sub);
+}
+
+.project-icon-btn svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.project-file-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0px;
+    border-top: 1px solid var(--surface-el);
+    font-size: calc(12px * var(--ui-font-scale));
+}
+
+.project-file-item:first-child {
+    border-top: 0px;
+}
+
+.project-file-name {
+    flex: 1 1 0%;
+    min-width: 0px;
+    color: var(--text-sub);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-file-size {
+    flex: 0 0 auto;
+    color: var(--text-muted);
+    font-size: calc(11px * var(--ui-font-scale));
+}
+
+.project-file-status {
+    flex: 0 0 auto;
+    padding: 1px 7px;
+    border-radius: 9px;
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 600;
+}
+
+.project-file-status.is-busy {
+    background: color-mix(in srgb, var(--orange) 12%, transparent);
+    color: var(--orange);
+}
+
+.project-file-status.is-ready {
+    background: color-mix(in srgb, var(--green) 12%, transparent);
+    color: var(--green);
+}
+
+.project-file-status.is-failed {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+}
+
+.chat-project-crumb {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 760px;
+    margin: 0px auto;
+}
+
+.chat-project-crumb button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 60%;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--primary);
+    font-style: inherit;
+    font-variant: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chat-project-crumb button:hover {
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.chat-project-crumb button span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-project-crumb svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.chat-project-crumb-note {
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.chat-action-modal-field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    resize: vertical;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: var(--text, #1f2328);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    line-height: 1.5;
+}
+
+.chat-action-modal-field textarea:focus {
+    outline: 0px;
+    border-color: var(--primary);
+    box-shadow: rgba(var(--primary-rgb), 0.18) 0px 0px 0px 3px;
+}
+
+.project-move-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.project-move-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: calc(13px * var(--ui-font-scale));
+    cursor: pointer;
+}
+
+.project-move-option:hover {
+    background: var(--bg);
+}
+
+.project-move-option:has(input:checked) {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.project-move-option svg {
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    fill: none;
+    stroke: var(--text-sub);
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+}
+
+.project-move-option span {
+    flex: 1 1 0%;
+    min-width: 0px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-action-modal-actions .project-move-create {
+    margin-right: auto;
+    border-style: dashed;
+}
+
+.chat-more-item[hidden] {
+    display: none !important;
+}
+
+.chatbot-project-list li.has-more-action {
+    position: relative;
+}
+
+.chatbot-project-list li.has-more-action > .chatbot-project-link {
+    padding-right: 34px;
+}
+
+.chatbot-project-list .btn-more {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0px;
+    border: 0px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s;
+}
+
+.chatbot-project-list li.has-more-action:hover > .btn-more,
+.chatbot-project-list li.has-more-action:focus-within > .btn-more,
+.chatbot-project-list li.has-more-action > .is-active ~ .btn-more,
+.chatbot-project-list .btn-more[aria-expanded="true"],
+.chatbot-project-list .btn-more:focus-visible {
+    opacity: 1;
+}
+
+.chatbot-project-list .btn-more:hover,
+.chatbot-project-list .btn-more[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--text);
+}
+
+.chatbot-project-list .btn-more:focus-visible {
+    outline: var(--primary) solid 2px;
+    outline-offset: -2px;
+}
+
+.chatbot-project-list li.has-more-action > .is-active ~ .btn-more {
+    color: var(--primary);
+}
+
+.chatbot-project-list li.is-more-open > .chatbot-project-link:not(.is-active) {
+    background: var(--surface-el);
+}
+
+.chatbot-project-list li.has-more-action:hover .chatbot-project-count,
+.chatbot-project-list li.is-more-open .chatbot-project-count {
+    visibility: hidden;
+}
+
+.chatbot-app.is-sidebar-collapsed .chatbot-project-list .btn-more {
+    display: none;
+}
+
+@media (hover: none) {
+    .chatbot-project-list .btn-more {
+        opacity: 1;
+    }
+}
+
+.chatbot-section-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0px;
+    border: 0px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.chatbot-section-toggle:hover {
+    color: var(--text-sub);
+}
+
+.chatbot-section-toggle svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 0.15s;
+}
+
+.chatbot-section-toggle[aria-expanded="false"] svg {
+    transform: rotate(-90deg);
+}
+
+.chatbot-project-list[hidden] {
+    display: none;
+}
+
+.chatbot-project-list li.has-more-action > .chatbot-project-link {
+    padding-right: 62px;
+}
+
+.chatbot-project-list .btn-more,
+.chatbot-project-list .btn-new-chat {
+    top: 3px;
+    transform: none;
+}
+
+.chatbot-project-list .btn-new-chat {
+    position: absolute;
+    right: 31px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0px;
+    border: 0px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s;
+}
+
+.chatbot-project-list .btn-new-chat svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.chatbot-project-list .btn-new-chat:hover {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--text);
+}
+
+.chatbot-project-list li.has-more-action:hover > .btn-new-chat,
+.chatbot-project-list li.has-more-action:focus-within > .btn-new-chat,
+.chatbot-project-list li.has-more-action > .is-active ~ .btn-new-chat {
+    opacity: 1;
+}
+
+.chatbot-project-list li.has-more-action > .is-active ~ .btn-new-chat {
+    color: var(--primary);
+}
+
+.chatbot-app.is-sidebar-collapsed .chatbot-project-list .btn-new-chat {
+    display: none;
+}
+
+@media (hover: none) {
+    .chatbot-project-list .btn-new-chat {
+        opacity: 1;
+    }
+}
+
+.chatbot-project-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    padding: 2px;
+    margin: -2px;
+    border-radius: 4px;
+}
+
+.chatbot-project-icon:hover {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.chatbot-project-link.is-active {
+    box-shadow: var(--primary) 0px 0px 0px 1.5px inset;
+}
+
+.chatbot-project-chats {
+    list-style: none;
+    margin: 2px 0px 4px;
+    padding: 0px;
+}
+
+.chatbot-project-chat {
+    display: block;
+    width: 100%;
+    padding: 6px 10px 6px 33px;
+    border: 0px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-sub);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chatbot-project-chat:hover {
+    background: var(--surface-el);
+}
+
+.chatbot-project-chat.is-active {
+    background: var(--surface-el);
+    color: var(--text);
+    font-weight: 600;
+}
+
+.chatbot-project-chat mark {
+    padding: 0px 1px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--orange) 28%, transparent);
+    color: inherit;
+    font-weight: 700;
+}
+
+.chatbot-project-chat-empty {
+    padding: 5px 10px 5px 33px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.chatbot-project-chats li.has-more-action {
+    position: relative;
+}
+
+.chatbot-project-chats li.has-more-action > .chatbot-project-chat {
+    padding-right: 34px;
+}
+
+.chatbot-project-chats .btn-more {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0px;
+    border: 0px;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-sub);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s;
+}
+
+.chatbot-project-chats li.has-more-action:hover > .btn-more,
+.chatbot-project-chats li.has-more-action:focus-within > .btn-more,
+.chatbot-project-chats li.has-more-action > .is-active ~ .btn-more,
+.chatbot-project-chats .btn-more[aria-expanded="true"],
+.chatbot-project-chats .btn-more:focus-visible {
+    opacity: 1;
+}
+
+.chatbot-project-chats .btn-more:hover,
+.chatbot-project-chats .btn-more[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--text);
+}
+
+.chatbot-project-chats .btn-more:focus-visible {
+    outline: var(--primary) solid 2px;
+    outline-offset: -2px;
+}
+
+.chatbot-project-chats li.is-more-open > .chatbot-project-chat:not(.is-active) {
+    background: var(--surface-el);
+}
+
+.chatbot-app.is-sidebar-collapsed .chatbot-project-chats .btn-more {
+    display: none;
+}
+
+@media (hover: none) {
+    .chatbot-project-chats .btn-more {
+        opacity: 1;
+    }
+}
+
+/* Start: 261020 수정 - 홈·챗봇 채팅 표 격자 및 헤더 스타일
+ * 복사 행·외곽 박스는 chat.js의 ensureBlockCopyStyle에서 관리합니다.
+ * 셀 테두리는 내부 구분선만 남겨 외곽 박스와 겹치지 않도록 합니다.
+ */
+.chat-msg-assistant .chat-bubble .chat-table-wrap {
+    max-width: 100%;
+    margin: 10px 0px 14px;
+    overflow-x: auto;
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table {
+    width: 100%;
+    margin: 0px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: calc(14px * var(--ui-font-scale));
+    line-height: 1.55;
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table th,
+.chat-msg-assistant .chat-bubble table.chat-table td {
+    min-width: 80px;
+    padding: 8px 10px;
+    border: 1px solid var(--border, #d9dee7);
+    text-align: left;
+    vertical-align: top;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table thead th {
+    border-bottom: 1px solid var(--border);
+    color: var(--text-sub);
+    font-weight: 600;
+    white-space: nowrap;
+    background: var(--surface-el, #f0f3f6);
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table tr > :first-child {
+    border-left: 0;
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table tr > :last-child {
+    border-right: 0;
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table tbody tr:last-child td {
+    border-bottom: 0px;
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table tbody tr:hover td {
+    background: var(--bg);
+}
+
+.chat-msg-assistant .chat-bubble table.chat-table p {
+    margin: 0px;
+}
+/* End: 261020 수정 - 홈·챗봇 채팅 표 격자 및 헤더 스타일 */
+
+.chat-msg-assistant .chat-bubble h1,
+.chat-msg-assistant .chat-bubble h2,
+.chat-msg-assistant .chat-bubble h5,
+.chat-msg-assistant .chat-bubble h6 {
+    margin: 12px 0px 6px;
+    font-size: calc(15px * var(--ui-font-scale));
+}
+
+.chat-msg-assistant .chat-bubble h3 {
+    font-size: calc(17px * var(--ui-font-scale));
+}
+
+.chat-msg-assistant .chat-bubble blockquote {
+    margin: 8px 0px;
+    padding: 2px 12px;
+    border-left: 3px solid var(--border);
+    color: var(--text-sub);
+}
+
+.chat-msg-assistant .chat-bubble hr {
+    margin: 14px 0px;
+    border-width: 1px 0px 0px;
+    border-style: solid none none;
+    border-color: var(--border) currentcolor currentcolor;
+    border-image: none;
+}
+
+.chat-msg-assistant .chat-bubble del {
+    color: var(--text-sub);
+}
+
+.chat-msg-assistant .chat-bubble.chat-search-card {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+}
+
+.chat-search-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.chat-search-title {
+    font-size: calc(15px * var(--ui-font-scale));
+    color: var(--text);
+}
+
+.chat-search-count {
+    flex: 1 1 0%;
+    font-size: calc(13px * var(--ui-font-scale));
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.chat-search-sort select {
+    height: 30px;
+    padding: 0px 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-sub);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(12px * var(--ui-font-scale));
+    cursor: pointer;
+}
+
+.chat-search-list {
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+}
+
+.chat-search-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 2px;
+    border-top: 1px solid var(--surface-el);
+}
+
+.chat-search-item:first-child {
+    border-top: 0px;
+}
+
+.chat-search-ext {
+    flex: 0 0 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--purple) 12%, transparent);
+    color: var(--purple);
+    font-size: calc(10px * var(--ui-font-scale));
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.chat-search-ext.ext-hwp,
+.chat-search-ext.ext-hwpx {
+    background: color-mix(in srgb, var(--cyan) 12%, transparent);
+    color: var(--cyan);
+}
+
+.chat-search-ext.ext-pdf {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+}
+
+.chat-search-ext.ext-xls,
+.chat-search-ext.ext-xlsx,
+.chat-search-ext.ext-csv {
+    background: color-mix(in srgb, var(--green) 12%, transparent);
+    color: var(--green);
+}
+
+.chat-search-ext.ext-doc,
+.chat-search-ext.ext-docx {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+}
+
+.chat-search-ext.ext-ppt,
+.chat-search-ext.ext-pptx {
+    background: color-mix(in srgb, var(--orange) 12%, transparent);
+    color: var(--orange);
+}
+
+.chat-search-body {
+    flex: 1 1 0%;
+    min-width: 0px;
+}
+
+.chat-search-name {
+    font-size: calc(14px * var(--ui-font-scale));
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-search-path {
+    margin-top: 2px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-sub);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-search-name mark,
+.chat-search-path mark {
+    padding: 0px 1px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--orange) 28%, transparent);
+    color: inherit;
+}
+
+.chat-search-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.chat-search-match {
+    padding: 0px 6px;
+    border-radius: 9px;
+    background: var(--surface-el);
+    color: var(--text-sub);
+    font-size: calc(11px * var(--ui-font-scale));
+    line-height: 18px;
+}
+
+.chat-search-level {
+    padding: 0px 6px;
+    border-radius: 9px;
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 700;
+    line-height: 18px;
+    background: var(--surface-el);
+    color: var(--text-sub);
+}
+
+.chat-search-level.is-c {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+}
+
+.chat-search-level.is-s {
+    background: color-mix(in srgb, var(--orange) 12%, transparent);
+    color: var(--orange);
+}
+
+.chat-search-level.is-o {
+    background: color-mix(in srgb, var(--green) 12%, transparent);
+    color: var(--green);
+}
+
+.chat-search-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.chat-search-tags span {
+    padding: 1px 7px;
+    border-radius: 6px;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    font-size: calc(11px * var(--ui-font-scale));
+}
+
+.chat-search-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 2px;
+    font-size: calc(13px * var(--ui-font-scale));
+    color: var(--text-sub);
+}
+
+.chat-search-notice {
+    margin: 8px 0px 0px;
+    font-size: calc(13px * var(--ui-font-scale));
+    color: var(--text-sub);
+}
+
+.chat-search-notice[hidden] {
+    display: none;
+}
+
+.chat-search-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.chat-search-more {
+    height: 32px;
+    padding: 0px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--primary);
+    font-style: inherit;
+    font-variant: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chat-search-more:hover {
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.chat-search-more:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.chat-search-more[hidden] {
+    display: none;
+}
+
+.chat-search-hint {
+    margin-left: auto;
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.chat-msg-assistant .chat-bubble ul.chat-search-list {
+    margin: 0px;
+    padding: 0px;
+}
+
+.chatbot-history-list > li,
+.chatbot-project-chats > li {
+    position: relative;
+}
+
+.chatbot-history-list > li.has-unread > .chatbot-history-link,
+.chatbot-project-chats > li.has-unread > .chatbot-project-chat {
+    padding-right: 34px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.chatbot-history-list > li.has-unread::after,
+.chatbot-project-chats > li.has-unread::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 13px;
+    width: 8px;
+    height: 8px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: rgba(var(--primary-rgb), 0.18) 0px 0px 0px 2px;
+    pointer-events: none;
+}
+
+.chatbot-history-list > li.has-unread:hover::after,
+.chatbot-history-list > li.has-unread:focus-within::after,
+.chatbot-history-list > li.has-unread.is-more-open::after,
+.chatbot-project-chats > li.has-unread:hover::after,
+.chatbot-project-chats > li.has-unread:focus-within::after,
+.chatbot-project-chats > li.has-unread.is-more-open::after {
+    opacity: 0;
+}
+
+@media (hover: none) {
+    .chatbot-history-list > li.has-unread.has-more-action::after,
+    .chatbot-project-chats > li.has-unread.has-more-action::after {
+        right: 34px;
+    }
+}
+
+.chatbot-app.is-sidebar-collapsed .chatbot-history-list > li.has-unread::after {
+    display: none;
+}
+
+.chatbot-history-list > li.has-unread.has-more-action:has(> .is-active)::after,
+.chatbot-project-chats > li.has-unread.has-more-action:has(> .is-active)::after {
+    right: 36px;
+    opacity: 1;
+}
+
+.chatbot-history-list > li.has-unread.has-more-action:has(> .is-active) > .chatbot-history-link,
+.chatbot-project-chats > li.has-unread.has-more-action:has(> .is-active) > .chatbot-project-chat {
+    padding-right: 52px;
+}
+
+.chatbot-history-list > li.is-answering > .chatbot-history-link,
+.chatbot-project-chats > li.is-answering > .chatbot-project-chat {
+    padding-right: 34px;
+}
+
+.chatbot-history-list > li.is-answering::before,
+.chatbot-project-chats > li.is-answering::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    width: 10px;
+    height: 10px;
+    margin-top: -5px;
+    box-sizing: border-box;
+    border-width: 2px;
+    border-style: solid;
+    border-color: var(--primary) rgba(var(--primary-rgb), 0.35) rgba(var(--primary-rgb), 0.35);
+    border-image: none;
+    border-radius: 50%;
+    animation: 0.8s linear 0s infinite normal none running chat-answering-spin;
+    pointer-events: none;
+}
+
+.chatbot-history-list > li.is-answering::after,
+.chatbot-project-chats > li.is-answering::after {
+    display: none;
+}
+
+.chatbot-history-list > li.is-answering:hover::before,
+.chatbot-history-list > li.is-answering.is-more-open::before,
+.chatbot-project-chats > li.is-answering:hover::before,
+.chatbot-project-chats > li.is-answering.is-more-open::before {
+    opacity: 0;
+}
+
+.chatbot-history-list > li.is-answering.has-more-action:has(> .is-active)::before,
+.chatbot-project-chats > li.is-answering.has-more-action:has(> .is-active)::before {
+    right: 36px;
+    opacity: 1;
+}
+
+@keyframes chat-answering-spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Start: Model Dropdown - home / chatbot */
+
+.dropdown-menu-model-trigger {
+    /* height: 30px;
+    min-height: 30px; */
+    height: 25px;
+    min-height: 25px;
+    padding: 5px 12px;
+    gap: 4px;
+    border-color: transparent;
+    border-radius: var(--radius-badge, 14px);
+    background: transparent;
+    color: var(--primary, #156edd);
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 600;
+}
+.dropdown-menu-model-trigger[aria-expanded="true"],
+.dropdown-menu-model-trigger:hover:not(:disabled) {
+    border-radius: 14px;
+    border: 0.5px solid;
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.04);
+}
+
+.dropdown-menu.dropdown-menu-model {
+    width: 260px;
+    min-width: min(260px, calc(100vw - 24px));
+    padding: 8px 0;
+    overflow: hidden;
+    border-color: var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 10px 30px rgba(31, 35, 40, 0.16);
+}
+
+.dropdown-menu-model .dropdown-menu-label {
+    padding: 10px 16px 8px;
+    color: var(--text-muted);
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 600;
+}
+
+.dropdown-menu-model .dropdown-menu-item {
+    min-height: 0;
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 0;
+    color: var(--text);
+    font-size: calc(13px * var(--ui-font-scale));
+    font-weight: 600;
+    transition: background 0.15s ease;
+}
+
+.dropdown-menu-item[aria-checked="true"],
+.dropdown-menu-item[aria-checked="true"]:hover {
+    background: rgba(var(--primary-rgb), 0.12);
+    color: var(--primary, #156edd);
+}
+
+.dropdown-model-name {
+    flex: 1;
+}
+
+.dropdown-model-desc {
+    flex-shrink: 0;
+    color: var(--text-sub);
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 500;
+}
+
+.dropdown-model-check {
+    display: none;
+    flex: 0 0 auto;
+    font-size: calc(14px * var(--ui-font-scale));
+}
+
+.dropdown-menu-item[aria-checked="true"] .dropdown-model-check {
+    display: inline;
+}
+
+/* End: Model Dropdown - home / chatbot */
+
+/* Start: Prompt Composer - home / chatbot shared input */
+
+.prompt-composer-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.prompt-composer-shell {
+    width: 100%;
+}
+
+.prompt-composer {
+    --composer-inline-padding-left: 18px;
+    --composer-inline-padding-right: 18px;
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 12px var(--composer-inline-padding-right) 12px var(--composer-inline-padding-left);
+    border: 2px solid transparent;
+    border-radius: 30px;
+    background:
+        linear-gradient(var(--surface, #fff), var(--surface, #fff)) padding-box,
+        linear-gradient(135deg, rgba(33, 145, 211, 0.5) 33%, rgba(130, 80, 223, 0.5) 100%) border-box;
+    background-size:
+        auto,
+        300% 300%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    animation: prompt-composer-border 6s ease infinite;
+}
+.prompt-composer-input[rows="2"] {
+    width: 100%;
+    min-height: 48px;
+}
+.prompt-composer:hover {
+    background-size:
+        auto,
+        300% 300%;
+    box-shadow: 0 4px 28px rgba(var(--primary-rgb, 21, 110, 221), 0.15);
+}
+.prompt-composer:focus-within {
+    background:
+        linear-gradient(var(--surface, #fff), var(--surface, #fff)) padding-box,
+        linear-gradient(135deg, rgb(33, 145, 211) 33%, rgb(130, 80, 223) 100%) border-box;
+    transform: translateY(-2px);
+}
+
+@keyframes prompt-composer-border {
+    0% {
+        background-position:
+            0% 50%,
+            0% 50%;
+    }
+    50% {
+        background-position:
+            100% 50%,
+            100% 50%;
+    }
+    100% {
+        background-position:
+            0% 50%,
+            0% 50%;
+    }
+}
+
+.prompt-composer-input {
+    min-width: 0;
+    height: 100%;
+    flex: 1 1 auto;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: transparent !important;
+    color: var(--text, #1f2328);
+    font: inherit;
+    font-size: calc(14px * var(--ui-font-scale, 1));
+    line-height: 1;
+    resize: none;
+    align-content: center;
+    caret-color: var(--primary, #156edd);
+    position: relative;
+    z-index: 1;
+}
+
+.prompt-composer-input::placeholder {
+    color: var(--text-muted, #8b949e);
+}
+
+.prompt-composer-tools,
+.prompt-composer-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    /* flex: 0 0 auto; */
+}
+.prompt-composer-attach {
+    width: 30px;
+    height: 30px;
+    border-color: transparent !important;
+    border-radius: 50%;
+    background: transparent !important;
+    /* color: var(--text-muted, #8b949e); */
+    transition: all 0.2s ease;
+}
+
+.prompt-composer-attach:hover:not(:disabled) {
+    background: var(--surface-el, #f0f3f6) !important;
+    /* color: var(--primary, #156edd); */
+    transform: scale(1.1);
+}
+.prompt-composer-attach:is(.button, .icon-button):hover:not(:disabled, [aria-disabled="true"]) img[data-icon] {
+    filter: none;
+}
+.prompt-composer .dropdown-menu-model {
+    z-index: 100;
+}
+
+/* Start: 261016 추가 - 모델명·작업명 및 구분점 */
+
+.chat-tit {
+    font-size: calc(12px * var(--ui-font-scale, 1));
+    color: var(--text);
+    font-weight: 500;
+}
+.chat-middot {
+    display: inline-block;
+    content: "";
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background-color: var(--text);
+    gap: 4px;
+}
+.chat-desc {
+    font-size: calc(12px * var(--ui-font-scale, 1));
+    color: var(--text-sub);
+    font-weight: 400;
+}
+/* End: 261016 추가 - 모델명·작업명 및 구분점 */
+
+.prompt-composer .dropdown-menu-model-trigger > img[data-icon] {
+    width: 10px;
+    height: 10px;
+    flex-basis: 10px;
+}
+
+/* 메뉴 열림 효과는 모델 선택 화살표에만 적용한다. */
+.prompt-composer .dropdown-menu-component.is-open > .dropdown-menu-model-trigger > img[data-icon="chevron-down"] {
+    transform: rotate(180deg);
+    filter: var(--icon-filter-primary) !important;
+}
+.prompt-composer-submit,
+.prompt-composer-stop {
+    width: 34px;
+    height: 34px;
+    border-radius: 50% !important;
+    transition: all 0.2s ease;
+}
+
+.prompt-composer-submit:disabled {
+    border-color: var(--border, #d1d9e0) !important;
+    background: var(--border, #d1d9e0) !important;
+    cursor: not-allowed;
+    opacity: 0.6 !important;
+}
+
+.prompt-composer-submit:not(:disabled) {
+    border-color: var(--primary, #156edd);
+    background: var(--primary, #156edd);
+    cursor: pointer;
+}
+
+.prompt-composer-submit:not(:disabled, .prompt-composer-stop):hover {
+    border-color: var(--primary-dark, #0550ae);
+    background: var(--primary-dark, #0550ae);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb, 21, 110, 221), 0.3);
+    transform: scale(1.05);
+}
+
+.prompt-composer-submit:not(:disabled):active {
+    transform: scale(0.95);
+}
+
+.prompt-composer-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 16px 0;
+}
+
+.prompt-composer-files:empty {
+    display: none;
+}
+
+.prompt-composer-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    padding: 5px 8px;
+    border: 1px solid var(--border, #d1d9e0);
+    border-radius: var(--radius-badge, 14px);
+    background: var(--surface-el, #f0f3f6);
+    color: var(--text-sub, #656d76);
+    font-size: calc(11px * var(--ui-font-scale, 1));
+}
+
+.prompt-composer-file-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .prompt-composer {
+        animation: none;
+    }
+}
+
+#chatInput.prompt-composer-input {
+    flex: 1 1 auto;
+    min-height: auto;
+    max-height: 200px;
+    font-size: calc(15px * var(--ui-font-scale));
+    line-height: 1.6;
+    overflow-y: auto;
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+}
+
+.prompt-composer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.prompt-composer-bar .prompt-composer-tools,
+.prompt-composer-bar .prompt-composer-actions {
+    gap: 8px;
+}
+
+/* End: Prompt Composer - home / chatbot shared input */
+
+.chat-attach-list {
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+}
+
+.chat-attach-list[hidden] {
+    display: none;
+}
+
+.chat-attach-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 240px;
+    padding: 3px 6px 3px 10px;
+    border-radius: 999px;
+    background: var(--surface-el);
+    font-size: calc(12px * var(--ui-font-scale));
+}
+
+.chat-attach-item.is-failed {
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    color: var(--red);
+}
+
+.chat-attach-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chat-attach-state {
+    color: var(--text-sub);
+}
+
+.chat-attach-remove {
+    border: 0px;
+    background: transparent;
+    cursor: pointer;
+    font-size: calc(14px * var(--ui-font-scale));
+    line-height: 1;
+}
+
+.chat-messages {
+    width: 100%;
+    max-width: 760px;
+    margin: 0px auto;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 4px;
+    font-size: calc(14px * var(--ui-font-scale));
+    line-height: 1.65;
+}
+
+.chat-messages[hidden] {
+    display: none;
+}
+
+.chat-msg {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.chat-msg-user {
+    align-items: flex-end;
+}
+
+.chat-msg-user .chat-bubble {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px 14px 4px;
+    background: rgba(var(--primary-rgb));
+    color: var(--surface);
+    word-break: break-word;
+}
+
+.chat-msg-assistant .chat-bubble {
+    padding: 4px 2px;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.chat-msg-assistant .chat-bubble h3,
+.chat-msg-assistant .chat-bubble h4 {
+    margin: 12px 0px 6px;
+    font-size: calc(15px * var(--ui-font-scale));
+}
+
+.chat-msg-assistant .chat-bubble p {
+    margin: 0px 0px 8px;
+}
+
+.chat-msg-assistant .chat-bubble ul,
+.chat-msg-assistant .chat-bubble ol {
+    margin: 0px 0px 8px;
+    padding-left: 20px;
+}
+
+.chat-msg-assistant .chat-bubble table {
+    border-collapse: collapse;
+    margin: 8px 0px;
+}
+
+.chat-msg-assistant .chat-bubble th,
+.chat-msg-assistant .chat-bubble td {
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+}
+
+.chat-code {
+    background: rgb(15, 23, 42);
+    color: rgb(226, 232, 240);
+    padding: 10px 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: calc(13px * var(--ui-font-scale));
+}
+
+.chat-msg-assistant p code,
+.chat-msg-assistant li code {
+    background: var(--surface-el);
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
+.chat-msg-files {
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.chat-msg-files li {
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-sub);
+    background: var(--surface-el);
+    border-radius: 999px;
+    padding: 2px 10px;
+}
+
+.chat-stage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-sub);
+    font-size: calc(13px * var(--ui-font-scale));
+}
+
+.chat-stage[hidden] {
+    display: none;
+}
+
+.chat-stage-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    animation: 1.2s ease-in-out 0s infinite normal none running chat-pulse;
+}
+
+/* 261016 수정 - 답변 액션의 버튼 크기·아이콘·hover·선택 상태와 오류신고 패널은 common.css에서 공통 관리합니다. */
+.chat-error {
+    color: var(--red);
+    margin: 0px;
+}
+
+body[data-page="chatbot"] {
+    margin: 0px;
+}
+
+.chatbot-app {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    bottom: 0px;
+    left: var(--chatbot-offset-left, 0);
+    z-index: 900;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: auto;
+    height: auto;
+    margin: 0px;
+    overflow: hidden;
+    /* 261016 수정 - 이미지 배경은 앱 전체에 적용. 크기는 기존 inset과 auto를 사용 */
+    background: var(--ai-background-image) no-repeat;
+    background-size: cover;
+    --chatbot-sidebar-motion: var(--chatbot-sidebar-motion-time) ease;
+}
+/* Start: 261016 수정 - 공통 점 배경과 flare를 콘텐츠 뒤에 배치 */
+.chatbot-app > .chatbot-main {
+    /* 점/flare의 음수 z-index를 본문 안에 유지하기 위한 설정 */
+    isolation: isolate;
+}
+
+.chatbot-main > .ai-one-background {
+    /* 261016 수정 - 앱의 테마별 배경 이미지를 가리지 않도록 SVG용 불투명 바탕 제거.
+       점/flare 레이어만 유지하며 위치와 클릭 통과는 공통 스타일을 재사용 */
+    z-index: -1;
+    background: transparent;
+}
+
+/* End: 261016 수정 - 공통 점 배경과 flare를 콘텐츠 뒤에 배치 */
+.app > .app-sidebar ~ .chatbot-app {
+    --chatbot-offset-left: var(--sidebar-w, 200px);
+}
+
+.app > .app-sidebar.collapsed ~ .chatbot-app {
+    --chatbot-offset-left: 56px;
+}
+
+.chatbot-app > .chatbot-sidebar {
+    position: relative;
+    inset: auto;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 var(--sidebar-w, 220px);
+    width: var(--sidebar-w, 220px);
+    min-width: 0px;
+    height: 100%;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    transition:
+        width var(--chatbot-sidebar-motion),
+        flex-basis var(--chatbot-sidebar-motion);
+}
+
+/* Start: 261016 수정 - 챗봇 사이드바 56px 접힘 및 사용자 영역 */
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) > .chatbot-sidebar {
+    flex-basis: 56px;
+    width: 56px;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-sidebar > :not(.chatbot-brand, .nav-mode, .chatbot-nav, .sidebar-footer),
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand-text {
+    display: none;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand {
+    display: grid;
+    grid-template-columns: 28px;
+    align-content: center;
+    justify-content: center;
+    height: 60px;
+    padding: 0 12px;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand :is(.chatbot-brand-link, .sidebar-collapse-btn) {
+    grid-area: 1 / 1;
+    width: 28px;
+    height: 28px;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand .sidebar-collapse-btn {
+    display: inline-flex;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand:is(:hover, :has(:focus-visible)) .chatbot-brand-link {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand:is(:hover, :has(:focus-visible)) .sidebar-collapse-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+/* Start: 261023 추가 - 사이드바 접기 버튼 효과 */
+.chatbot-app:not(.is-rail-mode) .chatbot-brand .sidebar-collapse-btn img {
+    transform: rotate(180deg);
+}
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand .sidebar-collapse-btn img {
+    transform: rotate(0);
+}
+/* End: 261023 추가 - 사이드바 접기 버튼 효과 */
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-nav {
+    padding: 8px 4px;
+}
+
+/* Start: 261021 수정 - 접힌 챗봇 Work·Chat 모드 표시 */
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .nav-mode {
+    flex-direction: column;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .nav-mode > .nav-link {
+    padding: 10px 0;
+    gap: 0;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .nav-mode .nav-text {
+    display: none;
+}
+/* End: 261021 수정 - 접힌 챗봇 Work·Chat 모드 표시 */
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-nav-item {
+    justify-content: center;
+    gap: 0;
+    padding: 10px 0;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-nav-icon,
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-nav-item svg,
+.chatbot-search svg {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+}
+
+/* Start: 261021 수정 - 접힌 사이드바 검색 아이콘 유지 */
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-search {
+    position: relative;
+    justify-content: center;
+    gap: 0;
+    padding: 10px 0;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-search svg {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+}
+
+/* 기존 입력창의 클릭·키보드 포커스를 유지합니다. */
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-search input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+/* 기존 검색창과 목록만 옆에 표시하며 56px 사이드바 폭은 유지합니다. */
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-search.is-active {
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .is-search-open .chatbot-search input {
+    left: calc(100% + 8px);
+    width: min(280px, calc(100vw - 72px));
+    padding: 8px 12px;
+    opacity: 1;
+    cursor: text;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+    z-index: 51;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-sidebar.is-search-open > .chatbot-history {
+    display: flex;
+    position: absolute;
+    left: calc(100% + 4px);
+    top: calc(var(--chatbot-search-top) + 40px);
+    width: min(280px, calc(100vw - 72px));
+    max-height: min(50vh, 400px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 50;
+}
+/* End: 261021 수정 - 접힌 사이드바 검색 아이콘 유지 */
+
+/* 접힌 사용자 영역은 기존 아바타 버튼을 하단에 유지한다. */
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .sidebar-footer {
+    justify-content: center;
+    margin-top: auto;
+    padding: 8px 4px;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .sidebar-footer .user-card {
+    justify-content: center;
+    gap: 0;
+}
+
+/* 아이콘 메뉴의 접근 가능한 이름은 유지한다. */
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .sidebar-footer :is(.user-info, .round-btn) {
+    display: none;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-nav-item > span:not(.chatbot-nav-icon) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* End: 261016 수정 - 챗봇 사이드바 56px 접힘 및 사용자 영역 */
+
+.chatbot-brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 60px;
+    flex-shrink: 0;
+    padding: 0 12px;
+}
+
+/* Start: 261022 주석 보완 - 챗봇 브랜드 로고 크기 정렬 */
+/* Work 브랜드와 로고 박스·텍스트·버튼의 높이 기준을 공유합니다. */
+.chatbot-brand .chatbot-brand-link {
+    gap: 10px;
+}
+
+.chatbot-brand .brand-symbol {
+    display: block;
+    width: 26px;
+    height: 26px;
+    margin: 0;
+}
+
+.chatbot-brand .chatbot-brand-text {
+    line-height: normal;
+}
+
+.chatbot-brand .sidebar-collapse-btn {
+    width: 28px;
+    height: 28px;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-brand .brand-symbol {
+    width: 26px;
+    height: 26px;
+    margin: 0;
+}
+/* End: 261022 주석 보완 - 챗봇 브랜드 로고 크기 정렬 */
+
+.chatbot-brand-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: inherit;
+    text-decoration: none;
+    min-width: 0px;
+}
+
+.chatbot-brand-link img {
+    width: 26px;
+    height: 26px;
+}
+
+.chatbot-brand-text {
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.chatbot-brand-text strong {
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: calc(14px * var(--ui-font-scale));
+    color: var(--text, #1f2328);
+    font-weight: 700;
+}
+
+.chatbot-brand-text small {
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: calc(10px * var(--ui-font-scale));
+    font-family: "Pretendard";
+    color: #464c53;
+}
+
+.chatbot-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 8px 8px;
+}
+
+.chatbot-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-sub);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(12px * var(--ui-font-scale));
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.chatbot-nav-item:hover {
+    background: var(--surface-el);
+}
+
+.chatbot-nav-item:is(.is-primary, .is-active, .active, [aria-current="page"]) {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.chatbot-nav-item svg,
+.chatbot-search svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    fill: none;
+    stroke: currentcolor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* 기본·호버 아이콘을 같은 영역에 겹쳐 표시해 호버 시 메뉴명이 밀리지 않도록 합니다. */
+.chatbot-nav-icon {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+}
+
+.chatbot-nav-item .chatbot-nav-icon > :is(img, svg) {
+    grid-area: 1 / 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.chatbot-nav-icon-hover,
+.chatbot-nav-item:is(:hover, :focus-visible) .chatbot-nav-icon-default {
+    visibility: hidden;
+}
+
+.chatbot-nav-item:is(:hover, :focus-visible) .chatbot-nav-icon-hover {
+    visibility: visible;
+}
+/* Start: 261021 수정 - 접힌 채팅 검색 아이콘 공통 호버 애니메이션 */
+.chatbot-nav-item:hover > .chatbot-nav-icon,
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-search:hover > svg {
+    animation: navIconWiggle 0.5s ease;
+    transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .chatbot-nav-item:hover > .chatbot-nav-icon,
+    .chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-search:hover > svg {
+        animation: none;
+    }
+}
+/* End: 261021 수정 - 접힌 채팅 검색 아이콘 공통 호버 애니메이션 */
+.chatbot-nav-item:is(.is-primary, .is-active, .active, [aria-current="page"]) .chatbot-nav-icon {
+    filter: var(--icon-filter-primary, none);
+}
+
+.chatbot-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--text-sub);
+}
+
+.chatbot-search:focus-within {
+    background: var(--surface-el);
+}
+
+.chatbot-search input {
+    flex: 1 1 0%;
+    min-width: 0px;
+    border: 0px;
+    outline: none;
+    background: transparent;
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+}
+
+.chatbot-history {
+    flex: 1 1 0%;
+    min-height: 0px;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 8px 0px;
+    border-top: 1px solid var(--surface-el);
+}
+
+.chatbot-history-title {
+    margin: 4px 10px 6px;
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 600;
+    color: var(--text-sub);
+}
+
+.chatbot-history-list {
+    list-style: none;
+    margin: 0px;
+    padding: 0px 0px 8px;
+    overflow-y: auto;
+}
+
+.chatbot-history-link {
+    display: block;
+    width: 100%;
+    padding: 7px 10px;
+    border: 0px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-sub);
+    font-style: inherit;
+    font-variant: inherit;
+    font-weight: inherit;
+    font-stretch: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-optical-sizing: inherit;
+    font-size-adjust: inherit;
+    font-kerning: inherit;
+    font-feature-settings: inherit;
+    font-variation-settings: inherit;
+    font-language-override: inherit;
+    font-size: calc(13px * var(--ui-font-scale));
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chatbot-history-link:hover {
+    background: var(--surface-el);
+}
+
+.chatbot-history-link.is-active {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.chatbot-history-item.is-favorite .chatbot-history-link::before {
+    content: "★ ";
+    color: var(--orange);
+}
+
+.chatbot-history-empty {
+    padding: 8px 10px;
+    font-size: calc(12px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+/* Start: 261016 수정 - 공통 사이드바 푸터 재사용 */
+.sidebar-footer.line {
+    border-top: 1px solid var(--border);
+}
+
+.chatbot-sidebar > .sidebar-footer {
+    margin-top: auto;
+}
+/* End: 261016 수정 - 공통 사이드바 푸터 재사용 */
+
+.chatbot-app > .chatbot-main {
+    position: relative;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0px;
+    max-width: none;
+    height: 100%;
+    margin: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px 24px 12px;
+    box-sizing: border-box;
+}
+
+.chatbot-hero {
+    text-align: center;
+}
+
+/* .chatbot-hero-greeting {
+    margin: 0px 0px 8px;
+    color: var(--text-sub);
+    font-size: calc(14px * var(--ui-font-scale));
+    font-weight: 600;
+} */
+
+.chatbot-hero-title {
+    margin: 0px;
+    font-size: 32px;
+    font-weight: 800;
+    display: inline-block;
+    width: fit-content;
+    background: linear-gradient(90deg, #52d985 0%, #2191d3 34%, #8250df 86%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: prompt-composer-border 6s ease infinite;
+}
+
+.chatbot-composer {
+    width: 100%;
+    max-width: 760px;
+    margin: 0px auto;
+    flex: 0 0 auto;
+}
+
+.home-prompt-composer {
+    position: relative;
+    z-index: 2;
+}
+
+.chatbot-composer .home-prompt-composer {
+    width: 100%;
+    max-width: none;
+    margin: 0px;
+}
+
+.chatbot-disclaimer {
+    margin: 8px 0;
+    text-align: center;
+    font-size: calc(11px * var(--ui-font-scale));
+    color: var(--text-muted);
+}
+
+.chatbot-app.is-chatting > .chatbot-main {
+    justify-content: flex-start;
+}
+
+.chatbot-app.is-chatting [data-chat-hero] {
+    display: none;
+}
+
+.chatbot-app.is-chatting .chat-messages {
+    flex: 1 1 0%;
+    min-height: 0px;
+}
+
+.chatbot-app .sr-only,
+.home-prompt-composer .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0px, 0px, 0px, 0px);
+    white-space: nowrap;
+    border: 0px;
+}
+
+.home-prompt-composer:has([data-dropdown-menu].is-open) {
+    z-index: 101;
+}
+
+/* Start: 261016 수정 - 모델·작업 선택 메뉴 배치 */
+/* 261016: 메뉴 외형은 유지하고 chat.js가 화면 여유에 맞춰 위·아래 위치를 계산한다. */
+.prompt-composer:has(.chat-menu-panels) {
+    container-type: inline-size;
+}
+/* 모델 박스의 오른쪽 끝을 버튼에 맞추고 작업 박스는 그 오른쪽에 배치한다. */
+.chat-menu-panels {
+    --chat-menu-width: 180px;
+    display: none;
+    position: absolute;
+    top: calc(50% + 12.5px + 8px); /* 세로 중앙의 모델 버튼 높이 25px 기준 */
+    right: auto;
+    bottom: auto;
+    z-index: 100;
+    width: max-content;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--chat-menu-width);
+    align-items: start;
+    gap: 8px;
+}
+.is-open > .chat-menu-panels {
+    display: grid;
+}
+.prompt-composer .chat-menu-panels > .dropdown-menu {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    max-height: min(36dvh, var(--chat-menu-available-height, 100dvh));
+    overflow-y: auto;
+}
+/* 작업 메뉴는 첫 모델 메뉴와 같은 높이로 맞추고 긴 목록만 스크롤한다. */
+.prompt-composer .chat-menu-panels > .chat-task-submenu {
+    height: var(--chat-model-menu-height, auto);
+}
+.chat-menu-panels .dropdown-menu-label {
+    line-height: calc(13px * var(--ui-font-scale, 1));
+}
+
+.chat-menu-panels .dropdown-model-name,
+.chat-menu-panels .dropdown-model-desc {
+    overflow-wrap: anywhere;
+}
+/* 좁은 화면에서는 세로로 이어 표시하고 화면 안에서 스크롤한다. */
+@media (max-width: 1000px) {
+    .chat-menu-panels {
+        --chat-menu-width: min(180px, calc(100vw - 24px));
+        grid-auto-flow: row;
+        grid-template-columns: var(--chat-menu-width);
+        max-height: min(36dvh, var(--chat-menu-available-height, 100dvh));
+        overflow-y: auto;
+    }
+}
+
+/* Start: 261022 수정 - 챗봇 모바일 모델·작업 메뉴 가로 배치 */
+@media (max-width: 1000px) {
+    /* 첫 번째 Grid 영역을 모델 버튼과 메뉴의 공통 정렬 기준으로 사용한다. */
+    .chatbot-composer [data-chat-menu="model"]:has(> .chat-menu-panels) {
+        display: inline-grid;
+        grid-template-columns: auto auto;
+    }
+    .chatbot-composer .chat-menu-panels {
+        /* 보내기 버튼과 간격(34 + 6px), 두 메뉴 사이 간격(8px)을 제외한다. */
+        --chat-menu-width: min(180px, calc((100cqw - 48px) / 2));
+        /* JS의 가로 좌표만 덮어쓰고 위·아래 배치 계산은 유지한다. */
+        left: auto !important;
+        right: 0;
+        grid-column: 1 / 2;
+        grid-auto-flow: column;
+        grid-template-columns: none;
+        max-height: none;
+        overflow: visible;
+    }
+}
+/* End: 261022 수정 - 챗봇 모바일 모델·작업 메뉴 가로 배치 */
+
+.chat-task-submenu .dropdown-menu-item:not([aria-checked="true"]) {
+    color: var(--text, #1f2328);
+}
+
+.chat-task-submenu .dropdown-menu-item:not([aria-checked="true"]):is(:hover, :focus-visible) {
+    background: var(--surface-el, #f0f3f6);
+    color: var(--text, #1f2328);
+}
+
+/* End: 261016 수정 - 모델·작업 선택 메뉴 배치 */
+/* 공통 계정 메뉴 외형을 사용하되 챗봇 전용 표시·클릭 처리는 chat.js에서 담당한다. */
+.chatbot-account-host {
+    position: static !important;
+    display: block !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: visible !important;
+    background: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+.chatbot-account-host .user-account-menu-detached {
+    z-index: 1100;
+}
+.modal.chatbot-raised {
+    z-index: 1200;
+}
+
+#projectFormModal .chat-action-modal-field:not(:first-of-type) {
+    margin-top: 12px;
+}
+
+/* 챗봇 전용 계정 메뉴는 body로 이동해 화면보다 앞에 표시한다. */
+.chatbot-account-host > .chatbot-account-menu {
+    position: fixed !important;
+    z-index: 1100 !important;
+}
+.chatbot-account-host > .chatbot-account-menu[hidden],
+.chatbot-account-host > .chatbot-account-menu.hidden {
+    display: none !important;
+}
+.chatbot-account-host > .modal.chatbot-raised {
+    z-index: 1200 !important;
+}
+
+/* Start: 261016 수정 - 모델·작업 선택값 표시 */
+/* 261016: 모델명과 작업명을 기존 버튼 안에 함께 표시한다. */
+.prompt-composer .dropdown-menu-model-trigger:has([data-chat-model-label]) {
+    max-width: none;
+    width: max-content;
+    flex-shrink: 0;
+}
+.prompt-composer .dropdown-menu-model-trigger [data-chat-model-label],
+.prompt-composer .dropdown-menu-model-trigger [data-chat-task-label] {
+    white-space: nowrap;
+}
+.prompt-composer .dropdown-menu-model-trigger .chat-middot {
+    flex-shrink: 0;
+}
+
+/* End: 261016 수정 - 모델·작업 선택값 표시 */
+/* Start: 261016 추가 - 모바일 채팅 메뉴 및 입력창 배치 */
+/* 모바일 메뉴는 데스크톱 접힘 상태와 분리하고 기본 레이아웃 뒤에서 적용합니다. */
+.chatbot-mobile-header,
+.chatbot-sidebar-backdrop {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .chatbot-app {
+        left: 0;
+        --chatbot-mobile-header-height: calc(60px + env(safe-area-inset-top, 0px));
+    }
+
+    .chatbot-mobile-header {
+        position: absolute;
+        inset: 0 0 auto;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        height: var(--chatbot-mobile-header-height);
+        padding: env(safe-area-inset-top, 0px) 12px 0;
+        box-sizing: border-box;
+        background: transparent;
+        border: 0;
+    }
+
+    .chatbot-mobile-header .chatbot-brand-text {
+        display: none;
+    }
+
+    .chatbot-mobile-toggle,
+    .chatbot-sidebar .sidebar-collapse-btn {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+    }
+
+    .chatbot-mobile-toggle .icon {
+        width: 24px;
+        height: 24px;
+    }
+    .chatbot-brand-link {
+        padding-top: 0;
+    }
+    /* Start: 261022 주석 보완 - 모바일 로고 정렬·스크롤 배경 */
+    .chatbot-mobile-header .brand-symbol,
+    .chatbot-brand .brand-symbol {
+        display: block;
+        width: 26px;
+        height: 26px;
+        margin: 0;
+    }
+    .chatbot-app .chatbot-sidebar .chatbot-brand {
+        height: 60px;
+        padding: 0 12px;
+    }
+    .chatbot-mobile-header.is-scrolled {
+        background: rgba(246, 248, 250, 0.9);
+    }
+    html[data-theme="dark"] .chatbot-mobile-header.is-scrolled {
+        background: rgba(13, 17, 23, 0.9);
+    }
+    /* End: 261022 주석 보완 - 모바일 로고 정렬·스크롤 배경 */
+    .chatbot-sidebar-backdrop:not([hidden]) {
+        position: absolute;
+        inset: 0;
+        z-index: 110;
+        display: block;
+        background: rgb(15 23 42 / 40%);
+    }
+
+    .chatbot-app > .chatbot-sidebar {
+        position: absolute;
+        inset: 0 auto 0 0;
+        z-index: 120;
+        width: min(280px, calc(100% - 48px));
+        height: 100%;
+        margin-left: 0;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        box-sizing: border-box;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        visibility: hidden;
+        transform: translateX(-100%);
+        transition:
+            transform var(--chatbot-sidebar-motion),
+            visibility 0s linear var(--chatbot-sidebar-motion-time);
+    }
+
+    .chatbot-app.is-mobile-sidebar-open > .chatbot-sidebar {
+        visibility: visible;
+        transform: translateX(0);
+        transition-delay: 0s;
+    }
+
+    .chatbot-sidebar > * {
+        flex-shrink: 0;
+    }
+
+    .chatbot-sidebar > .chatbot-history {
+        flex-basis: 160px;
+    }
+
+    .chatbot-app > .chatbot-main {
+        padding: calc(var(--chatbot-mobile-header-height) + 16px) 12px max(12px, env(safe-area-inset-bottom, 0px));
+    }
+    .chatbot-hero-title {
+        font-size: 24px;
+    }
+    .mo-block {
+        display: inline-block;
+    }
+}
+@media (max-width: 560px) {
+    #chatComposerForm.prompt-composer {
+        gap: 20px;
+    }
+    .prompt-composer {
+        --composer-inline-padding-left: 12px;
+        --composer-inline-padding-right: 10px;
+        gap: 5px;
+        padding: 9px var(--composer-inline-padding-right) 9px var(--composer-inline-padding-left);
+        border-radius: 12px;
+    }
+    #chatComposerForm .chatbot-composer {
+        padding: 0 12px;
+    }
+    .prompt-composer-input {
+        font-size: calc(13px * var(--ui-font-scale, 1));
+    }
+
+    .prompt-composer-attach {
+        width: 28px;
+        height: 28px;
+    }
+
+    .prompt-composer .dropdown-menu-model-trigger {
+        max-width: 82px;
+        padding: 5px 8px;
+    }
+
+    .prompt-composer .dropdown-menu-model-trigger [data-dropdown-label] {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .prompt-composer-submit {
+        width: 31px;
+        height: 31px;
+    }
+}
+
+/* End: 261016 추가 - 모바일 채팅 메뉴 및 입력창 배치 */
+
+/* Start: 261016 수정 - 챗봇 사이드바 다크 테마 색상 */
+/* 공통 테마 토큰을 사용해 메뉴·목록·푸터의 고정된 라이트 색상을 보정합니다. */
+html[data-theme="dark"] .chatbot-sidebar {
+    --chatbot-selected-bg: rgba(var(--primary-rgb), 0.1);
+    --chatbot-badge-color: color-mix(in srgb, var(--purple) 55%, var(--text));
+    --chatbot-badge-border: color-mix(in srgb, var(--purple) 35%, var(--border));
+    scrollbar-color: var(--border) transparent;
+}
+
+html[data-theme="dark"] .chatbot-sidebar :is(.chatbot-nav-item, .chatbot-search, .chatbot-search input, .chatbot-project-link, .chatbot-project-chat, .chatbot-history-link, .user-name) {
+    color: var(--text);
+}
+
+html[data-theme="dark"] .chatbot-sidebar :is(.chatbot-brand-text small, .chatbot-history-title, .chatbot-section-add, .user-dept),
+html[data-theme="dark"] .chatbot-sidebar .chatbot-search input::placeholder,
+html[data-theme="dark"] .chatbot-sidebar :is(.chatbot-history-empty, .chatbot-project-chat-empty, .chatbot-project-count, .btn-more, .btn-new-chat) {
+    color: var(--text-muted);
+}
+
+html[data-theme="dark"] .chatbot-sidebar :is(.chatbot-projects, .chatbot-history, .sidebar-footer) {
+    border-color: var(--border);
+}
+
+html[data-theme="dark"] .chatbot-sidebar :is(.chatbot-nav-item, .chatbot-history-link, .chatbot-project-link, .chatbot-project-chat, .chatbot-section-add, .chatbot-project-icon, .btn-more, .btn-new-chat):is(:hover, :focus-visible),
+html[data-theme="dark"] .chatbot-sidebar .chatbot-search:focus-within,
+html[data-theme="dark"] .chatbot-sidebar .is-more-open > :is(.chatbot-history-link, .chatbot-project-link, .chatbot-project-chat) {
+    background: var(--surface-el);
+    color: var(--text);
+}
+
+html[data-theme="dark"] .chatbot-sidebar .chatbot-section-toggle:hover {
+    color: var(--text);
+}
+
+html[data-theme="dark"] .chatbot-sidebar :is(.chatbot-nav-item, .chatbot-history-link, .chatbot-project-link, .chatbot-project-chat):is(.is-primary, .is-active, .active, [aria-current="page"]) {
+    background: var(--chatbot-selected-bg);
+    color: var(--primary);
+}
+
+html[data-theme="dark"] .chatbot-sidebar .chatbot-nav-item:not(.is-primary, .is-active, .active, [aria-current="page"]) .chatbot-nav-icon {
+    filter: var(--icon-filter-text);
+}
+
+html[data-theme="dark"] .chatbot-sidebar .chatbot-history-badge {
+    border-color: var(--chatbot-badge-border);
+    background: transparent;
+    color: var(--chatbot-badge-color);
+}
+
+html[data-theme="dark"] .chatbot-sidebar .user-avatar {
+    border-color: transparent;
+    background: var(--chatbot-selected-bg);
+}
+/* End: 261016 수정 - 챗봇 사이드바 다크 테마 색상 */
+
+/* ==========================================================================
+ * Start: 261019 운영 반영 (MD_chatbot.jsp · MD_home.jsp + 공통 레이아웃 MD_Manage.jsp)
+ * 위의 퍼블 261016판은 그대로 두고, 운영 화면에서 필요한 보정만 아래에 덧붙인다 (뒤에 있어 같은 우선순위면 이쪽이 이긴다).
+ *  1. 챗봇 화면 배치 : 기본은 챗봇 메뉴만 보이고(공통 사이드바 위를 덮음), 메뉴를 접으면 공통 아이콘 메뉴(56px)가 드러난다.
+ *                    공통 사이드바와 나란히 두려면 AIOneChatConfig.sidebarSideBySide = true (chat.js 가 .is-side-by-side)
+ *  2. 사용자 카드 : 소속 옆 권한 배지, 공간이 모자라면 배지만 다음 줄
+ *  3. 입력창 : 챗봇 글자 위 빈 공간 · 홈 한 줄(알약) · 밝은 드롭다운 · 클릭 시 흰색 유지 · 챗봇 16px 라운드 · 국회답변초안생성 숨김
+ *  4. 답변 액션 · 오류신고 대체 스타일 : 퍼블 common.css 의 AIOneChatMessageActions 스타일이 없을 때만 보이는 것들
+ * */
+
+/* 1. 챗봇 화면 배치 (퍼블은 .app > .app-sidebar 옆으로 늘 비켜 선다 → 운영은 덮고, 접으면 아이콘 메뉴만큼 비킨다) */
+.app > .app-sidebar ~ .chatbot-app:not(.is-side-by-side),
+.app > .app-sidebar.collapsed ~ .chatbot-app:not(.is-side-by-side) {
+    --chatbot-offset-left: 0px;
+}
+.app > .app-sidebar ~ .chatbot-app.is-rail-mode:not(.is-side-by-side) {
+    left: var(--chatbot-rail-w, 56px);
+}
+.chatbot-app {
+    transition: left var(--chatbot-sidebar-motion, 0.25s ease);
+}
+@media (max-width: 768px) {
+    .app > .app-sidebar ~ .chatbot-app {
+        left: 0 !important;
+    }
+}
+
+/* 2. 사용자 카드 */
+.chatbot-sidebar .sidebar-footer .user-meta-row {
+    flex-wrap: wrap;
+    row-gap: 2px;
+}
+/* 공통 사이드바(MD_Manage.jsp) 사용자 카드도 같은 규칙 : 부서명 옆에 권한 배지, 공간이 모자라면 배지만 다음 줄로 */
+.user-card .user-info {
+    min-width: 0;
+}
+.user-card .user-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 4px;
+    min-width: 0;
+}
+.user-card .user-meta-row .user-dept {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.user-card .user-meta-row .user-role-badge {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 3. 입력창 */
+/* 챗봇 화면 입력창(2줄): 입력 글자는 위에서 시작 (ai-home.css 의 align-content:center 는 홈의 한 줄 입력창용) */
+.chatbot-composer .prompt-composer {
+    padding: 12px 18px;
+}
+/* Start: 261021 수정 - 챗봇 입력창은 HTML 순서 유지 */
+.chatbot-composer #chatInput.prompt-composer-input {
+    align-content: start;
+    min-height: 48px;
+}
+/* End: 261021 수정 - 챗봇 입력창은 HTML 순서 유지 */
+/* ───────── 홈 입력창 : 한 줄(알약) 모양 ─────────
+ * 위의 2줄 입력창 규칙(#chatComposerForm 세로 배치 · 입력란 최소 높이)은 챗봇 화면용이다.
+ * 홈(.page > .home-prompt-composer — 데코레이터 MD_Manage.jsp 의 <body> 에는 data-page 가 없어 구조로 구분)에서는 [+][작업 선택] 입력란 [모델][보내기] 를 한 줄로 놓는다.
+ * 입력 내용이 길어지면 입력란만 아래로 늘어난다 (chatScript.jsp 자동 높이, 최대 200px). 첨부 파일 목록은 다음 줄. */
+
+/* .page > .home-prompt-composer #chatComposer.prompt-composer-shell {
+    border-radius: 999px;
+}
+.page > .home-prompt-composer #chatComposerForm.prompt-composer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 16px;
+}
+.page > .home-prompt-composer .prompt-composer-bar {
+    display: contents;
+}
+.page > .home-prompt-composer .prompt-composer-tools {
+    order: 1;
+    flex: 0 0 auto;
+}
+.page > .home-prompt-composer #chatInput.prompt-composer-input {
+    order: 2;
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    height: 24px;
+    max-height: 200px;
+    padding: 0;
+    line-height: 24px;
+    align-content: center;
+}
+.page > .home-prompt-composer .prompt-composer-actions {
+    order: 3;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+.page > .home-prompt-composer #chatAttachList {
+    order: 4;
+    flex: 0 0 100%;
+    padding: 0 0 4px;
+} */
+
+/* Start: 261021 수정 - 홈 전용 입력창 순서 및 한 줄·여러 줄 배치 */
+.page > .home-prompt-composer #chatComposerForm.prompt-composer {
+    --composer-multiline-padding: 18px;
+    gap: 8px;
+    transition:
+        box-shadow 0.3s ease,
+        transform 0.3s ease;
+}
+.page > .home-prompt-composer #chatComposerForm > .prompt-composer-tools,
+.page > .home-prompt-composer #chatComposerForm > .prompt-composer-bar {
+    flex: 0 0 auto;
+}
+.page > .home-prompt-composer #chatComposerForm > .prompt-composer-tools {
+    order: 1;
+}
+.page > .home-prompt-composer #chatComposerForm > .prompt-composer-bar {
+    order: 3;
+}
+.page > .home-prompt-composer #chatComposerForm #chatInput.prompt-composer-input {
+    order: 2;
+    flex: 1 1 0;
+    width: 0;
+    min-height: 1.6em;
+    height: var(--composer-input-height, 1.6em);
+    max-height: 200px;
+    align-content: start;
+}
+.page > .home-prompt-composer #chatComposerForm #chatAttachList {
+    order: 4;
+    flex: 0 0 100%;
+}
+.page > .home-prompt-composer #chatComposerForm.prompt-composer.is-multiline {
+    padding: 12px var(--composer-multiline-padding);
+    border-radius: 16px;
+}
+.page > .home-prompt-composer #chatComposerForm.is-multiline #chatInput.prompt-composer-input {
+    order: 0;
+    flex: 1 1 100%;
+    width: 100%;
+    min-height: 3.2em;
+}
+/* End: 261021 수정 - 홈 전용 입력창 순서 및 한 줄·여러 줄 배치 */
+/* 입력창과 동일한 글꼴로 측정하되 페이지 배치와 접근성 트리에서는 제외한다. */
+.home-composer-measure {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    visibility: hidden;
+    pointer-events: none;
+    contain: strict;
+    box-sizing: border-box;
+    height: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    resize: none;
+}
+
+/* ───────── 입력창 드롭다운(작업 선택 · 모델 선택) 밝은 메뉴 : 흰 바탕 · 검정 글자 ─────────
+ * 공통 CSS 의 어두운 메뉴(.dropdown-menu-model) 대신, 선택된 항목은 연한 강조색 바탕 + 강조색 글자 + 체크.
+ * 색은 테마 변수(--surface · --text · --primary …)를 따르므로 다크 모드 · 강조 컬러에서도 맞게 바뀐다. */
+.prompt-composer [data-chat-menu] > .dropdown-menu {
+    background: var(--surface, #fff) !important;
+    color: var(--text, #1f2328) !important;
+    border: 1px solid var(--border, #d0d7de) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.12) !important;
+    padding: 6px !important;
+}
+.prompt-composer [data-chat-menu] > .dropdown-menu .dropdown-menu-label {
+    color: var(--text-sub, #656d76) !important;
+}
+.prompt-composer [data-chat-menu] .dropdown-menu-item {
+    background: transparent !important;
+    color: var(--text, #1f2328) !important;
+}
+.prompt-composer [data-chat-menu] .dropdown-menu-item .dropdown-model-name {
+    color: var(--text, #1f2328) !important;
+}
+.prompt-composer [data-chat-menu] .dropdown-menu-item .dropdown-model-desc {
+    color: var(--text-sub, #656d76) !important;
+}
+.prompt-composer [data-chat-menu] .dropdown-menu-item:hover,
+.prompt-composer [data-chat-menu] .dropdown-menu-item:focus-visible {
+    background: var(--bg, #f6f8fa) !important;
+}
+.prompt-composer [data-chat-menu] .dropdown-menu-item[aria-checked="true"] {
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.1) !important;
+}
+.prompt-composer [data-chat-menu] .dropdown-menu-item[aria-checked="true"] .dropdown-model-name,
+.prompt-composer [data-chat-menu] .dropdown-menu-item[aria-checked="true"] .dropdown-model-check {
+    color: var(--primary, #0969da) !important;
+}
+
+/* ───────── 입력창 클릭(포커스) 때도 안쪽은 흰색 유지 ─────────
+ * 공통 CSS 가 포커스 때 입력창 안쪽을 파란 그라데이션으로 칠하는 것을 막는다 (테두리 그라데이션은 그대로).
+ * form 을 흰 바탕으로 맨 위층에 두어 바깥 상자의 배경 · ::before/::after 효과가 안쪽에 비치지 않게 한다. */
+.home-prompt-composer #chatComposerForm.prompt-composer,
+.home-prompt-composer #chatComposer:focus-within #chatComposerForm.prompt-composer {
+    position: relative;
+    z-index: 1;
+    background-size:
+        auto,
+        300% 300%;
+    /* border-radius: inherit; */
+}
+
+.home-prompt-composer #chatComposer:focus-within #chatInput.prompt-composer-input,
+.home-prompt-composer #chatInput.prompt-composer-input:focus {
+    background: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* 챗봇 화면 입력창 모서리 라운드 (흰 바탕 form 이 바깥 상자의 둥근 모서리를 덮어 각져 보이던 것) */
+.chatbot-composer .home-prompt-composer #chatComposer.prompt-composer-shell,
+.chatbot-composer .home-prompt-composer #chatComposerForm.prompt-composer {
+    border-radius: 16px !important;
+}
+.chatbot-composer .home-prompt-composer #chatComposer.prompt-composer-shell {
+    overflow: visible;
+}
+
+/* 작업 선택에서 국회답변초안생성 숨김 (2026.10.16 · chat.js removeHiddenTasks 와 같은 처리, 스크립트가 돌기 전에도 안 보이게) */
+[data-chat-menu="task"] [data-menu-value="answer"] {
+    display: none !important;
+}
+
+/* 운영 입력창(chat/inc/chatComposer.jsp)은 [+ · 작업 선택] 이 아래 줄(.prompt-composer-bar) 안에 있다 (퍼블은 줄 밖).
+   퍼블 규칙(margin-left:auto)대로면 작업 선택이 오른쪽으로 몰리므로, 이 구조일 때만 줄을 꽉 채워 왼쪽 · 오른쪽으로 나눈다. */
+.prompt-composer-bar:has(> .prompt-composer-tools) {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-left: 0;
+    justify-content: space-between;
+}
+
+/* 4. 답변 액션 · 오류신고 대체 스타일 (chat.js createMessageActionButton · openChatIssueFallback) */
+/* ───────── 답변 아래 작업 버튼 : 좋아요 · 싫어요 · 다시 생성 · 복사 · 오류 신고 (chat.js MSG_ACTIONS_HTML) ───────── */
+.chat-msg-assistant .chat-msg-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 6px;
+}
+.chat-msg-assistant .chat-msg-actions[hidden] {
+    display: none;
+}
+.chat-action.chat-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted, #6b7280);
+    cursor: pointer;
+}
+.chat-action.chat-action-icon[hidden] {
+    display: none;
+}
+.chat-action.chat-action-icon svg {
+    width: 17px;
+    height: 17px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.chat-action.chat-action-icon:hover,
+.chat-action.chat-action-icon:focus-visible {
+    background: var(--surface-el, #f1f5f9);
+    color: var(--text, #1f2328);
+    outline: none;
+}
+.chat-action.chat-action-icon[aria-pressed="true"] {
+    background: transparent;
+    border: 0;
+    color: var(--primary, #0969da);
+}
+.chat-action.chat-action-icon[aria-pressed="true"] svg {
+    fill: rgba(var(--primary-rgb, 9, 105, 218), 0.15);
+}
+/* 다시 생성은 마지막 답변에만 */
+.chat-msg-assistant:has(~ .chat-msg-assistant) [data-chat-action="regenerate"] {
+    display: none;
+}
+
+/* 오류 신고 창 */
+.chat-issue-modal .chat-action-modal-box {
+    width: min(480px, calc(100vw - 32px));
+}
+.chat-issue-types {
+    margin: 0 0 14px;
+    padding: 0;
+    border: 0;
+    display: grid;
+    gap: 8px;
+}
+.chat-issue-types legend {
+    margin-bottom: 8px;
+    padding: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text, #1f2328);
+}
+.chat-issue-types label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border: 1px solid var(--border, #d0d7de);
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    color: var(--text, #1f2328);
+    cursor: pointer;
+}
+.chat-issue-types label:has(input:checked) {
+    border-color: var(--primary, #0969da);
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.06);
+}
+.chat-issue-types input {
+    accent-color: var(--primary, #0969da);
+    margin: 0;
+}
+.chat-issue-modal .chat-action-modal-field + .chat-action-modal-field {
+    margin-top: 14px;
+}
+.chat-issue-modal textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid var(--border, #d0d7de);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: var(--text, #1f2328);
+    font: inherit;
+    font-size: 0.8125rem;
+    resize: vertical;
+}
+.chat-issue-upload {
+    display: flex;
+    padding: 14px;
+    border: 1px dashed var(--border, #d0d7de);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--text-sub, #656d76);
+    cursor: pointer;
+}
+.chat-issue-upload:hover {
+    border-color: var(--primary, #0969da);
+    color: var(--primary, #0969da);
+}
+.chat-issue-file-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+}
+.chat-issue-file-list:empty {
+    display: none;
+}
+.chat-issue-file-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 6px 4px 10px;
+    border-radius: 6px;
+    background: var(--surface-el, #f1f5f9);
+    font-size: 0.75rem;
+    color: var(--text, #1f2328);
+}
+.chat-issue-file-list li span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.chat-issue-file-list li button {
+    border: 0;
+    background: transparent;
+    color: var(--text-muted, #6b7280);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* 오류신고 대체 창 : 퍼블 common.css 가 있으면 그쪽 규칙이 이기도록 :where() 로 우선순위를 0 으로 둔다 */
+:where(.chat-issue-backdrop) {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, 0.45);
+}
+:where(.chat-issue-backdrop) :where(.chat-issue-modal) {
+    width: min(480px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    padding: 22px;
+    border-radius: 14px;
+    background: var(--surface, #fff);
+    color: var(--text, #1f2328);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+}
+:where(.chat-issue-head) {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+:where(.chat-issue-head) p {
+    margin: 4px 0 0;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+    color: var(--text-sub, #656d76);
+}
+:where(.chat-issue-close) {
+    border: 0;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-muted, #6b7280);
+}
+:where(.chat-issue-field) {
+    margin-top: 14px;
+    display: grid;
+    gap: 6px;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+}
+:where(.chat-issue-types) {
+    display: grid;
+    gap: 6px;
+}
+:where(.chat-issue-type) {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid var(--border, #d0d7de);
+    border-radius: 8px;
+    cursor: pointer;
+}
+:where(.chat-issue-type):has(input:checked) {
+    border-color: var(--primary, #0969da);
+    background: rgba(var(--primary-rgb, 9, 105, 218), 0.06);
+}
+:where(.chat-issue-modal) textarea {
+    min-height: 90px;
+    padding: 8px 10px;
+    border: 1px solid var(--border, #d0d7de);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: inherit;
+    font: inherit;
+    resize: vertical;
+}
+:where(.chat-issue-upload) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px;
+    border: 1px dashed var(--border, #d0d7de);
+    border-radius: 8px;
+    color: var(--text-sub, #656d76);
+    cursor: pointer;
+    text-align: center;
+}
+:where(.chat-issue-upload) svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+}
+:where(.chat-issue-file) {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--surface-el, #f1f5f9);
+    font-size: 12px;
+}
+:where(.chat-issue-file) button {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+:where(.chat-issue-actions) {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+}
+:where(.chat-issue-actions) button {
+    min-width: 72px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid var(--border, #d0d7de);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+:where(.chat-issue-actions) [data-issue-submit] {
+    border-color: var(--primary, #0969da);
+    background: var(--primary, #0969da);
+    color: #fff;
+}
+/* End: 261019 운영 반영 (MD_chatbot.jsp · MD_home.jsp + 공통 레이아웃 MD_Manage.jsp) */

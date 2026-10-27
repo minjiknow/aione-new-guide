@@ -1,0 +1,258 @@
+/* =====================================================================
+ * AI-ONE 내부 자료 검색 · 작성 지원 (MD_search.jsp)
+ *
+ * - 화면 골격과 공통 컴포넌트는 common.css(+ ai-theme.css / ai-workspace.css)를 그대로 사용한다.
+ *     · 3단 패널 ............ .three-panel / .panel / .panel-head / .panel-resize-handle
+ *     · 버튼 · 필터 ......... .button / .icon-button / .filter-bar / .filter-btn
+ *     · 빈 상태 ............. .empty-state / .empty-title / .empty-desc
+ *     · 파일 아이콘 · 목록 .. .file-icon / .file-list / .file-list-header
+ *     · 선택 자료 ........... .selected-refs-head / .selected-refs-list li (.ref-name · .ref-remove)
+ *     · 채팅 ................ [data-chat-message-list][data-variant="answer"] > .chat-msg.user|ai
+ *     · 채팅 입력 ........... .chat-input-area / .chat-tags / .chat-tag / .chat-input-row / .chat-input
+ *     · 문서 페이지 ......... .doc-viewer-body / .web-doc-page / .web-doc-header / .web-doc-page-footer
+ * - 이 파일에는 공통 CSS 에 없는 이 화면 전용 보정만 둔다. (모두 이 화면의 클래스 또는 #ds* 범위)
+ * - 색상은 공통 테마 토큰을 사용하므로 화면 모드(라이트/다크) · 강조 컬러 설정을 그대로 따른다.
+ * =====================================================================
+ *
+ * 기본 구간 형식: Start: 기능명 / End: 기능명
+ * 변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+ * 주석 정리 내역
+ * - 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+ */
+body[data-page="searchwrite"] {
+  --ds-mark: #fff1b8;
+}
+
+/* 공통 컴포넌트의 display 지정보다 hidden 속성이 우선하도록 보정 */
+#dsApp [hidden], #dsResetModal[hidden], #dsToast[hidden] { display: none !important; }
+
+/* ─────────── 왼쪽: 내부 자료 검색 ─────────── */
+.search-panel-area { display: flex; flex-direction: column; min-height: 0; }
+.search-panel-area .search-box { flex: none; display: flex; flex-direction: column; gap: 8px; padding: 12px 16px 4px; }
+.search-panel-area .search-box .chat-input-row { margin: 0; }
+.search-panel-area .search-box .filter-bar { padding: 0; border-bottom: 0; background: transparent; }
+.search-panel-area .file-list-section { flex: 1 1 auto; min-height: 0; }
+.search-panel-area .upload-summary-inline strong { color: var(--primary); }
+
+/* 검색 결과 목록: common .file-list 를 패널 높이에 맞춰 늘린다 */
+.search-panel-area .search-result-list { max-height: none; flex: 1 1 auto; padding: 0 0 8px; }
+.search-panel-area .search-result-list:empty { display: none; }
+
+/* 검색 결과 카드 (search.js renderResults) — common .file-list li 위에 배치만 보정 */
+.search-result-list li.ds-result-item {
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  outline: none;
+  background: var(--surface);
+}
+.search-result-list li.ds-result-item:hover { border-color: var(--text-muted); }
+.search-result-list li.ds-result-item:focus-visible { outline: 2px solid rgba(var(--primary-rgb), .28); outline-offset: 1px; }
+.search-result-list li.ds-result-item.is-active {
+  border-color: var(--primary);
+  background: rgba(var(--primary-rgb), .05);
+}
+.ds-result-item input[type="checkbox"] {
+  flex: 0 0 auto; width: 16px; height: 16px; margin: 5px 0 0;
+  accent-color: var(--primary); cursor: pointer;
+}
+.ds-result-body { min-width: 0; flex: 1; }
+.ds-result-title {
+  margin: 0 0 3px; color: var(--text);
+  font-size: calc(12px * var(--ui-font-scale)); font-weight: 600; line-height: 1.45; word-break: break-all;
+}
+.ds-result-summary-text {
+  margin: 0 0 6px; color: var(--text-muted);
+  font-size: calc(11px * var(--ui-font-scale)); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ds-result-meta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--text-muted); font-size: calc(10px * var(--ui-font-scale)); }
+.ds-result-title mark, .ds-result-summary-text mark { background: var(--ds-mark); color: inherit; padding: 0 1px; }
+.ds-applied-badge { color: var(--primary); font-weight: 700; }
+
+/* 로딩 스켈레톤 (common .ai-skeleton 과 같은 톤) */
+.search-result-list li.ds-skeleton { justify-content: flex-start; align-items: flex-start; gap: 10px; }
+.ds-skeleton span {
+  display: block; border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, rgba(209, 217, 224, .28) 25%, rgba(255, 255, 255, .72) 50%, rgba(209, 217, 224, .28) 75%);
+  background-size: 200% 100%;
+  animation: aiSkeletonShimmer 1.35s ease-in-out infinite;
+}
+[data-theme="dark"] .ds-skeleton span {
+  background: linear-gradient(90deg, rgba(70, 78, 90, .35) 25%, rgba(105, 115, 130, .42) 50%, rgba(70, 78, 90, .35) 75%);
+  background-size: 200% 100%;
+}
+.ds-skeleton .sk-badge { width: 26px; height: 26px; flex: none; }
+.ds-skeleton .sk-lines { flex: 1; display: grid; gap: 7px; }
+.ds-skeleton .sk-line { height: 11px; }
+.ds-skeleton .sk-line:nth-child(1) { width: 70%; height: 13px; }
+.ds-skeleton .sk-line:nth-child(3) { width: 40%; }
+
+/* 하단: 선택 문서 수 + 선택자료 반영 */
+.search-apply-footer {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px; border-top: 1px solid var(--border); background: var(--surface);
+}
+.search-apply-message { color: var(--text-sub); font-size: calc(12px * var(--ui-font-scale)); }
+.search-apply-message strong { color: var(--primary); }
+
+/* 검색 패널 접힘 상태 (common .panel.panel-collapsed 위에 이 패널 내용만 숨김) */
+.search-panel-area.panel-collapsed > :not(.panel-head) { display: none !important; }
+.search-panel-area.panel-collapsed .panel-head { border-bottom: 0; }
+.search-panel-area.panel-collapsed .panel-actions { display: flex; }
+
+/* 3단 패널 너비 조절 핸들 (드래그 처리는 common.js AIOneSplitHandler) */
+.search-app .three-panel > .panel-resize-handle { z-index: 2; }
+.search-app .three-panel > .panel-resize-handle::before { left: -5px; right: -5px; }   /* 잡기 쉬운 영역 12px */
+.search-app .three-panel.panel-resize-mode > .panel-resize-handle {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .18);
+}
+/* 검색 패널이 접혀 있으면 왼쪽 핸들은 쓰지 않는다 */
+.search-app .search-panel-area.panel-collapsed + .panel-resize-handle { pointer-events: none; opacity: 0; }
+
+/* ─────────── 가운데: 문서 미리보기 ─────────── */
+.search-preview-area { display: flex; flex-direction: column; min-height: 0; }
+.search-preview-area #dsPreviewScroll { position: relative; background: var(--bg); }
+.search-preview-empty { position: absolute; inset: 0; background: var(--surface); }
+.search-preview-empty .search-empty-icon {
+  width: 32px; height: 32px; margin-bottom: 10px; opacity: .45;
+  filter: var(--icon-filter-muted, none);
+}
+#dsPreviewType[data-type="hwp"] { color: var(--primary); font-weight: 700; }
+#dsPreviewType[data-type="pdf"] { color: var(--red); font-weight: 700; }
+#dsPreviewType[data-type="xlsx"] { color: var(--green); font-weight: 700; }
+
+/* 문서 페이지 본문 (common .web-doc-page 시트 안의 마크다운) */
+.ds-page-title {
+  margin: 0 0 6px; text-align: center; color: #111;
+  font-size: calc(20px * var(--ui-font-scale)); font-weight: 800; letter-spacing: -.02em; line-height: 1.35;
+}
+.ds-page-org { margin: 0; text-align: center; color: #656d76; font-size: calc(12px * var(--ui-font-scale)); }
+.ds-page-body { color: #1f2328; font-size: calc(13px * var(--ui-font-scale)); line-height: 1.75; }
+.ds-page-body h1, .ds-page-body h2, .ds-page-body h3 { font-size: 1.1em; font-weight: 800; margin: 22px 0 8px; }
+.ds-page-body p { margin: 0 0 8px; }
+.ds-page-body ul, .ds-page-body ol { margin: 0 0 8px; padding-left: 20px; }
+.ds-page-body ul { list-style: disc; }
+.ds-page-body li { margin: 2px 0; }
+.ds-page-body table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: .92em; }
+.ds-page-body th, .ds-page-body td { border: 1px solid #d1d9e0; padding: 6px 8px; text-align: left; }
+.ds-page-body th { background: #f6f8fa; }
+.ds-page mark { background: var(--ds-mark); color: inherit; padding: 1px 3px; border-radius: 2px; }
+
+/* 불러오는 중 · 오류 안내 (페이지 수 집계에서 빠지도록 web-doc-page 를 쓰지 않음) */
+.ds-page-state {
+  display: flex; align-items: center; justify-content: center; min-height: 240px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+}
+.ds-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: calc(12px * var(--ui-font-scale));
+}
+.ds-empty strong { color: var(--text); font-size: calc(14px * var(--ui-font-scale)); font-weight: 600; }
+
+/* 명세 No.23 PDF 미리보기 */
+.ds-pdf-frame {
+  display: block; width: 100%; height: 100%; min-height: 480px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: #fff;
+}
+
+/* ─────────── 오른쪽: AI 작성 지원 ─────────── */
+.search-ai-panel { display: flex; flex-direction: column; min-height: 0; }
+
+/* AI 참조 소스 박스 (common .selected-refs-* 사용, 바깥 박스만 정의) */
+.search-source-box {
+  flex: none; margin: 12px 12px 0; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg);
+}
+.search-source-box .selected-refs-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--radius-badge);
+  background: rgba(var(--primary-rgb), .1); color: var(--primary);
+  font-size: calc(10px * var(--ui-font-scale)); font-weight: 700;
+}
+.search-source-box .selected-refs-list { max-height: 150px; }
+.search-source-box .selected-refs-list:empty { display: none; }
+.search-source-box .selected-refs-list li:last-child { margin-bottom: 0; }
+.search-source-box .selected-refs-list .file-icon {
+  width: 22px; height: 22px; font-size: calc(8px * var(--ui-font-scale));
+}
+.search-source-box .selected-refs-guide { padding: 6px 4px 2px; }
+
+/* 대화 말풍선 안쪽 (말풍선 자체는 common [data-variant="answer"] 스타일) */
+#dsChat .msg-text p { margin: 0 0 6px; }
+#dsChat .msg-text p:last-child { margin-bottom: 0; }
+#dsChat > .chat-msg.user .msg-text { white-space: pre-wrap; word-break: break-word; }
+#dsChat .ds-msg-content ul, #dsChat .ds-msg-content ol { margin: 4px 0 6px; padding-left: 18px; }
+#dsChat .ds-msg-content ul { list-style: disc; }
+#dsChat .ds-msg-content h1, #dsChat .ds-msg-content h2, #dsChat .ds-msg-content h3 { font-size: 1.05em; margin: 10px 0 6px; }
+#dsChat .ds-msg-content table { border-collapse: collapse; font-size: .95em; margin: 6px 0; }
+#dsChat .ds-msg-content th, #dsChat .ds-msg-content td { border: 1px solid var(--border); padding: 4px 6px; }
+#dsChat .msg-action-btn svg { width: 15px; height: 15px; }
+.ds-msg-stopped { color: var(--text-muted); }
+
+/* 응답 대기 표시 */
+.ds-msg-status { display: flex; align-items: center; gap: 8px; color: var(--text-sub); }
+.ds-dots { display: inline-flex; gap: 3px; }
+.ds-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); opacity: .3; animation: ds-dot 1s infinite; }
+.ds-dots i:nth-child(2) { animation-delay: .15s; }
+.ds-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes ds-dot { 50% { opacity: 1; } }
+
+/* 오류 · 경고 말풍선 */
+#dsChat > .chat-msg.ds-msg-error { background: rgba(207, 34, 46, .08); color: var(--red); }
+#dsChat > .chat-msg.ds-msg-warn { box-shadow: inset 3px 0 0 var(--red); }
+
+/* 참조한 자료 목록 (common .rec-tag 와 같은 모양) */
+.ds-msg-meta { flex: 0 0 100%; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.ds-msg-meta span {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text-muted); font-size: calc(10px * var(--ui-font-scale));
+}
+
+/* 명세 No.6 턴 결과 (action · report) */
+.ds-turn-result {
+  flex: 0 0 100%; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: calc(11px * var(--ui-font-scale));
+}
+.ds-turn-kind, .ds-turn-report {
+  padding: 2px 8px; border-radius: var(--radius-badge); font-weight: 600;
+  background: rgba(var(--primary-rgb), .08); color: var(--primary);
+}
+.ds-turn-kind[data-kind="error"] { background: rgba(207, 34, 46, .08); color: var(--red); }
+.ds-turn-kind[data-kind="message"], .ds-turn-kind[data-kind="sources"], .ds-turn-report {
+  background: var(--surface); color: var(--text-sub); border: 1px solid var(--border);
+}
+.ds-turn-notice { flex-basis: 100%; margin: 2px 0 0; color: var(--text-sub); }
+.ds-turn-sources { flex-basis: 100%; color: var(--text-sub); }
+.ds-turn-sources ul { margin: 4px 0 0; padding-left: 18px; list-style: disc; }
+.ds-turn-sources em { font-style: normal; color: var(--text-muted); }
+.ds-turn-link { color: var(--primary); font-weight: 600; }
+.ds-turn-link:hover { text-decoration: underline; }
+
+/* 명세 No.6 trace (처리 과정) */
+.ds-trace { flex: 0 0 100%; margin-top: 8px; font-size: calc(11px * var(--ui-font-scale)); color: var(--text-sub); }
+.ds-trace summary { cursor: pointer; color: var(--text-muted); }
+.ds-trace ol { margin: 6px 0 0; padding-left: 20px; }
+.ds-trace li { display: flex; justify-content: space-between; gap: 12px; }
+.ds-trace em { font-style: normal; color: var(--text-muted); }
+
+/* 입력 영역: 빠른 작업 칩 줄 + 여러 줄 입력 */
+.search-ai-panel .chat-tags .composer-source-info {
+  margin-left: auto; color: var(--text-muted); font-size: calc(10px * var(--ui-font-scale));
+}
+.search-ai-panel .chat-tags .composer-source-info strong { color: var(--primary); }
+.search-ai-panel .chat-tag:disabled { opacity: .45; cursor: default; }
+.search-ai-panel .chat-input-row { align-items: flex-end; }
+#dsChatInput {
+  min-width: 0; min-height: 36px; max-height: 160px;
+  line-height: 1.5; resize: none; overflow-y: auto;
+}
+
+/* ─────────── 토스트 ─────────── */
+.ds-toast {
+  position: fixed; left: 50%; bottom: 28px; z-index: 10000; transform: translateX(-50%);
+  padding: 10px 18px; border-radius: 999px; background: #1f2328; color: #fff;
+  font-size: calc(12px * var(--ui-font-scale)); box-shadow: 0 6px 20px rgba(0, 0, 0, .2);
+}

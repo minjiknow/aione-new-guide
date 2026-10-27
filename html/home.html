@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<!--
+[파일 요약]
+홈 화면: html/home.html.
+연결 파일: js/ai-home.js(서비스·이력), js/chat.js(질문 전달), css/ai-home.css·css/chat.css.
+데이터 관리: js/dummy/dummy-data.js의 home.history와 js/dummy/dummy-api.js.
+UI 관리: 홈 정적 마크업과 기존 이력 렌더러를 사용하며 사이드바·툴팁은 common.js/common.css에서 관리합니다.
+
+[변경 내용]
+- 수정: 공통 점 배경·flare 및 홈 배치
+- 수정: 모델·작업 선택 메뉴와 질문 입력창
+- 추가: 서비스 카드 순환 슬라이드 및 키보드 이동
+- 수정: 최근·전체 사용 이력의 API 응답 표시
+- 사이드바 수정 (10/20)
+	1) 질의분류,정책 변경 호버 인라인 svg 이미지로 통일화 : nav-classification-hover.svg,nav-policy-hover.svg
+	2) 정책변경보고서, 매각표준검토서, 내부자료검색 사이드바 호버 시 아이콘 교체 (이름 동일)
+	3) workspace,chat 탭 생성
+	4) 261020 수정 - nav-mode의 Chat 선택 시 common.js에서 chatbot.html로 바로 이동
+- 홈 질문 입력창 수정 (10/21)
+	1) 한 줄은 가로 배치, 자동 줄바꿈·개행으로 두 줄 이상이면 입력란 위 / 버튼 아래로 전환 (is-multiline)
+	2) 내용을 한 줄로 줄이거나 삭제하면 기존 가로 배치로 복귀, 화면 너비 변경 시에도 재판단
+	3) textarea rows="1" 적용, 높이는 chat.js의 initHomeComposerLayout에서 최대 200px까지 조절 (기존 인라인 높이 이벤트 제거)
+	4) css/chat.css의 홈 전용 배치 규칙과 js/chat.js의 초기화·갱신 호출을 함께 반영, 챗봇은 적용 제외
+
+[주요 구성]
+- 261021 - 입력창 order를 홈 전용으로 한정해 한 줄·여러 줄 배치를 유지하고 챗봇과 분리
+- 261021 - 챗봇 일반 홈 메뉴로 이동하면 전달받은 사이드바 접힘 상태 유지
+- 261020 - Work·Chat 모드 이동 및 서비스 메뉴 호버 아이콘 정리
+- 261021 - 공통 배경 효과 위치 조정
+- 공통 사이드바 및 사용자 메뉴
+- 질문 입력창 및 AI 서비스 카드
+- 최근 사용 이력 및 전체 사용 이력 모달
+
+[개발 연동 안내]
+js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거합니다.
+이력 조회·표시는 js/ai-home.js의 loadHomeHistoryData / renderHomeHistory에서 처리합니다.
+미리보기의 ND_recentHistory.do는 더미 전용입니다. 실제 연동은 질의분류·답변서의 ND_conversationList.do 결과를 합칩니다.
+모델값 매핑과 일반 대화 외 작업 이동은 하단 인라인 스크립트, 공통 메뉴 위치·선택 연결은 js/chat.js에서 처리합니다.
+일반 대화는 AIOneChatConfig.mode의 handoff 설정으로 질문·첨부를 챗봇에 전달합니다.
+
+[주석 표기]
+기본 구간 형식: Start: 기능명 / End: 기능명
+변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
+신규 구간 형식: Start: 신규 - 기능명 / End: 신규 - 기능명
+
+[주석 정리 내역]
+- 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
+-->
+<html lang="ko" data-theme-preference="light" data-theme="light" data-accent-color="default"
+	style="color-scheme: light; --ui-font-scale: 1;">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>AI-ONE 홈</title>
+	<link rel="icon" href="../assets/icons/ai-one-logo.svg" type="image/svg+xml">
+	<link rel="stylesheet" href="../css/common.css">
+	<link rel="stylesheet" href="../css/toastify.min.css">
+	<link rel="stylesheet" href="../css/ai-theme.css">
+	<!-- Start: 261014 추가 - 서비스 카드 스와이퍼 스타일 -->
+	<link rel="stylesheet" href="../assets/vendor/swiper/swiper-bundle.min.css">
+	<!-- End: 261014 추가 - 서비스 카드 스와이퍼 스타일 -->
+	<link rel="stylesheet" href="../css/ai-home.css">
+	<link rel="stylesheet" href="../css/chat.css">
+	<!-- Start: 261015 수정 - 더미 데이터 연동 -->
+	<!--
+	[개발 연동 안내]
+	아래 스크립트 3개는 퍼블리싱 화면 확인용입니다. 실제 연동 시 제거합니다.
+	이력 예시는 js/dummy/dummy-data.js, 응답 대체는 js/dummy/dummy-api.js에서 관리합니다.
+	
+	-->
+	<script src="../js/dummy/preview-config.js"></script>
+	<script src="../js/dummy/dummy-data.js" defer></script>
+	<script src="../js/dummy/dummy-api.js" defer></script>
+	<!-- End: 261015 수정 - 더미 데이터 연동 -->
+	<script src="../js/toastify.js" defer></script>
+	<script src="../js/ai-theme.js"></script>
+</head>
+
+<body data-page="home">
+	<div class="app">
+		<!-- Start: 사이드바 -->
+		<aside class="sidebar app-sidebar" id="sidebar" aria-label="주요 메뉴">
+
+			<div class="sidebar-top-bar">
+				<a class="sidebar-brand" id="sidebarBrandButton" href="home.html" aria-label="AI-ONE 홈"
+					data-tooltip="AI-ONE 홈">
+					<span class="brand-logo">
+						<img class="brand-symbol" src="../assets/icons/ai-one-logo.svg" alt="AI-ONE"
+							data-icon="ai-one-logo">
+					</span>
+					<span class="brand-text">
+						<span class="brand-name">AI-ONE</span>
+						<span class="brand-sub">재정경제부 AI 플랫폼</span>
+					</span>
+				</a>
+				<button type="button" class="icon-button icon-button-ghost sidebar-collapse-btn" id="sidebarCollapseBtn"
+					aria-label="사이드바 접기" aria-expanded="true" data-tooltip="사이드바 접기">
+					<img class="collapse-icon icon icon-text" src="../assets/icons/sidebar-collapse.svg"
+						data-icon="sidebar-collapse" alt="" aria-hidden="true">
+				</button>
+			</div>
+			<!-- Start: 261020 수정 - Work·Chat 모드 화면 바로 이동 -->
+			<div class="nav-mode" role="tablist" aria-label="사이드바 모드">
+				<button type="button" class="nav-link active" id="navModeWork" data-tooltip="업무 특화서비스 워크스페이스" role="tab"
+					aria-selected="true" aria-controls="navModeWorkPanel" aria-label="업무 특화서비스 워크스페이스">
+					<span class="nav-service-icon" aria-hidden="true">
+						<img class="nav-service-icon-default" src="../assets/icons/nav-mode-work.svg" width="17"
+							height="17" alt="">
+						<img class="nav-service-icon-hover" src="../assets/icons/nav-mode-work-hover.svg" width="17"
+							height="17" alt="">
+					</span>
+					<span class="nav-text">Work</span>
+				</button>
+				<button type="button" class="nav-link" id="navModeChat" data-tooltip="대화형 챗봇" role="tab"
+					aria-selected="false" data-nav-mode-href="chatbot.html" aria-label="대화형 챗봇" tabindex="-1">
+					<span class="nav-service-icon" aria-hidden="true">
+						<img class="nav-service-icon-default" src="../assets/icons/nav-chatbot.svg" width="17"
+							height="18" alt="">
+						<img class="nav-service-icon-hover" src="../assets/icons/nav-chatbot-hover.svg" width="17"
+							height="18" alt="">
+					</span>
+					<span class="nav-text">Chat</span>
+				</button>
+			</div>
+			<!-- End: 261020 수정 - Work·Chat 모드 화면 바로 이동 -->
+
+			<nav class="sidebar-nav" aria-label="메인 네비게이션">
+				<!-- 
+				<button class="nav-btn"  id="home" data-tooltip="홈">
+					<svg viewBox="0 0 24 24">
+						<path d="M3 11.5 12 4l9 7.5" />
+						<path d="M5.5 10.5V20h13v-9.5" />
+						<path d="M9.5 20v-6h5v6" />
+					</svg>
+				</button>
+				 -->
+				<div class="nav-group">
+					<a class="nav-link active" href="home.html" data-route="home" data-page="home"
+						data-tooltip="AI-ONE 홈" aria-label="AI-ONE 홈" aria-current="page">
+						<span class="nav-service-icon" aria-hidden="true"><img class="nav-service-icon-default"
+								src="../assets/icons/home.svg" data-icon="home" width="18" height="16" alt=""><img
+								class="nav-service-icon-hover" src="../assets/icons/home-hover.svg" width="18"
+								height="16" alt=""></span>
+						<span class="nav-text">AI-ONE 홈</span>
+					</a>
+				</div>
+
+
+				<div class="nav-group" id="navModeWorkPanel" data-nav-mode-panel role="tabpanel"
+					aria-labelledby="navModeWork">
+					<span class="nav-group-label">AI 서비스</span>
+					<a class="nav-link" href="classifcation.html?newChat=Y" data-route="intake" data-page="intake"
+						data-tooltip="국회질의분류" aria-label="국회질의분류">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-classification.svg"
+								width="17" height="17" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-classification-hover.svg"
+								width="17" height="17" alt="">
+						</span>
+						<span class="nav-text">국회질의분류</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="ai-answer.html?newChat=Y" data-route="answer" data-page="answer"
+						data-tooltip="국회 답변서 초안" aria-label="국회 답변서 초안">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">국회 답변서 초안</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="sale-review.html" data-route="asset" data-page="asset" data-tooltip="매각표준검토서 검증"
+						aria-label="매각표준검토서 검증">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-sale.svg" width="17"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-sale-hover.svg" width="17"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">매각표준검토서 검증</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="policy.html" data-route="policy-verify" data-page="policy-verify"
+						data-tooltip="정책변경보고서 검증" aria-label="정책변경보고서 검증">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-policy.svg" width="17"
+								height="18" alt="">
+							<!-- Start: 261020 수정 - 정책변경보고서 검증 아이콘 이미지 태그 적용 -->
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-policy-hover.svg" width="17"
+								height="18" alt="">
+							<!-- End: 261020 수정 - 정책변경보고서 검증 아이콘 이미지 태그 적용 -->
+						</span>
+						<span class="nav-text">정책변경보고서 검증</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+					<a class="nav-link" href="work-support.html" data-route="searchwrite" data-page="searchwrite"
+						data-tooltip="내부 자료 검색 · 업무 지원" aria-label="내부 자료 검색 · 업무 지원" aria-expanded="false">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-search.svg" width="17"
+								height="17" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-search-hover.svg" width="17"
+								height="17" alt="">
+						</span>
+						<span class="nav-text">내부 자료 검색 · 업무 지원</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
+							data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+				</div>
+				<!-- <div class="nav-group" id="navModeChatPanel" data-nav-mode-panel role="tabpanel" aria-labelledby="navModeChat" hidden>
+					<a class="nav-link" href="chatbot.html?newChat=Y" data-route="chatbot" data-page="chatbot"
+						data-tooltip="챗봇" aria-label="챗봇">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-chatbot.svg" width="17"
+								height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-chatbot-hover.svg" width="17"
+								height="18" alt="">
+						</span>
+						<span class="nav-text">챗봇</span>
+						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음" data-tooltip="완료된 작업이 있습니다."></span>
+					</a>
+				</div> -->
+			</nav>
+			<div class="sidebar-footer">
+				<div class="user-card">
+					<button type="button" class="user-avatar" data-sidebar-account-toggle="" aria-label="담당자 정보"
+						data-tooltip="담당자 정보" aria-haspopup="menu" aria-expanded="false"
+						aria-controls="sidebarAccountMenu">
+						<img class="icon icon-text" src="../assets/icons/user.svg" data-icon="user" alt=""
+							aria-hidden="true">
+					</button>
+					<button type="button" class="user-info" data-sidebar-account-toggle="" aria-label="사용자 계정 메뉴"
+						aria-haspopup="menu" aria-expanded="false" aria-controls="sidebarAccountMenu"
+						data-tooltip="사용자 계정 메뉴">
+						<span class="user-name">일반담당자 </span>
+						<span class="user-meta-row">
+							<span class="user-dept">시스템운영팀</span>
+
+							<span class="user-role-badge">일반담당자</span>
+						</span>
+					</button>
+				</div>
+			</div>
+			<!-- Start: 내 정보 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarProfileModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-account-profile account-profile-modal"
+					role="dialog" aria-modal="true" data-modal-variant="account-profile" aria-label="내 정보">
+					<div class="modal-variant-panel" data-modal-panel="account-profile" data-account-modal-panel="">
+						<div class="account-modal-head">
+							<div class="modal-title">내 정보</div>
+							<button type="button" class="query-edit-modal-close" data-modal-close=""
+								aria-label="닫기">×</button>
+						</div>
+						<div class="account-modal-body account-profile-content">
+							<div class="account-profile-summary">
+								<span class="account-profile-avatar" aria-hidden="true">
+									<svg viewBox="0 0 24 24">
+										<circle cx="12" cy="8" r="4"></circle>
+										<path d="M5 21a7 7 0 0 1 14 0"></path>
+									</svg>
+								</span>
+								<div>
+									<strong data-account-profile-name="">일반담당자</strong>
+									<span data-account-profile-dept="">시스템운영팀</span>
+								</div>
+							</div>
+							<dl class="account-profile-list">
+								<div>
+									<dt>이름·직위</dt>
+									<dd data-account-profile-name="">일반담당자</dd>
+								</div>
+								<div>
+									<dt>소속 부서</dt>
+									<dd data-account-profile-dept="">시스템운영팀</dd>
+								</div>
+								<div>
+									<dt>사용자 권한</dt>
+
+									<dd><span class="account-role-tag" data-account-profile-role="">일반담당자</span>
+									</dd>
+								</div>
+								<!-- 								<div> -->
+								<!-- 									<dt>로그인 방식</dt> -->
+								<!-- 									<dd>통합 ID · SSO</dd> -->
+								<!-- 								</div> -->
+							</dl>
+						</div>
+						<div class="modal-actions account-modal-actions">
+							<button type="button" class="btn-cancel" data-modal-close="" hidden="">취소</button>
+							<button type="button" class="btn-confirm" data-modal-close="">확인</button>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 내 정보 클릭 시 나오는 프로필 모달 -->
+			<!-- Start: 환경설정 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarSettingsModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-account-settings account-settings-modal"
+					role="dialog" aria-modal="true" data-modal-variant="account-settings" aria-label="환경설정">
+					<div class="modal-variant-panel" data-modal-panel="account-settings" data-account-modal-panel="">
+						<div class="account-modal-head">
+							<div class="modal-title">환경설정</div>
+							<button type="button" class="query-edit-modal-close" data-modal-close=""
+								aria-label="닫기">×</button>
+						</div>
+						<div class="account-modal-body account-settings-content" data-settings-panel="">
+							<section class="account-settings-section">
+								<div class="settings-section-title">화면 모드</div>
+								<div class="theme-option-list" role="radiogroup" aria-label="화면 모드 선택">
+									<button type="button" class="theme-option" data-theme-value="system" role="radio"
+										aria-checked="false">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<rect x="3" y="4" width="18" height="14" rx="2"></rect>
+												<path d="M8 21h8M12 18v3"></path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>시스템</strong><small>기기 설정에
+												맞춤</small></span>
+										<span class="theme-option-check" aria-hidden="true"></span>
+									</button>
+									<button type="button" class="theme-option" data-theme-value="dark" role="radio"
+										aria-checked="false">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.5 6.5 0 0 0 21 12.8z">
+												</path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>다크 모드</strong><small>어두운
+												화면</small></span>
+										<span class="theme-option-check" aria-hidden="true"></span>
+									</button>
+									<button type="button" class="theme-option active" data-theme-value="light"
+										role="radio" aria-checked="true">
+										<span class="theme-option-icon">
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<circle cx="12" cy="12" r="4"></circle>
+												<path
+													d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42">
+												</path>
+											</svg>
+										</span>
+										<span class="theme-option-text"><strong>라이트 모드</strong><small>밝은
+												화면</small></span>
+										<span class="theme-option-check" aria-hidden="true">✓</span>
+									</button>
+								</div>
+							</section>
+							<section class="account-settings-section">
+								<div class="settings-section-title">강조 컬러</div>
+								<div class="settings-accent-control" data-accent-control="" data-accent-value="default">
+									<button type="button" class="settings-accent-trigger" data-accent-trigger=""
+										aria-haspopup="listbox" aria-expanded="false" aria-label="강조 컬러 선택">
+										<span class="settings-accent-swatch" aria-hidden="true"
+											data-accent-value="default" aria-selected="true"></span>
+										<span data-accent-label="">기본값</span>
+										<span class="settings-accent-arrow" aria-hidden="true"></span>
+									</button>
+									<div class="settings-accent-options" data-accent-listbox="" role="listbox"
+										aria-label="강조 컬러 옵션" hidden="">
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="default" aria-selected="true">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>기본값</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="blue" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>블루</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="green" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>그린</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="yellow" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>옐로</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="pink" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>핑크</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="orange" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>오렌지</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+										<button type="button" class="settings-accent-option" role="option"
+											data-accent-value="purple" aria-selected="false">
+											<span class="settings-accent-option-dot"
+												aria-hidden="true"></span><span>퍼플</span><span
+												class="settings-accent-option-check" aria-hidden="true">✓</span>
+										</button>
+									</div>
+								</div>
+							</section>
+							<section class="account-settings-section">
+								<div class="settings-section-title">알림</div>
+								<div class="notification-setting-row">
+									<div class="notification-setting-text">
+										<strong>응답 완료 알림</strong>
+										<small>시간이 걸리는 요청에 응답할 때 알림을 받습니다.</small>
+										<span class="notification-setting-status" aria-live="polite">알림이 켜져
+											있습니다.</span>
+									</div>
+									<button type="button" class="notification-toggle active" role="switch"
+										aria-checked="true" aria-label="응답 완료 알림 설정"><span></span></button>
+								</div>
+							</section>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 환경설정 클릭 시 나오는 프로필 모달 -->
+
+			<!-- Start: 로그아웃 클릭 시 나오는 프로필 모달 -->
+			<div class="hidden modal" id="sidebarLogoutModal" data-component="modal" data-modal="">
+				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+				<section class="modal-contents modal-medium modal-variant-logout" role="dialog" aria-modal="true"
+					data-modal-variant="logout" aria-label="로그아웃 확인">
+					<div class="modal-variant-panel" data-modal-panel="content">
+						<div class="modal-icon logout" data-modal-icon="logout" aria-hidden="true">
+							<img src="../assets/icons/logout.svg" alt="">
+						</div>
+						<div class="modal-title" id="sidebarLogoutModal-title" data-slot="title">
+							로그아웃</div>
+						<div class="modal-msg" id="sidebarLogoutModal-description" data-slot="description">
+							AI-ONE에서 로그아웃하시겠습니까?
+						</div>
+						<div class="modal-actions" data-slot="actions">
+							<button type="button" class="btn-cancel" data-modal-close="">취소</button>
+
+							<button type="button" class="btn-confirm danger" data-sidebar-logout-confirm=""
+								data-modal-close="">로그아웃</button>
+						</div>
+					</div>
+				</section>
+			</div>
+			<!-- End: 로그아웃 클릭 시 나오는 프로필 모달 -->
+
+			<!-- Start: 사이드 바 하단 클릭 시 나오는 프로필 메뉴 -->
+
+			<div class="user-account-menu user-account-menu-detached" id="sidebarAccountMenu" role="menu"
+				aria-label="사용자 계정 메뉴" data-sidebar-account-menu="detached" hidden="">
+				<div class="user-account-summary">
+					<strong>일반담당자</strong>
+					<span>시스템운영팀</span>
+				</div>
+				<button type="button" role="menuitem" data-sidebar-account-action="profile"
+					data-modal-open="sidebarProfileModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/user.svg" data-icon="user" alt="" aria-hidden="true">
+					<span>내 정보</span>
+				</button>
+				<button type="button" role="menuitem" data-sidebar-account-action="settings"
+					data-modal-open="sidebarSettingsModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/settings-alt.svg" data-icon="settings-alt" alt="" aria-hidden="true">
+					<span>환경설정</span>
+				</button>
+				<button type="button" class="danger" role="menuitem" data-sidebar-account-action="logout"
+					data-modal-open="sidebarLogoutModal" aria-haspopup="dialog" aria-expanded="false">
+					<img src="../assets/icons/logout.svg" data-icon="logout" alt="" aria-hidden="true">
+					<span>로그아웃</span>
+				</button>
+			</div>
+			<!-- End: 사이드 바 하단 클릭 시 나오는 프로필 메뉴 -->
+		</aside>
+		<!-- End: 사이드바 -->
+		<!-- div class="main-wrap" 부터 각 페이지에서 구현 -->
+
+		<main class="main-wrap">
+			<!-- Start: 261021 수정 - 배경 효과 위치 -->
+			<div class="ai-one-background ai-one-background-particles" aria-hidden="true">
+				<span class="ai-one-background-part ai-one-background-login-flare"></span>
+			</div>
+			<!-- End: 261021 수정 - 배경 효과 위치 -->
+			<div class="page">
+				<header class="home-header">
+					<p class="home-eyebrow">AI-ONE PLATFORM</p>
+					<h1>환영합니다, 일반담당자 님!</h1>
+					<p class="home-description">무엇을 도와드릴까요?</p>
+				</header>
+
+				<!-- Start: Home Prompt Composer -->
+				<!--
+						  [문서/페이지 구조 안내 — 개발자용]
+						  - home-prompt-composer: 홈 화면에서 사용자에게 질문을 입력받는 컴포넌트
+						  - 2026.10.06 주석 해제·hidden 제거. 입력창은 챗봇 화면과 같은 마크업을 사용한다.
+						  - 작업이 "일반 대화"면 질문·첨부를 챗봇 화면(chatbot.html)으로 넘겨 그 화면에서 대화한다.
+						    다른 작업은 하단 연결 스크립트가 해당 화면으로 보낸다.
+				-->
+
+
+				<div class="home-prompt-composer">
+					<div class="prompt-composer-shell chat-drop-zone" id="chatComposer" data-chat-task-current="chat"
+						data-chat-model="">
+						<form class="prompt-composer" id="chatComposerForm" novalidate="">
+							<!-- Start: 261015 수정 - 채팅 입력 위치 -->
+							<label for="chatInput" class="sr-only">AI-ONE에게 요청할 내용</label>
+							<textarea class="prompt-composer-input" id="chatInput" name="prompt" rows="1"
+								maxlength="20000" placeholder="AI-ONE에게 요청해 보세요: 관련 법령과 근거 자료를 찾아줘"></textarea>
+							<ul class="chat-attach-list" id="chatAttachList" aria-label="첨부 파일" hidden=""></ul>
+							<!-- End: 261015 수정 - 채팅 입력 위치 -->
+							<div class="prompt-composer-tools">
+								<input class="prompt-composer-file-input" id="chatFileInput" type="file" multiple=""
+									hidden=""
+									accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif,.bmp">
+								<button type="button" class="icon-button icon-button-ghost prompt-composer-attach"
+									id="chatAttachBtn" aria-label="파일 첨부" data-tooltip="파일 첨부">
+									<img class="icon icon-small" data-icon="plus" alt="" aria-hidden="true"
+										src="../assets/icons/plus.svg">
+								</button>
+							</div>
+							<div class="prompt-composer-bar">
+								<div class="prompt-composer-actions">
+									<!-- 모델 선택 (AI 서버 모델명은 하단 스크립트의 MODEL_MAP 에서 연결) -->
+									<div class="dropdown-menu-component" data-dropdown-menu="" data-chat-menu="model">
+										<button type="button" class="button dropdown-menu-model-trigger"
+											data-dropdown-trigger="" aria-haspopup="menu" aria-expanded="false"
+											aria-controls="chatModelMenu">
+											<span data-chat-model-label="" class="chat-tit">AI-ONE AI</span>
+											<span class="chat-middot" aria-hidden="true"></span>
+											<span data-chat-task-label="" class="chat-desc">일반 대화</span>
+											<img class="icon icon-xsmall" data-icon="chevron-down" alt=""
+												aria-hidden="true" src="../assets/icons/chevron-down.svg">
+										</button>
+										<div class="chat-menu-panels">
+											<!-- 옵션은 HTML에서 관리하며 aria-controls로 모델과 작업 메뉴를 연결합니다. -->
+											<div class="dropdown-menu dropdown-menu-model" id="chatModelMenu"
+												role="menu" data-placement="bottom-end" hidden="">
+												<span class="dropdown-menu-label">모델 선택</span>
+												<button type="button" class="dropdown-menu-item" role="menuitemradio"
+													aria-checked="true" data-menu-value="default"
+													data-menu-label="AI-ONE AI" data-menu-keep-open=""
+													aria-haspopup="menu" aria-expanded="false"
+													aria-controls="chatTaskMenu">
+													<span class="dropdown-model-name">AI-ONE AI</span>
+													<span class="dropdown-model-check" aria-hidden="true">✓</span>
+												</button>
+												<button type="button" class="dropdown-menu-item" role="menuitemradio"
+													aria-checked="false" data-menu-value="government"
+													data-menu-label="범정부 AI" data-menu-keep-open="" aria-haspopup="menu"
+													aria-expanded="false" aria-controls="chatGovernmentTaskMenu">
+													<span class="dropdown-model-name">범정부 AI</span>
+													<span class="dropdown-model-check" aria-hidden="true">✓</span>
+												</button>
+											</div>
+											<div class="dropdown-menu dropdown-menu-model chat-task-submenu"
+												id="chatTaskMenu" role="menu" data-chat-menu="task" hidden="">
+												<button type="button" class="dropdown-menu-item" role="menuitemradio"
+													aria-checked="false" data-menu-value="chat" data-menu-label="일반 대화">
+													<span class="dropdown-model-name">일반 대화</span>
+													<span class="dropdown-model-check" aria-hidden="true">✓</span>
+												</button>
+												<button type="button" class="dropdown-menu-item" role="menuitemradio"
+													aria-checked="false" data-menu-value="search"
+													data-menu-label="내부자료 검색">
+													<span class="dropdown-model-name">내부자료 검색</span>
+													<span class="dropdown-model-check" aria-hidden="true">✓</span>
+												</button>
+											</div>
+											<div class="dropdown-menu dropdown-menu-model chat-task-submenu"
+												id="chatGovernmentTaskMenu" role="menu" data-chat-menu="task" hidden="">
+												<button type="button" class="dropdown-menu-item" role="menuitemradio"
+													aria-checked="false" data-menu-value="document-summary"
+													data-menu-label="문서생성요약">
+													<span class="dropdown-model-name">문서생성요약</span>
+													<span class="dropdown-model-check" aria-hidden="true">✓</span>
+												</button>
+												<button type="button" class="dropdown-menu-item" role="menuitemradio"
+													aria-checked="false" data-menu-value="public-search"
+													data-menu-label="공개자료 검색">
+													<span class="dropdown-model-name">공개자료 검색</span>
+													<span class="dropdown-model-check" aria-hidden="true">✓</span>
+												</button>
+												<button type="button" class="dropdown-menu-item" role="menuitemradio"
+													aria-checked="false" data-menu-value="law-search"
+													data-menu-label="법령 검색">
+													<span class="dropdown-model-name">법령 검색</span>
+													<span class="dropdown-model-check" aria-hidden="true">✓</span>
+												</button>
+											</div>
+										</div>
+										<button type="submit"
+											class="icon-button icon-button-primary prompt-composer-submit"
+											id="chatSendBtn" aria-label="보내기" disabled="" data-tooltip="보내기">
+											<img class="icon icon-text" data-icon="send" alt="" aria-hidden="true"
+												src="../assets/icons/send.svg">
+										</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+				<!-- End: Home Prompt Composer -->
+
+
+				<!-- Start: AI 서비스 카드 영역 -->
+
+				<section class="home-services" aria-label="AI 서비스">
+					<!-- Start: Service Cards -->
+					<!--
+						  [문서/페이지 구조 안내 — 개발자용]
+								- service-cards: AI 서비스 카드 목록 / 각 페이지 링크 연결됨 (국유재산,정책 안내서는 준비 중 모달로 연결)
+								- service-item: AI 서비스 카드
+						-->
+					<div class="service-swiper swiper" tabindex="0" role="region" aria-label="AI 서비스 목록, 좌우 방향키로 이동">
+						<ul class="service-cards swiper-wrapper" aria-label="AI 서비스 목록">
+							<li class="service-item swiper-slide">
+								<a class="service-card" data-service-tone="blue" data-service-version="1"
+									href="ai-answer.html?newChat=Y" target="_top">
+									<div class="service-icon">
+										<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<path
+												d="M8.74805 3.99902C11.3708 3.99912 13.497 6.12529 13.4971 8.74805C13.497 11.1409 11.7268 13.1186 9.4248 13.4473C9.98288 15.1405 11.5861 16.3691 13.4609 16.3594L13.4629 16.3584L17.6826 16.3467C21.038 16.3339 23.9181 18.3648 25.165 21.2588C25.3311 21.2399 25.4998 21.2295 25.6709 21.2295C28.1238 21.2295 30.1121 23.2181 30.1123 25.6709C30.1123 28.1239 28.1239 30.1123 25.6709 30.1123C23.2181 30.1121 21.2295 28.1238 21.2295 25.6709C21.2296 23.9214 22.2416 22.4086 23.7119 21.6846C22.6928 19.4887 20.5098 17.9437 17.959 17.8506L17.6885 17.8467L13.4678 17.8584L13.4668 17.8574C11.8088 17.8654 10.3107 17.1627 9.25879 16.0391V21.3047C11.3207 21.6889 12.8817 23.4977 12.8818 25.6709C12.8818 28.1238 10.8933 30.1122 8.44043 30.1123C5.9875 30.1123 3.99902 28.1238 3.99902 25.6709C3.99918 23.4498 5.62947 21.6082 7.75879 21.2803V13.3926C5.61098 12.9373 3.99911 11.0315 3.99902 8.74805C3.99907 6.12525 6.12525 3.99907 8.74805 3.99902Z"
+												fill="url(#paint0_linear_1353_3110)" />
+											<defs>
+												<linearGradient id="paint0_linear_1353_3110" x1="17.0557" y1="3.99902"
+													x2="17.0557" y2="30.1123" gradientUnits="userSpaceOnUse">
+													<stop stop-color="#26A6C6" />
+													<stop offset="1" stop-color="#0969DA" />
+												</linearGradient>
+											</defs>
+										</svg>
+
+									</div>
+									<div class="service-card-top">
+										<h3 class="service-title">국회 질의 분류</h3>
+										<span class="service-arrow" aria-hidden="true">›</span>
+									</div>
+									<p class="service-desc">질의 파일 업로드 · 질의 추출 ·
+										소관 실국 추천 · 분류 결과
+										검토·수정</p>
+
+								</a>
+							</li>
+							<li class="service-item swiper-slide">
+								<a class="service-card" data-service-tone="green" data-service-version="1"
+									href="ai-answer.html?newChat=Y" target="_top">
+									<div class="service-icon">
+										<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<path
+												d="M28.8867 3.50214C29.3621 3.50217 29.8333 3.59563 30.2725 3.77753C30.7115 3.95943 31.1102 4.22667 31.4463 4.56268C31.7824 4.89881 32.0495 5.29832 32.2314 5.73749C32.4132 6.17645 32.5067 6.64715 32.5068 7.12225C32.5068 7.59756 32.4133 8.06885 32.2314 8.508C32.0495 8.94718 31.7824 9.34664 31.4463 9.6828L13.0586 28.0705C12.9946 28.1344 12.914 28.1804 12.8262 28.2023L6.94238 29.673C6.77205 29.7156 6.59192 29.6653 6.46777 29.5412C6.34376 29.417 6.29338 29.2369 6.33594 29.0666L7.80762 23.1828L7.82812 23.1183C7.85315 23.0558 7.89055 22.9984 7.93848 22.9504L26.3262 4.56268C27.0051 3.88382 27.9266 3.50214 28.8867 3.50214ZM10.4297 10.2228C10.9818 10.2228 11.4295 10.6707 11.4297 11.2228C11.4297 11.7751 10.982 12.2228 10.4297 12.2228H2.00488C1.45267 12.2228 1.00488 11.7751 1.00488 11.2228C1.0051 10.6708 1.45281 10.2229 2.00488 10.2228H10.4297ZM20.0586 3.00214C20.6106 3.00231 21.0584 3.4501 21.0586 4.00214C21.0586 4.55432 20.6107 5.00197 20.0586 5.00214H2.00488C1.45267 5.00205 1.00488 4.55437 1.00488 4.00214C1.00505 3.45004 1.45277 3.00222 2.00488 3.00214H20.0586Z"
+												fill="url(#paint0_linear_1264_7553)" />
+											<defs>
+												<linearGradient id="paint0_linear_1264_7553" x1="16.7559" y1="3.00214"
+													x2="16.7559" y2="29.6879" gradientUnits="userSpaceOnUse">
+													<stop stop-color="#F6E38E" />
+													<stop offset="1" stop-color="#56AF80" />
+												</linearGradient>
+											</defs>
+										</svg>
+
+									</div>
+									<div class="service-card-top">
+										<h3 class="service-title">국회 답변서 초안 생성</h3>
+										<span class="service-arrow" aria-hidden="true">›</span>
+									</div>
+									<p class="service-desc">질의 입력 · 관련자료 자동 추천 ·
+										AI 참조소스 검색·업로드 · 버전별
+										초안 생성</p>
+								</a>
+							</li>
+							<li class="service-item swiper-slide">
+								<a class="service-card" data-service-tone="orange" data-service-version="1" href="sale-review.html" aria-label="매각표준검토서 검증">
+									<div class="service-icon">
+										<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<g clip-path="url(#paint0_angular_1264_7592_clip_path)"
+												data-figma-skip-parse="true">
+												<g transform="matrix(0 0.0145271 -0.0137829 0 16.7829 18.1365)">
+													<foreignObject x="-1072.55" y="-1072.55" width="2145.11"
+														height="2145.11">
+														<div xmlns="http://www.w3.org/1999/xhtml"
+															style="background:conic-gradient(from 90deg,rgba(255, 214, 177, 1) 0deg,rgba(191, 135, 0, 1) 360deg);height:100%;width:100%;opacity:1">
+														</div>
+													</foreignObject>
+												</g>
+											</g>
+											<path
+												d="M23.5042 3.60938H10.0775C6.16667 3.60938 3 6.79187 3 10.6869V25.586C3 29.481 6.1825 32.6635 10.0775 32.6635H23.4883C27.3992 32.6635 30.5658 29.481 30.5658 25.586V10.6869C30.5817 6.77604 27.3992 3.60938 23.5042 3.60938Z"
+												data-figma-gradient-fill="{&#34;type&#34;:&#34;GRADIENT_ANGULAR&#34;,&#34;stops&#34;:[{&#34;color&#34;:{&#34;r&#34;:1.0,&#34;g&#34;:0.84163159132003784,&#34;b&#34;:0.69471156597137451,&#34;a&#34;:1.0},&#34;position&#34;:0.0},{&#34;color&#34;:{&#34;r&#34;:0.74901962280273438,&#34;g&#34;:0.52941179275512695,&#34;b&#34;:0.0,&#34;a&#34;:1.0},&#34;position&#34;:1.0}],&#34;transform&#34;:{&#34;m00&#34;:1.6879241644871782e-15,&#34;m01&#34;:-27.565893173217773,&#34;m02&#34;:30.565893173217773,&#34;m10&#34;:29.054166793823242,&#34;m11&#34;:1.7790546393372554e-15,&#34;m12&#34;:3.6093750},&#34;opacity&#34;:1.0,&#34;blendMode&#34;:&#34;NORMAL&#34;,&#34;stopsVar&#34;:[{&#34;color&#34;:{&#34;r&#34;:1.0,&#34;g&#34;:0.84163159132003784,&#34;b&#34;:0.69471156597137451,&#34;a&#34;:1.0},&#34;position&#34;:0.0},{&#34;color&#34;:{&#34;r&#34;:0.74901962280273438,&#34;g&#34;:0.52941179275512695,&#34;b&#34;:0.0,&#34;a&#34;:1.0},&#34;position&#34;:1.0}],&#34;visible&#34;:true}" />
+											<path d="M26.2891 11.8359L19.1641 20.8359L14.4141 14.8359L7.28906 23.8359"
+												stroke="white" stroke-width="2" stroke-linecap="round"
+												stroke-linejoin="round" />
+											<path
+												d="M20.5045 1H13.0628C11.4161 1 10.0703 2.33 10.0703 3.97667V5.465C10.0703 7.11167 11.4003 8.44167 13.047 8.44167H20.5045C22.1511 8.44167 23.4811 7.11167 23.4811 5.465V3.97667C23.497 2.33 22.1511 1 20.5045 1Z"
+												fill="#BF8700" />
+											<defs>
+												<clipPath id="paint0_angular_1264_7592_clip_path">
+													<path
+														d="M23.5042 3.60938H10.0775C6.16667 3.60938 3 6.79187 3 10.6869V25.586C3 29.481 6.1825 32.6635 10.0775 32.6635H23.4883C27.3992 32.6635 30.5658 29.481 30.5658 25.586V10.6869C30.5817 6.77604 27.3992 3.60938 23.5042 3.60938Z" />
+												</clipPath>
+											</defs>
+										</svg>
+
+									</div>
+									<div class="service-card-top">
+										<h3 class="service-title">매각표준검토서 검증</h3>
+										<span class="service-arrow" aria-hidden="true">›</span>
+									</div>
+									<p class="service-desc">검토서·검증 자료 업로드 · AI 검증 ·
+										원본·검증결과 확인 · 검증결과 기반 추가 질의</p>
+								</a>
+							</li>
+							<li class="service-item swiper-slide">
+								<a class="service-card" data-service-tone="purple" data-service-version="1" href="policy.html" aria-label="정책변경보고서 검증">
+									<div class="service-icon">
+										<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
+											xmlns="http://www.w3.org/2000/svg">
+											<rect x="3" y="1" width="28" height="32" rx="2"
+												fill="url(#paint0_linear_1264_7626)" />
+											<path d="M11.5 7.60938L24.7222 7.60938" stroke="#8250DF"
+												stroke-linecap="round" />
+											<path d="M11.5 13.2734L19.0556 13.2734" stroke="#8250DF"
+												stroke-linecap="round" />
+											<path d="M11.5 18.9453L22.8333 18.9453" stroke="#8250DF"
+												stroke-linecap="round" />
+											<path
+												d="M3 29.2857C3 27.6763 3 26.8716 3.43634 26.3244C3.52971 26.2074 3.63594 26.1011 3.75302 26.0078C4.30017 25.5714 5.10488 25.5714 6.71429 25.5714H27C28.8856 25.5714 29.8284 25.5714 30.4142 24.9856C31 24.3999 31 23.457 31 21.5714V20V29C31 30.8856 31 31.8284 30.4142 32.4142C29.8284 33 28.8856 33 27 33H6.71429C5.10488 33 4.30017 33 3.75302 32.5637C3.63594 32.4703 3.52971 32.3641 3.43634 32.247C3 31.6998 3 30.8951 3 29.2857Z"
+												fill="url(#paint1_linear_1264_7626)" />
+											<defs>
+												<linearGradient id="paint0_linear_1264_7626" x1="17" y1="1" x2="17"
+													y2="33" gradientUnits="userSpaceOnUse">
+													<stop stop-color="#C5A6FF" />
+													<stop offset="1" stop-color="#DBFFE5" />
+												</linearGradient>
+												<linearGradient id="paint1_linear_1264_7626" x1="16.9108" y1="10.1309"
+													x2="17.0113" y2="33" gradientUnits="userSpaceOnUse">
+													<stop stop-color="#8250DF" />
+													<stop offset="1" stop-color="#649873" />
+												</linearGradient>
+											</defs>
+										</svg>
+
+									</div>
+									<div class="service-card-top">
+										<h3 class="service-title">정책변경보고서 검증</h3>
+										<span class="service-arrow" aria-hidden="true">›</span>
+									</div>
+									<p class="service-desc">보고서 업로드 · 원본·정책과제 확인 · 체크리스트 검증 · 정책별 검증
+										결과 검토</p>
+								</a>
+							</li>
+							<li class="service-item swiper-slide">
+								<a class="service-card" data-service-tone="teal" data-service-version="1"
+									href="work-support.html" aria-label="내부 자료 검색 · 업무 지원">
+									<div class="service-icon">
+										<svg width="35" height="34" viewBox="0 0 35 34" fill="none"
+											xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+											<!-- 큰 육각형부터 겹쳐 그리고 채색 그룹 전체에 투명도를 적용합니다. -->
+											<g clip-path="url(#paint0_angular_1264_7668_clip_path)" opacity="0.4">
+												<g transform="matrix(0 0.0145754 -0.0168307 0 17.8332 14.5788)">
+													<foreignObject x="-1068.61" y="-1068.61" width="2137.22"
+														height="2137.22">
+														<div xmlns="http://www.w3.org/1999/xhtml"
+															style="background:conic-gradient(from 90deg,rgba(9, 105, 218, 1) 0deg,rgba(15, 159, 143, 1) 360deg);height:100%;width:100%;opacity:1">
+														</div>
+													</foreignObject>
+												</g>
+											</g>
+											<g clip-path="url(#paint1_angular_1264_7668_clip_path)">
+												<g transform="matrix(0 0.00560463 -0.00647982 0 12.7059 23.5461)">
+													<foreignObject x="-1178.42" y="-1178.42" width="2356.85"
+														height="2356.85">
+														<div xmlns="http://www.w3.org/1999/xhtml"
+															style="background:conic-gradient(from 90deg,rgba(9, 105, 218, 1) 0deg,rgba(15, 159, 143, 1) 360deg);height:100%;width:100%;opacity:1">
+														</div>
+													</foreignObject>
+												</g>
+											</g>
+											<g clip-path="url(#paint2_angular_1264_7668_clip_path)" opacity="0.6">
+												<g transform="matrix(0 0.0106539 -0.0123033 0 15.6397 18.4969)">
+													<foreignObject x="-1093.86" y="-1093.86" width="2187.73"
+														height="2187.73">
+														<div xmlns="http://www.w3.org/1999/xhtml"
+															style="background:conic-gradient(from 90deg,rgba(9, 105, 218, 1) 0deg,rgba(15, 159, 143, 1) 360deg);height:100%;width:100%;opacity:1">
+														</div>
+													</foreignObject>
+												</g>
+											</g>
+											<defs>
+												<clipPath id="paint0_angular_1264_7668_clip_path">
+													<path
+														d="M26.2485 0.00341797H9.41781L1.00244 14.5788L9.41781 29.1542H26.2485L34.6639 14.5788L26.2485 0.00341797Z" />
+												</clipPath>
+												<clipPath id="paint1_angular_1264_7668_clip_path">
+													<path
+														d="M15.9374 17.9415H9.47439L6.22607 23.5461L9.47439 29.1507H15.9374L19.1857 23.5461L15.9374 17.9415Z" />
+												</clipPath>
+												<clipPath id="paint2_angular_1264_7668_clip_path">
+													<path
+														d="M21.7829 7.84302H9.47963L3.33643 18.4969L9.47963 29.1507H21.7829L27.9429 18.4969L21.7829 7.84302Z" />
+												</clipPath>
+											</defs>
+										</svg>
+
+
+									</div>
+									<div class="service-card-top">
+										<h3 class="service-title">내부 자료 검색 · 업무 지원</h3>
+										<span class="service-arrow" aria-hidden="true">›</span>
+									</div>
+									<p class="service-desc">내부 자료 검색 · 원본 미리보기 ·
+										선택자료 반영 · AI 질의응답 ·
+										문서 작성</p>
+								</a>
+							</li>
+						</ul>
+					</div>
+				</section>
+					<!-- End: Service Cards -->
+
+
+
+				<!-- End: AI 서비스 카드 영역 -->
+
+
+
+				<!-- Start: 최근 사용 이력조회 테이블 영역 -->
+				<section class="home-history" aria-labelledby="homeHistoryTitle">
+					<section class="table-area">
+						<header class="table-header">
+							<h2 class="table-title" id="homeHistoryTitle">최근 사용 이력</h2>
+							<a class="table-more" href="#">전체 이력 보기 ›</a>
+						</header>
+						<div class="table-scroll">
+							<!-- 최근 사용 이력 테이블 -->
+							<!--
+						  [문서/페이지 구조 안내 — 개발자용]
+								- thead: 서비스명, 유형,최근 작업명,최근 이용일, 상태, 등록일
+								- tbody: 최근 사용 이력 데이터
+						-->
+							<table class="table" data-datatable="" data-home-datatable="">
+								<caption>AI-ONE 최근 사용 이력</caption>
+								<thead>
+									<tr>
+										<th class="table-col-service" scope="col">서비스명</th>
+										<th class="table-col-type" scope="col">유형</th>
+										<th class="table-col-task" scope="col">최근 작업명</th>
+										<th class="table-col-updated" scope="col">최근 이용일</th>
+										<th class="table-col-status" scope="col">상태</th>
+										<th class="table-col-created" scope="col">등록일</th>
+										<th class="table-col-actions" scope="col"><span class="sr-only">작업</span>
+										</th>
+									</tr>
+								</thead>
+								<!-- Start: 최근 사용 이력데이터 -->
+								<tbody>
+									<!-- 261015 수정 - ai-home.js의 renderHomeHistory()가 더미/실제 API 응답으로 이력을 표시합니다. -->
+								</tbody>
+								<!-- End: 최근 사용 이력데이터 -->
+							</table>
+						</div>
+					</section>
+				</section>
+				<!-- End: 최근 사용 이력조회 테이블 영역 -->
+			</div>
+		</main>
+
+		<!-- Start: 최근 사용 이력조회 테이블 모달 -->
+		<div class="hidden modal history-modal-layer" id="homeHistoryModal" data-home-history-modal=""
+			aria-hidden="true">
+			<div class="modal-bg" aria-hidden="true"></div>
+			<section class="modal-contents history-modal" role="dialog" aria-modal="true"
+				aria-labelledby="homeHistoryModalTitle">
+				<header class="history-modal-header">
+					<h3 id="homeHistoryModalTitle">전체 사용 이력</h3>
+					<button type="button" class="history-modal-close" data-home-history-close=""
+						aria-label="전체 사용 이력 닫기">×</button>
+				</header>
+				<div class="history-modal-search">
+					<div class="history-search-box">
+						<label class="sr-only" for="homeHistorySearch">전체 사용 이력 검색</label>
+						<img src="../assets/icons/search.svg" alt="" aria-hidden="true">
+						<input type="search" id="homeHistorySearch" data-home-history-search=""
+							placeholder="서비스, 유형, 작업 내용, 상태, 일시 검색" autocomplete="off">
+						<button type="button" class="history-search-clear" data-home-history-clear=""
+							aria-label="검색어 지우기" hidden="">×</button>
+					</div>
+					<span class="history-search-result" data-home-history-result="">총 50건</span>
+				</div>
+				<div class="history-modal-body">
+					<div class="history-table-scroll">
+						<table class="table history-table full" data-datatable="">
+							<caption class="sr-only">AI-ONE 전체 사용 이력</caption>
+							<thead>
+								<tr>
+									<th class="table-col-service" scope="col">서비스</th>
+									<th class="table-col-type" scope="col">유형</th>
+									<th class="table-col-task" scope="col">작업 내용</th>
+									<th class="table-col-updated" scope="col">작업일시</th>
+									<th class="table-col-status" scope="col">상태</th>
+									<th class="table-col-created" scope="col">등록일</th>
+								</tr>
+							</thead>
+							<tbody data-home-history-rows="">
+								<!-- 261015 수정 - ai-home.js의 renderHomeHistory()가 더미/실제 API 응답으로 이력을 표시합니다. -->
+							</tbody>
+						</table>
+					</div>
+					<!-- Start: 검색 결과 없을 시 표시되는 영역 -->
+					<div class="history-search-empty" data-home-history-empty="" hidden="">
+						<img src="../assets/icons/search.svg" alt="" aria-hidden="true">
+						<strong class="empty-title">검색 결과가 없습니다.</strong>
+						<span class="empty-desc">다른 검색어를 입력해 보세요.</span>
+					</div>
+					<!-- End: 검색 결과 없을 시 표시되는 영역 -->
+				</div>
+			</section>
+		</div>
+		<!-- End: 최근 사용 이력조회 테이블 모달 -->
+		<div class="ai-one-notification-toast" aria-live="polite">
+			<div class="ai-one-notification-icon">✓</div>
+			<div class="ai-one-notification-copy"><strong></strong><span></span></div><button type="button"
+				aria-label="알림 닫기">×</button>
+		</div>
+		<div id="aiOneTooltip" class="ai-one-tooltip" role="tooltip" hidden=""></div>
+		<!-- Start: 아바타 버튼 호버 시 나오는 사용자 툴팁 -->
+		<div id="userProfileHoverTooltip" class="user-profile-hover-tooltip hidden" role="tooltip">
+			<strong>담당자 기본정보</strong>
+			<span data-profile-name="">일반담당자 </span>
+			<span data-profile-department="">재정분석과</span>
+			<em data-profile-role="">국회담당자</em>
+		</div>
+		<!-- End: 아바타 버튼 호버 시 나오는 사용자 툴팁 -->
+		<script src="../js/common.js" defer></script>
+		<!-- Start: 261014 추가 - 서비스 카드 스와이퍼 라이브러리 -->
+		<script src="../assets/vendor/swiper/swiper-bundle.min.js" defer></script>
+		<!-- End: 261014 추가 - 서비스 카드 스와이퍼 라이브러리 -->
+		<script src="../js/ai-home.js" defer></script>
+
+
+
+
+
+
+
+		<!-- Start: 261016 수정 - 홈 질문 전달 및 모델·작업 연결 -->
+		<script>
+			window.AIOneChatConfig = {
+				baseUrl: '/intra/ai/chat/',
+				mode: 'handoff',
+				chatbotUrl: 'chatbot.html',
+				toast: function (message) { window.AIOneHomeNotify ? window.AIOneHomeNotify(message) : window.alert(message); }
+			};
+		</script>
+		<script src="../js/chat.js" defer=""></script>
+		<script>
+			(function () {
+				'use strict';
+
+				/** 화면 모델 선택값 → AI 서버 llm_model. 빈 값이면 AI 서버 기본 모델을 쓴다 (모델명 확정 시 채운다) */
+				var MODEL_MAP = { 'default': '' };
+
+				/** 홈(handoff)에서 일반 대화 외 작업: 전송 시 이동할 화면. 없으면 준비 중 안내 */
+				var TASK_ROUTES = { answer: 'ai-answer.html?newChat=Y' };
+
+				/** 챗봇 화면(inline)에서는 이 작업들을 이 화면에서 바로 대화한다 (chat.js: 국회답변서초안생성 → report_generator 에이전트) */
+				var INLINE = 'handoff' === 'inline';
+				var INLINE_TASKS = { chat: true, answer: INLINE };
+
+				var PLACEHOLDERS = {
+					chat: 'AI-ONE에게 요청해 보세요: 관련 법령과 근거 자료를 찾아줘',
+					answer: INLINE ? '국회 질의 내용을 입력하면 답변서 초안 작성을 도와드립니다'
+						: '국회 질의 내용을 입력하면 답변서 초안 작성 화면으로 이동합니다',
+					search: '찾을 내부 업무자료를 입력해 보세요'
+				};
+
+				/** 알림 (공통 토스트가 있으면 그것을, 없으면 alert) */
+				window.AIOneHomeNotify = function (message) {
+					var common = window.AIOneWorkspaceCommon;
+					if (common && common.showToast) common.showToast(message);
+					else window.alert(message);
+				};
+
+				/**
+				 * 입력창 아이콘(<img data-icon="plus"> 처럼 src 없이 이름만 둔 것)을 채운다.
+				 * 공통 아이콘 스크립트(AIOneIcons)가 있으면 그것을 쓰고, 그래도 비어 있으면
+				 * ../assets/icons/{이름}.svg 를 직접 넣는다. 파일이 없으면 깨진 네모 대신 숨긴다.
+				 */
+				function hydrateIcons(root) {
+					try {
+						if (window.AIOneIcons && window.AIOneIcons.hydrate) window.AIOneIcons.hydrate(root);
+					} catch (e) { /* 공통 스크립트 오류는 아래 대체 처리로 넘긴다 */ }
+					Array.prototype.forEach.call(root.querySelectorAll('img[data-icon]'), function (img) {
+						if (img.getAttribute('src')) return;
+						img.addEventListener('error', function () { img.style.visibility = 'hidden'; }, { once: true });
+						img.src = '../assets/icons/' + img.getAttribute('data-icon') + '.svg';
+					});
+				}
+
+				function init() {
+					var composer = document.getElementById('chatComposer');
+					if (composer) hydrateIcons(composer);
+					var newBtn = document.getElementById('chatNewBtn');
+					if (newBtn) hydrateIcons(newBtn.parentNode);
+					var form = document.getElementById('chatComposerForm');
+					var input = document.getElementById('chatInput');
+					var sendBtn = document.getElementById('chatSendBtn');
+					if (!composer || !form || !input || !sendBtn) return;
+
+					var currentTask = function () { return composer.getAttribute('data-chat-task-current') || 'chat'; };
+
+					// 작업·모델 메뉴 선택 → chat.js 가 읽는 속성에 반영
+					composer.addEventListener('click', function (event) {
+						var item = event.target.closest('[data-chat-menu] [data-menu-value]');
+						if (!item || item.closest('[data-task-submenu-ready="true"]')) return;
+						var menu = item.closest('[data-chat-menu]');
+						var value = item.getAttribute('data-menu-value');
+						if (menu.getAttribute('data-chat-menu') === 'task') {
+							composer.setAttribute('data-chat-task-current', value);
+							input.placeholder = PLACEHOLDERS[value] || PLACEHOLDERS.chat;
+						} else {
+							composer.setAttribute('data-chat-model', MODEL_MAP[value] || '');
+						}
+						// 공통 드롭다운이 처리하지 않는 경우를 대비해 선택 표시도 맞춘다 (같은 값이면 영향 없음)
+						Array.prototype.forEach.call(item.closest('[role="menu"]').querySelectorAll('[data-menu-value]'), function (btn) {
+							btn.setAttribute('aria-checked', String(btn === item));
+						});
+						var label = menu.querySelector('[data-dropdown-label]');
+						if (label) label.textContent = item.getAttribute('data-menu-label') || label.textContent;
+					});
+
+					// 일반 대화 외 작업 전송
+					function sendOtherTask(event) {
+						var task = currentTask();
+						if (INLINE_TASKS[task]) return;           // chat.js 가 보낸다
+						if (event) event.preventDefault();
+						var route = TASK_ROUTES[task];
+						if (!route) {
+							window.AIOneHomeNotify('준비 중인 기능입니다.');
+							return;
+						}
+						var text = input.value.trim();
+						window.location.href = route + (text ? '&prompt=' + encodeURIComponent(text.slice(0, 2000)) : '');
+					}
+
+					sendBtn.addEventListener('click', sendOtherTask);
+					input.addEventListener('keydown', function (event) {
+						if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+						sendOtherTask(event);
+					});
+					form.addEventListener('submit', function (event) { event.preventDefault(); });
+
+				}
+
+				if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+				else init();
+			})();
+		</script>
+		<!-- End: 261016 수정 - 홈 질문 전달 및 모델·작업 연결 -->
+
+
+		<!-- Start: 준비중 안내 모달 -->
+		<div class="hidden modal" id="preparingServiceModal" data-component="modal" data-modal="">
+			<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
+			<section class="modal-contents modal-medium modal-variant-alert" role="dialog" aria-modal="true"
+				data-modal-variant="alert" aria-labelledby="preparingServiceModal-title"
+				aria-describedby="preparingServiceModal-description">
+				<div class="modal-variant-panel" data-modal-panel="content">
+					<div class="modal-icon alert" data-modal-icon="alert" aria-hidden="true">!</div>
+					<div class="modal-title" id="preparingServiceModal-title" data-slot="title">준비중</div>
+					<div class="modal-msg" id="preparingServiceModal-description" data-slot="description">
+						해당 서비스는 준비 중 입니다.
+					</div>
+					<div class="modal-actions" data-slot="actions">
+						<button type="button" class="btn-confirm" data-modal-close="">확인</button>
+					</div>
+				</div>
+			</section>
+		</div>
+		<!-- End: 준비중 안내 모달 -->
+	</div>
+</body>
+
+</html>
