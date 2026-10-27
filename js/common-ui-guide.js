@@ -1,12 +1,109 @@
 /** 공통 UI 가이드: 표 검색, 목차 선택 상태, 표 헤더 고정을 처리합니다. */
 (() => {
   'use strict';
+  document.querySelectorAll('[data-guide-message-actions]').forEach(actions => {
+    const types = actions.dataset.guideMessageActions === 'ai'
+      ? ['copy', 'like', 'dislike', 'research', 'issue'] : ['copy'];
+    types.forEach(type => {
+      const button = window.AIOneChatMessageActions.createButton(type);
+      button.addEventListener('click', async () => {
+        if (type === 'copy') {
+          try {
+            await navigator.clipboard.writeText(actions.closest('.chat-msg').querySelector('.msg-text').textContent);
+            window.AIOneToast.show('메시지를 복사했습니다.');
+          } catch {
+            window.AIOneToast.show('메시지를 복사하지 못했습니다. 브라우저의 복사 권한을 확인해 주세요.');
+          }
+        } else if (type === 'like' || type === 'dislike') {
+          const pressed = button.getAttribute('aria-pressed') !== 'true';
+          actions.querySelectorAll('[data-feedback-value]').forEach(control => {
+            control.setAttribute('aria-pressed', String(control === button && pressed));
+          });
+        } else {
+          window.AIOneToast.show('이 기능은 원본 화면에서 실행할 수 있습니다.');
+        }
+      });
+      actions.append(button);
+    });
+  });
+  // 예시도 실제 공통 컨트롤러를 사용합니다. 화면별 API 초기화는 호출하지 않습니다.
+  document.querySelectorAll('.guide-preview .three-panel').forEach(container => {
+    window.AIOnePanel.initShell({ container, accessory: false });
+  });
+  document.querySelectorAll('.guide-panel-layout').forEach(container => {
+    window.AIOneWorkspaceUi.initPanelDragDrop({
+      container,
+      applyState(state) {
+        window.AIOneWorkspaceUi.applyPanelLayout(container, state);
+        // 공통 노드 이동은 재사용하고, 예시의 동일한 3열 너비는 CSS로 유지합니다.
+        container.style.removeProperty('grid-template-columns');
+      },
+    });
+  });
+  window.AIOneWorkspaceUi.initAccessoryController({
+    container: () => document.querySelector('.guide-preview .three-panel'),
+    font: { cookieKey: '' },
+  });
+  document.querySelector('[data-guide-notification]')?.addEventListener('click', event => {
+    const toast = event.currentTarget.parentElement.querySelector('.ai-one-notification-toast');
+    toast.hidden = false;
+    toast.classList.add('show');
+  });
+  document.querySelector('.guide-preview .ai-one-notification-toast button')?.addEventListener('click', event => {
+    const toast = event.currentTarget.closest('.ai-one-notification-toast');
+    toast.classList.remove('show');
+    toast.hidden = true;
+  });
+  document.querySelector('.guide-preview .selected-refs-toggle')?.addEventListener('click', event => {
+    const button = event.currentTarget;
+    const expanded = button.closest('.selected-refs').classList.toggle('is-expanded');
+    button.setAttribute('aria-expanded', String(expanded));
+    const label = `선택된 소스 목록 ${expanded ? '접기' : '펼치기'}`;
+    window.AIOneTooltip.hide(button);
+    button.setAttribute('aria-label', label);
+    button.dataset.tooltip = label;
+  });
+  document.querySelector('[data-guide-toast]')?.addEventListener('click', event => {
+    window.AIOneToast.show('저장되었습니다.', {
+      target: event.currentTarget.parentElement.querySelector('[data-toast]'),
+    });
+  });
+  // 페이지 전용 탭은 예시의 탭 목록 안에서만 선택 상태를 전환합니다.
+  document.querySelectorAll('.guide-preview [role="tablist"]').forEach(list => {
+    const tabs = [...list.querySelectorAll('[role="tab"]')];
+    const select = target => tabs.forEach(tab => {
+      const active = tab === target;
+      tab.classList.toggle('active', active);
+      tab.classList.toggle('is-active', active);
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+      const panel = document.getElementById(tab.getAttribute('aria-controls'));
+      if (panel) panel.hidden = !active;
+    });
+    list.addEventListener('click', event => {
+      const tab = event.target.closest('[role="tab"]');
+      if (tabs.includes(tab) && !tab.disabled) select(tab);
+    });
+    list.addEventListener('keydown', event => {
+      const current = tabs.indexOf(document.activeElement);
+      if (current < 0 || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const index = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+        : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+      select(tabs[index]);
+      tabs[index].focus();
+    });
+  });
   const input = document.querySelector('#guide-search');
   const rows = [...document.querySelectorAll('[data-guide-row]')];
   const status = document.querySelector('#search-status');
   const tables = [...document.querySelectorAll('.guide-table')];
   const normalize = value => value.normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g, ' ').trim();
-  const index = rows.map(row => ({ row, text: normalize(row.innerText) }));
+  const index = rows.map(row => ({
+    row,
+    text: normalize(row.textContent),
+  }));
+  status.textContent = `전체 ${rows.length}개 항목`;
   input.addEventListener('input', () => {
     const terms = normalize(input.value).split(' ').filter(Boolean);
     let visible = 0;
@@ -49,7 +146,8 @@
   floatingHeader.hidden = true;
   floatingHeader.setAttribute('aria-hidden', 'true');
   floatingHeader.inert = true;
-  document.body.append(floatingHeader);
+  // 팝업과 같은 앱 스태킹 컨텍스트에 두어 공통 modal/drawer z-index를 따릅니다.
+  scroller.append(floatingHeader);
 
   let frame = 0;
   let mirroredTable = null;
@@ -77,6 +175,7 @@
     for (const wrapper of wrappers) {
       const hasOverflow = wrapper.scrollWidth > wrapper.clientWidth + 1;
       wrapper.classList.toggle('has-horizontal-scroll', hasOverflow);
+      wrapper.classList.toggle('has-no-horizontal-scroll', !hasOverflow);
       const table = wrapper.querySelector('.guide-table');
       const rect = table.getBoundingClientRect();
       table.classList.toggle('is-header-stuck', !hasOverflow && rect.top <= offset && rect.bottom > offset);
@@ -112,6 +211,7 @@
     });
     mirror.style.width = `${rect.width}px`;
     mirror.style.transform = `translateX(${-wrapper.scrollLeft}px)`;
+    mirror.style.setProperty('--guide-scroll-left', `${wrapper.scrollLeft}px`);
     floatingHeader.style.left = `${wrapperRect.left + wrapper.clientLeft}px`;
     floatingHeader.style.width = `${wrapper.clientWidth}px`;
     const height = table.tHead.getBoundingClientRect().height;

@@ -1535,7 +1535,9 @@
 
         const brandButton = sidebar.querySelector("#sidebarBrandButton, .sidebar-brand");
         if (brandButton) {
-            const label = collapsed ? "사이드바 펼치기" : "AI-ONE 홈";
+            const label = brandButton.dataset.sidebarBrandAction === "navigate"
+                ? brandButton.dataset.tooltip
+                : collapsed ? "사이드바 펼치기" : "AI-ONE 홈";
             brandButton.setAttribute("aria-label", label);
             brandButton.title = label;
         }
@@ -1582,6 +1584,7 @@
                 setSidebarCollapsed(sidebar, !sidebar.classList.contains("collapsed"));
             });
             sidebar.querySelector("#sidebarBrandButton, .sidebar-brand")?.addEventListener("click", (event) => {
+                if (event.currentTarget.dataset.sidebarBrandAction === "navigate") return;
                 if (!sidebar.classList.contains("collapsed")) return;
                 event.preventDefault();
                 setSidebarCollapsed(sidebar, false);
