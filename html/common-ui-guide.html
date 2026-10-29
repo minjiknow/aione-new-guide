@@ -2264,24 +2264,31 @@
 											주황색입니다. 상태점·회전 표시는 없습니다.<br>20261019_인터웹 대비 여백 2px 6px → 3px 8px, 글자 8px →
 											9px, 굵기 600 → 700, 묶음 위 여백 3px → 0으로 변경됐고 review가 추가됐습니다.</td>
 									</tr>
-									<tr data-guide-row>
+									<tr data-guide-row="">
 										<td role="rowheader">완료 알림 점 · nav-complete-dot</td>
 										<td>
 											<div class="guide-preview-viewport">
-												<div class="guide-preview" data-preview-page="common">
-													<div class="guide-completion-example">답변서 초안<span
-															class="nav-complete-dot" role="img"
-															aria-label="완료 알림 있음"></span></div>
-												</div>
+												<div data-preview-layout="completion" class="guide-preview" data-preview-page="common"><div class="guide-completion-states"><section><p class="guide-preview-note">사이드바 펼침</p><div class="sidebar guide-completion-sidebar"><nav aria-label="펼친 사이드바 완료 알림 예시" class="sidebar-nav"><div tabindex="0" aria-label="국회 답변서 초안 생성" data-tooltip="국회 답변서 초안 생성" class="nav-link has-complete-status">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18" height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18" height="18" alt="">
+						</span>
+						<span class="nav-text">국회 답변서 초안 생성</span>
+						<span class="nav-complete-dot" aria-label="완료된 작업 있음" data-tooltip="완료된 작업이 있습니다."></span>
+					</div></nav></div></section><section><p class="guide-preview-note">사이드바 접힘</p><div class="sidebar guide-completion-sidebar collapsed"><nav aria-label="접힌 사이드바 완료 알림 예시" class="sidebar-nav"><div tabindex="0" aria-label="국회 답변서 초안 생성" data-tooltip="국회 답변서 초안 생성" class="nav-link has-complete-status">
+						<span class="nav-service-icon" aria-hidden="true">
+							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18" height="18" alt="">
+							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18" height="18" alt="">
+						</span>
+						<span class="nav-text">국회 답변서 초안 생성</span>
+						<span class="nav-complete-dot" aria-label="완료된 작업 있음" data-tooltip="완료된 작업이 있습니다."></span>
+					</div></nav></div></section></div></div>
 											</div>
-											<a class="guide-preview-source" href="../css/common.css" target="_blank"
-												rel="noopener noreferrer" hidden>원본 보러가기</a>
+											<a class="guide-preview-source" href="../css/common.css" target="_blank" rel="noopener noreferrer" hidden>원본 보러가기</a>
 										</td>
-										<td><span class="class-value">nav-complete-dot</span></td>
-										<td>7 × 7px 원형<br>위·오른쪽 7px에 절대 배치<br>예시의 부모만 위치 기준으로 지정</td>
-										<td>완료 알림이 있는 메뉴·목록 항목에 붙는 점입니다. 상태 문구나 건수 배지와 별개로 사용하며 hidden으로 숨깁니다. 일반 위치는
-											파란색, 사이드바 안에서는 강조색과 반복 애니메이션이 적용됩니다.<br>20261019_인터웹과 현재의 스타일·메뉴 표시 및 해제 로직은
-											같습니다. 다른 세 배지와 역할이 달라 기본 클래스로 유지합니다.</td>
+										<td><span class="class-value">sidebar / sidebar collapsed<br>nav-link has-complete-status<br>nav-complete-dot</span></td>
+										<td>공통 7 × 7px 원형<br>펼침: 오른쪽 7px · 세로 중앙<br>접힘: 위·오른쪽 7px</td>
+										<td>aione-new의 실제 사이드바 메뉴 구조와 공통 CSS를 사용합니다. 펼침·접힘 상태 모두 강조색과 완료 알림 애니메이션을 유지하며, hidden으로 점을 숨깁니다. 가이드는 사이드바의 위치와 높이만 예시 영역에 맞춥니다.</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">라디오 · 오류 신고</td>

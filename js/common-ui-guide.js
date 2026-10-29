@@ -6,6 +6,42 @@
 /** 공통 UI 가이드: 내용 검색, 목차 선택 상태, 표 헤더 고정을 처리합니다. */
 (() => {
   'use strict';
+  // 표의 스크롤 영역을 늘리지 않고 기존 메뉴를 최상위 레이어에 표시합니다.
+  document.querySelectorAll('[data-preview-layout="dropdown"] [data-dropdown-menu]').forEach(component => {
+    const trigger = component.querySelector('[data-dropdown-trigger]');
+    const menu = component.querySelector('[role="menu"]');
+    if (!trigger || !menu) return;
+    menu.setAttribute('popover', 'manual');
+    let focusLast = false;
+    component.addEventListener('keydown', event => { focusLast = event.key === 'ArrowUp'; });
+    component.addEventListener('click', () => { focusLast = false; });
+    const positionMenu = () => {
+      if (menu.hidden) return;
+      const anchor = trigger.getBoundingClientRect();
+      const bounds = menu.getBoundingClientRect();
+      const gutter = 8;
+      const left = Math.max(gutter, Math.min(anchor.right - bounds.width, window.innerWidth - bounds.width - gutter));
+      const below = anchor.bottom + gutter;
+      const top = below + bounds.height <= window.innerHeight - gutter
+        ? below : Math.max(gutter, anchor.top - bounds.height - gutter);
+      menu.style.left = `${left}px`;
+      menu.style.top = `${top}px`;
+    };
+    component.addEventListener('dropdownmenu:toggle', event => {
+      if (event.target !== component) return;
+      if (event.detail.open) {
+        menu.showPopover();
+        positionMenu();
+        const items = [...menu.querySelectorAll('[role="menuitem"]')]
+          .filter(item => !item.disabled && item.getAttribute('aria-disabled') !== 'true');
+        (focusLast ? items.at(-1) : items[0])?.focus({ preventScroll: true });
+      } else if (menu.matches(':popover-open')) {
+        menu.hidePopover();
+      }
+    });
+    window.addEventListener('resize', positionMenu);
+    document.addEventListener('scroll', positionMenu, true);
+  });
   document.querySelectorAll('[data-guide-loading]').forEach(host => {
     const type = host.dataset.guideLoading;
     if (type === 'document') {

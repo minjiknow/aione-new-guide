@@ -2040,6 +2040,7 @@ html[data-theme="dark"] .filter-btn:is(.active, [aria-pressed="true"]) {
     margin-bottom: 6px;
     border: 1px solid var(--border, #d1d9e0);
     border-radius: var(--radius, 10px);
+    background-color: var(--surface);
     color: var(--text, #1f2328);
     font-size: calc(12px * var(--ui-font-scale));
     cursor: default;
