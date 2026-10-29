@@ -1,6 +1,9 @@
 @charset "utf-8";
 
 /*
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 공통 사이드바·모달·툴팁·목록·파일 카드·빈 화면·로딩·탑바와 답변 액션 스타일을 관리합니다. 페이지별 UI는 공통 기본형과 상태 클래스를 조합합니다.
+ *
  * 공통 기본 스타일 및 재사용 UI 컴포넌트. 기본형·상태·크기 변형은 해당 컴포넌트 구간에 작성합니다.
  * 공통 기본형은 common.css, 페이지 전용 보정은 각 페이지 CSS에 작성합니다.
  * 적용 페이지: 공통 스타일을 로드하는 홈·챗봇·답변서·질의분류·업무지원·로그인.
@@ -211,7 +214,7 @@ html ::-webkit-scrollbar-thumb:hover {
 .ai-skeleton {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(90deg, rgba(209, 217, 224, 0.28) 25%, rgba(255, 255, 255, 0.72) 50%, rgba(209, 217, 224, 0.28) 75%);
+    background: linear-gradient(90deg, rgba(209, 217, 224, 0.5) 25%, rgba(255, 255, 255, 0.72) 50%, rgba(209, 217, 224, 0.5) 75%);
     background-size: 200% 100%;
     animation: aiSkeletonShimmer 1.35s ease-in-out infinite;
     border-radius: var(--radius-sm);
@@ -627,7 +630,7 @@ html ::-webkit-scrollbar-thumb:hover {
 .sub-badge.file-name {
     font-size: calc(11px * var(--ui-font-scale));
     font-weight: 500;
-    border: 0.5px solid var(--border);
+    border: 0.5px solid var(--primary);
     /* line-height: 1.35; */
     padding: 6px 12px;
 }
@@ -1072,9 +1075,10 @@ input[type="checkbox"]:has(+ .file-select-check-ui) {
         background-color 0.15s ease,
         border-color 0.15s ease,
         box-shadow 0.15s ease;
+    position: relative;
 }
 
-.checkbox-control-md + .file-select-check-ui {
+/* .checkbox-control-md + .file-select-check-ui {
     width: 16px;
     height: 16px;
 }
@@ -1087,14 +1091,18 @@ input[type="checkbox"]:has(+ .file-select-check-ui) {
 .checkbox-control-xs + .file-select-check-ui {
     width: 13px;
     height: 13px;
-}
+} */
 
 input[type="checkbox"]:is(:checked, :indeterminate) + .file-select-check-ui {
     border-color: #1473e6;
     background: #1473e6;
     box-shadow: 0 0 0 2px rgba(20, 115, 230, 0.12);
 }
-
+.file-select-check-ui::after {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+}
 input[type="checkbox"]:checked + .file-select-check-ui::after {
     content: "";
     width: 11px;
@@ -1596,7 +1604,7 @@ html[data-theme="dark"] .filter-btn:is(.active, [aria-pressed="true"]) {
 .upload-zone:hover,
 .upload-zone.dragover {
     border-color: var(--primary, #156edd);
-    background: rgba(var(--primary-rgb, 21, 110, 221), 0.02);
+    background: rgba(var(--primary-rgb, 21, 110, 221), 0.045);
 }
 
 .upload-zone:focus-visible {
@@ -1788,18 +1796,9 @@ html[data-theme="dark"] .filter-btn:is(.active, [aria-pressed="true"]) {
     stroke-linejoin: round;
 }
 
-.upload-zone-type3 .upload-text,
-[data-component-type="type3"] .upload-zone .upload-text {
-    margin: 0;
-    color: color-mix(in srgb, var(--text-muted) 88%, var(--text-sub));
-    font-size: calc(11px * var(--ui-font-scale));
-    font-weight: 700;
-}
-
 .upload-zone-type3 .upload-hint,
 [data-component-type="type3"] .upload-zone .upload-hint {
     margin: 0;
-    color: color-mix(in srgb, var(--text-muted) 76%, transparent);
     font-size: calc(10px * var(--ui-font-scale));
 }
 
@@ -2296,12 +2295,13 @@ html[data-theme="dark"] .filter-btn:is(.active, [aria-pressed="true"]) {
     flex-direction: column;
     gap: 5px;
     color: var(--text-muted, #8b949e);
+    font-size: calc(10px * var(--ui-font-scale));
     text-align: center;
 }
 
 .file-list-empty strong {
-    color: var(--text, #1f2328);
-    font-size: calc(12px * var(--ui-font-scale, 1));
+    color: var(--text-sub, #656d76);
+    font-size: calc(11px * var(--ui-font-scale));
 }
 
 .file-list-section.is-collapsed {
@@ -3083,6 +3083,8 @@ html[data-theme="dark"] .ai-one-tooltip {
     position: fixed !important;
     inset: 0 !important;
     z-index: 9998 !important;
+    margin: 0 !important;
+    max-height: none !important;
     display: flex !important;
     width: auto !important;
     height: auto !important;
@@ -3094,6 +3096,21 @@ html[data-theme="dark"] .ai-one-tooltip {
     border: 0 !important;
     border-radius: 0 !important;
     background: var(--surface, #fff) !important;
+}
+
+.document-statusbar-fullscreen > .panel-head {
+    flex-shrink: 0;
+}
+
+.document-statusbar-fullscreen > :is(.panel-content, .center-body) {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 확대 패널(9998) 위에 공통 툴팁을 표시한다. */
+body:has(.document-statusbar-fullscreen) > .ai-one-tooltip {
+    z-index: 12001;
 }
 
 body:has(.document-statusbar-fullscreen) {
@@ -3819,9 +3836,10 @@ html[data-theme="dark"] .panel-head .panel-title img {
     display: grid;
     place-items: center;
     box-sizing: border-box;
-    width: 28px;
-    height: 28px;
-    min-height: 28px;
+    width: 30px;
+    height: 30px;
+    min-height: 30px;
+    border-radius: 8px;
     margin: 0;
     padding: 0;
 }
@@ -3835,6 +3853,10 @@ html[data-theme="dark"] .panel-head .panel-title img {
     width: 16px;
     height: 16px;
     margin: 0;
+}
+
+.panel.panel-collapsed .file-upload-area .upload-zone:is(:hover, :focus-visible) > .upload-zone-default-icon {
+    filter: var(--icon-filter-primary);
 }
 
 .panel-card {
@@ -3989,7 +4011,16 @@ html[data-theme="dark"] .panel-head .panel-title img {
     margin: 0;
     box-shadow: 0 0 0 2px var(--surface, #fff);
 }
-
+/* start: 1029: 사이드바가 펼쳐졌을 때  */
+.sidebar:not(.collapsed) .nav-complete-dot {
+    position: absolute;
+    top: 50%;
+    right: 7px;
+    translate: 0 -50%;
+    margin: 0;
+    box-shadow: 0 0 0 2px var(--surface, #fff);
+}
+/* end: 1029: 사이드바가 펼쳐졌을 때  */
 .nav-link.has-complete-status {
     border-color: rgba(var(--primary-rgb, 21, 110, 221), 0.18) !important;
     background: rgba(var(--primary-rgb, 21, 110, 221), 0.06) !important;
@@ -5016,18 +5047,18 @@ html[data-theme="dark"] .chatbot-sidebar {
 }
 
 /* Intake 기준의 상단 주요 액션과 목록 액션을 모든 Topbar에서 동일하게 사용합니다. */
-:is(.app-topbar-actions, .topbar > .topbar-right) #newClassifyBtn {
+/* :is(.app-topbar-actions, .topbar > .topbar-right) #newClassifyBtn {
     width: auto;
     min-width: 0;
-    min-height: 32px;
-    height: 32px;
-    padding: 0 9px;
-    gap: 4px;
+    min-height: 34px;
+    height: 34px;
+    padding: 0 14px;
+    gap: 6px;
     border-color: rgba(var(--primary-rgb, 21, 110, 221), 0.42);
     border-radius: 9px;
     background: rgba(var(--primary-rgb, 21, 110, 221), 0.09);
     color: var(--primary, #156edd);
-    font-size: calc(10.5px * var(--ui-font-scale));
+    font-size: calc(12px * var(--ui-font-scale));
     font-weight: 800;
     box-shadow: 0 1px 2px rgba(var(--primary-rgb, 21, 110, 221), 0.06);
 }
@@ -5042,35 +5073,7 @@ html[data-theme="dark"] .chatbot-sidebar {
 :is(.app-topbar-actions, .topbar > .topbar-right) #newClassifyBtn :is(img, svg) {
     width: 13px;
     height: 13px;
-}
-
-:is(.app-topbar-actions, .topbar > .topbar-right) #runDrawerBtn {
-    width: 32px;
-    height: 32px;
-}
-
-body[data-page="intake"] :is(.app-topbar-actions, .topbar > .topbar-right) #runDrawerBtn {
-    border-color: rgba(130, 80, 223, 0.42);
-    background: rgba(130, 80, 223, 0.09);
-    color: var(--purple, #8250df);
-    box-shadow: 0 1px 2px rgba(130, 80, 223, 0.06);
-}
-
-body[data-page="intake"] :is(.app-topbar-actions, .topbar > .topbar-right) #runDrawerBtn:hover:not(:disabled, [aria-disabled="true"]) {
-    border-color: var(--purple, #8250df);
-    background: var(--purple, #8250df);
-    color: #fff;
-    box-shadow: 0 5px 14px rgba(130, 80, 223, 0.22);
-}
-
-:is(.app-topbar-actions, .topbar > .topbar-right) #runDrawerBtn :is(img, svg) {
-    width: 18px;
-    height: 18px;
-}
-
-body[data-page="intake"] .app-topbar-actions #runDrawerBtn:hover:not(:disabled, [aria-disabled="true"]) img[data-icon] {
-    filter: var(--icon-filter-white);
-}
+} */
 
 .app-topbar .accessory-tool {
     position: relative;
@@ -5109,7 +5112,7 @@ body[data-page="intake"] .app-topbar-actions #runDrawerBtn:hover:not(:disabled, 
     z-index: 3;
 }
 
-.app-topbar :is(.accessory-trigger:hover, .accessory-trigger.active, .accessory-action:hover:not(.is-disabled)) {
+.app-topbar :is(.accessory-trigger:hover, .accessory-trigger.active, .accessory-action:hover:not(.is-disabled), .accessory-action[data-accessory-action="fullscreen"][aria-pressed="true"]:not(.is-disabled)) {
     border-color: color-mix(in srgb, var(--primary, #156edd) 42%, var(--border, #d1d9e0));
     background: color-mix(in srgb, var(--primary, #156edd) 8%, var(--surface, #fff));
     box-shadow: 0 4px 12px color-mix(in srgb, var(--primary, #156edd) 14%, transparent);
@@ -6971,7 +6974,7 @@ body.is-component-layer-open {
 
 /* Start: 261023 수정 - 파일·실행 목록 정렬 공통화 및 상태별 화살표 유지 */
 .drawer-list-sort {
-    min-width: 0;
+    min-width: 70px;
     height: 24px;
     flex: 0 0 auto;
     padding: 0 24px 0 8px;
@@ -7351,6 +7354,7 @@ body.is-component-layer-open {
     box-shadow: var(--shadow-lg);
     color: var(--text, #1f2328);
     font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 500;
     line-height: 1.5;
     text-align: left;
     opacity: 0;
@@ -7654,13 +7658,13 @@ body.is-component-layer-open {
 
 .selected-refs-guide-title {
     font-size: calc(11px * var(--ui-font-scale));
-    font-weight: 400;
+    font-weight: 600;
     color: var(--text-sub);
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .selected-refs-guide-desc {
-    font-size: calc(11px * var(--ui-font-scale));
+    font-size: calc(10px * var(--ui-font-scale));
     color: var(--text-muted);
     line-height: 1.5;
 }
@@ -7937,6 +7941,7 @@ html .rec-card:is(.active, .is-selected) {
 
 .rec-meta {
     font-size: calc(10px * var(--ui-font-scale));
+    font-wieght: 500;
     color: var(--text-muted);
     margin: 4px 0;
 }
@@ -8306,21 +8311,28 @@ html .rec-card:is(.active, .is-selected) {
 }
 
 .empty-title {
-    margin: 14px 0 5px;
-    color: var(--text, #1f2328);
-    font-size: calc(12px * var(--ui-font-scale));
-    font-weight: 700;
+    margin: 6px 0;
+    color: var(--text-sub, #656d76);
+    font-size: calc(14px * var(--ui-font-scale));
+    font-weight: 600;
     line-height: 1.5;
 }
-
+.empty-title.type1 {
+    margin: 4px 0;
+    font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 600;
+}
 .empty-desc {
     max-width: 300px;
     margin: 0;
     color: var(--text-muted, #8b949e);
-    font-size: calc(10px * var(--ui-font-scale));
-    line-height: 1.55;
+    font-size: calc(12px * var(--ui-font-scale));
+    line-height: 18px;
+    white-space: pre-line;
 }
-
+.empty-desc.type1 {
+    font-size: calc(10px * var(--ui-font-scale));
+}
 /* End: Empty State */
 
 /* End: Workspace Shared Components */
@@ -8547,6 +8559,8 @@ html .rec-card:is(.active, .is-selected) {
 .workspace-topbar-context {
     display: flex;
     min-width: 0;
+    max-width: min(38vw, 440px);
+    min-width: 220px;
     align-items: center;
     gap: 28px;
 }
@@ -8584,6 +8598,21 @@ html .rec-card:is(.active, .is-selected) {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* 글자 수 기준 축약은 데스크톱에만 적용합니다. */
+.display-title-full {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .display-title-full {
+        display: inline;
+    }
+
+    .display-title-short {
+        display: none;
+    }
 }
 
 .workspace-topbar-edit {
@@ -8670,12 +8699,6 @@ html .rec-card:is(.active, .is-selected) {
 
 @media (max-width: 1024px) {
     .topbar-subtit {
-        display: none;
-    }
-}
-
-@media (max-width: 1350px) {
-    [data-page="policy-verify"] .topbar-workspace-slot {
         display: none;
     }
 }
@@ -9104,38 +9127,28 @@ html .rec-card:is(.active, .is-selected) {
     box-sizing: border-box;
     color: #0f172a;
     font: inherit;
-    line-height: 1.55;
+    font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 500;
+    line-height: 20px;
 }
-.chat-issue-upload {
-    display: flex;
-    min-height: 98px;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 5px;
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
-    color: #667085;
-    cursor: pointer;
-    text-align: center;
-    font-size: 11px;
+.chat-issue-field textarea:hover,
+.chat-issue-field textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: none;
 }
-.chat-issue-upload:hover {
-    border-color: #1683ff;
-    background: #f8fbff;
+/* 검토서 업로드와 동일한 공통 아이콘·문구·박스 스타일을 재사용합니다. */
+.chat-issue-field > .chat-issue-upload-title {
+    color: var(--text);
+    font-size: calc(11px * var(--ui-font-scale));
 }
-.chat-issue-upload svg {
-    width: 20px;
-    height: 20px;
-    fill: none;
-    stroke: #0877e8;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+.chat-issue-field > .chat-issue-upload {
+    display: block;
+    margin: 0;
+    font-weight: 400;
 }
-.chat-issue-upload small {
-    color: #98a2b3;
-    font-size: 10px;
+.chat-issue-upload .upload-text {
+    display: block;
 }
 .chat-issue-file-list {
     display: flex;
@@ -9515,8 +9528,14 @@ html[data-theme="dark"] .center-sub-head {
     box-sizing: border-box;
     border-radius: 999px;
     background: var(--surface-el);
+    margin-bottom: 8px;
 }
-
+.no-file-icon.type1 {
+    width: 24px;
+    height: 24px;
+    background: var(--surface);
+    margin-bottom: 10px;
+}
 .selected-ref-count {
     min-width: 18px;
     padding: 1px 7px;
@@ -9536,13 +9555,19 @@ html[data-theme="dark"] .center-sub-head {
 }
 
 /* Start: 261026 추가 - 공통 문서·Drawer 로딩 */
-.document-loading-preview {
+/* 답변서 초안 기준: 페이지 본문의 글자 크기·줄 높이를 상속하지 않는다. */
+.document-loading-preview,
+.answer-loading-preview {
     align-items: center;
     justify-content: center;
+    gap: 14px;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+    line-height: 1.7;
     text-align: center;
     background: var(--surface);
 }
-.document-loading-preview::before {
+.document-loading-preview::before,
+.answer-loading-preview::before {
     content: "";
     width: 24px;
     height: 24px;
@@ -9551,8 +9576,37 @@ html[data-theme="dark"] .center-sub-head {
     border-radius: 50%;
     animation: aiSkeletonSpin 0.8s linear infinite;
 }
-.document-loading-preview .skeleton-loading-label::before {
+.document-loading-preview > strong,
+.answer-loading-preview > strong {
+    margin: 0;
+    font-size: calc(13px * var(--ui-font-scale, 1));
+    font-weight: 700;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+.document-loading-preview .skeleton-loading-label,
+.answer-loading-preview .skeleton-loading-label {
+    max-width: 100%;
+    margin: 0 0 2px;
+    font-size: calc(12px * var(--ui-font-scale, 1));
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+.document-loading-preview .skeleton-loading-label::before,
+.answer-loading-preview .skeleton-loading-label::before {
     display: none;
+}
+.document-preview-loading-host {
+    position: relative;
+    min-height: 220px;
+}
+.document-preview-loading-content {
+    visibility: hidden;
+}
+.document-preview-loading {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
 }
 .loading-skeleton-list {
     display: flex;
@@ -9566,6 +9620,10 @@ html[data-theme="dark"] .center-sub-head {
 .drawer-list-loading {
     min-height: 320px;
     overflow: hidden;
+}
+.drawer-list-loading .ai-skeleton {
+    /* 짧은 목록 조회에서도 공통 shimmer의 흐르는 구간을 바로 보여준다. */
+    animation-delay: -0.45s;
 }
 .ai-search-banner {
     display: flex;
@@ -9616,3 +9674,20 @@ html[data-theme="dark"] .center-sub-head {
     background: transparent;
 }
 /* End: 261026 추가 - 공통 문서·Drawer 로딩 */
+
+/* 입력창과 동일한 글꼴로 측정하되 페이지 배치와 접근성 트리에서는 제외한다. */
+.home-composer-measure {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    visibility: hidden;
+    pointer-events: none;
+    contain: strict;
+    box-sizing: border-box;
+    height: 0;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    resize: none;
+}

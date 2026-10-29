@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 업무지원의 구조화 답변·연결 자료·미리보기와 생성결과를 처리합니다. 미리보기 확장/닫기 및 레이아웃 초기화 시 저장한 너비·접힘 상태를 동기화합니다.
+ *
  * AI-ONE 내부자료 검색·업무지원
  * 적용 화면: work-support.html
  * 역할: 페이지 초기화, 구조화 답변·자료 연결·미리보기, 생성결과 조회·생성·다운로드
@@ -174,7 +177,10 @@
         const preview = document.querySelector('[data-panel="result"] .work-document-preview');
         preview.querySelector(".file-name").textContent = item.title;
         preview.querySelector(".sub-badge").textContent = label;
-        preview.querySelector(".doc-pages-track").replaceChildren(document.getElementById("answerDocumentPreviewTemplate").content.cloneNode(true));
+        const pages = preview.querySelector(".doc-pages-track");
+        window.AIOneLoadingOverlay.preview(pages, item.title, () => {
+            pages.replaceChildren(document.getElementById("answerDocumentPreviewTemplate").content.cloneNode(true));
+        });
         setPreviewPanel("result", true);
         preview.dataset.resultId = String(item.id);
     }
@@ -431,7 +437,7 @@
 
 // 내부자료 검색 진입점: 위의 전용 기능을 공통 패널에 연결합니다.
 window.AIOnePanel.init({
-    config: { labels: { renameSuccess: "작업이름을 변경했습니다.", renameFailure: "작업 이름 변경에 실패했습니다.", workspace: "업무지원", untitled: "제목 없는 작업", history: "작업 목록" },
+    config: { labels: { renameSuccess: "작업이름을 변경했습니다.", renameFailure: "작업 이름 변경에 실패했습니다.", workspace: "새 작업", untitled: "제목 없는 작업", history: "작업 목록" },
         previewDataKey: "workSupport", showHistoryIcon: false, kind: "work-support", layoutCookie: "ai_one_work_support_panel_layout_v1", promptType: "report_generator",
         newWorkspaceInPreview: true, previewConversation: true, sourceRowPreview: true },
     installPage(runtime) {

@@ -1,6 +1,9 @@
 @charset "utf-8";
 
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 공통 패널·참조소스·자료 카드·문서 미리보기·채팅 및 접힘 상태를 관리합니다. 로딩·추천자료 구간의 종료 주석을 실제 스타일 범위에 맞춥니다.
+ *
  * AI-ONE 공통 패널 스타일
  * 적용 화면: ai-answer.html, work-support.html, sale-review.html
  * 역할: 패널 틀·참조소스·채팅·자료 카드 기본형·문서 미리보기
@@ -22,7 +25,7 @@
 .sub-desc {
     font-size: calc(10px * var(--ui-font-scale));
     color: var(--text-muted);
-    font-weight: 400;
+    font-weight: 500;
     line-height: 1.6;
 }
 
@@ -1159,6 +1162,7 @@ html[data-theme="dark"] :is(.answer-recommend-empty strong, .selected-refs-guide
 
 .selected-refs-guide {
     padding: 10px 8px 14px;
+    font-weight: 600;
 }
 
 .ref-remove {
@@ -1193,24 +1197,6 @@ html[data-theme="dark"] :is(.answer-recommend-empty strong, .selected-refs-guide
 .answer-loading-list .answer-skeleton-columns {
     display: block;
 }
-.answer-loading-preview {
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background: var(--surface);
-}
-.answer-loading-preview::before {
-    content: "";
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(var(--primary-rgb), 0.18);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: aiSkeletonSpin 0.8s linear infinite;
-}
-.answer-loading-preview .skeleton-loading-label::before {
-    display: none;
-}
 .answer-source-file-section:has(.source-search-results.is-expanded:not([hidden])) {
     flex: 1 1 0 !important;
     min-height: 0;
@@ -1228,6 +1214,8 @@ html[data-theme="dark"] :is(.answer-recommend-empty strong, .selected-refs-guide
     min-height: 110px;
 }
 
+/* End: Answer loading skeleton */
+
 .answer-recommend-empty {
     min-height: 0;
     flex: 1 1 auto;
@@ -1239,7 +1227,7 @@ html[data-theme="dark"] :is(.answer-recommend-empty strong, .selected-refs-guide
     color: var(--text-muted, #8b949e);
     text-align: center;
 }
-
+/* 
 .answer-recommend-empty strong {
     margin-bottom: 5px;
     color: var(--text, #1f2328);
@@ -1247,9 +1235,9 @@ html[data-theme="dark"] :is(.answer-recommend-empty strong, .selected-refs-guide
     font-weight: 700;
     line-height: 1.5;
     margin-top: 14px;
-}
+} */
 
-.answer-recommend-empty .small.gray {
+/* .answer-recommend-empty .small.gray {
     color: var(--text-sub, #656d76);
     font-size: calc(11px * var(--ui-font-scale));
     font-weight: 600;
@@ -1259,7 +1247,7 @@ html[data-theme="dark"] :is(.answer-recommend-empty strong, .selected-refs-guide
     font-size: calc(10px * var(--ui-font-scale));
     line-height: 1.55;
     max-width: 300px;
-}
+} */
 
 .center-left {
     min-width: 0;
@@ -1318,7 +1306,7 @@ html[data-theme="dark"] .rec-card.reference-source-card:hover:not(.active):not(.
     border-color: color-mix(in srgb, var(--primary) 62%, var(--border));
     background: color-mix(in srgb, var(--primary) 10%, var(--surface));
 }
-/* End: 261015 추가 - 관련자료 안내 배너 및 검색·업로드 카드 */
+/* End: 추천자료 및 문서 미리보기 패널 */
 
 /* End: 공통 워크스페이스 구성 */
 
@@ -1826,12 +1814,19 @@ html[data-theme="dark"] .rec-card.reference-source-card:hover:not(.active):not(.
     color: var(--text-sub);
     flex: 0 0 auto;
 }
-#selectedReferenceList .rec-tag.search {
-    background: rgba(21, 110, 221, 0.09);
+#selectedReferenceList .rec-tag.blue {
+    background: rgba(9, 105, 218, 0.09);
+    border-color: var(--primary, #156edd);
     color: var(--primary, #156edd);
+}
+#selectedReferenceList .rec-tag.search {
+    background: rgba(130, 80, 223, 0.1);
+    border-color: var(--purple, #8250df);
+    color: var(--purple, #8250df);
 }
 #selectedReferenceList .rec-tag.upload {
     background: rgba(26, 127, 55, 0.09);
+    border-color: var(--green, #1a7f37);
     color: var(--green, #1a7f37);
 }
 /* End: 261014 추가 - 검색·업로드 배지 */
@@ -2014,7 +2009,6 @@ html[data-theme="dark"] .rec-card.reference-source-card:hover:not(.active):not(.
     color: var(--text-muted);
     font-size: calc(11px * var(--ui-font-scale));
     font-weight: 400;
-    line-height: 1.5;
     white-space: nowrap;
     cursor: pointer;
 }

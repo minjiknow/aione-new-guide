@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 유사답변서·검색자료·업로드자료의 필터·카드·선택 상태를 표시합니다. 자료가 없을 때도 필터와 미리보기의 대기 상태를 유지합니다.
+ *
  * AI-ONE 답변서 관련자료 목록
  * 적용 화면: ai-answer.html
  * 역할: 유사답변서 추천·점수·필터·선택 카드 렌더링
@@ -12,7 +15,22 @@
  */
 
 window.AIOneDraftSource = function (runtime) {
-    const { addSelectedReferenceKey, clonePrototypeElement, createRecommendationTagFromPublicPrototype, el, getCompareSimilarSources, getCompareVersionNumbers, getSearchRecommendationItems, getUploadedRecommendationItems, isUploadedFileSelected, referenceKey, renderCompareWorkspace, renderPreview, renderSelectedReferences, state } = runtime;
+    const {
+        addSelectedReferenceKey,
+        clonePrototypeElement,
+        createRecommendationTagFromPublicPrototype,
+        el,
+        getCompareSimilarSources,
+        getCompareVersionNumbers,
+        getSearchRecommendationItems,
+        getUploadedRecommendationItems,
+        isUploadedFileSelected,
+        referenceKey,
+        renderCompareWorkspace,
+        renderPreview,
+        renderSelectedReferences,
+        state,
+    } = runtime;
     function createFallbackRecommendationCard() {
         const article = document.createElement("article");
         article.className = "rec-card";
@@ -21,7 +39,7 @@ window.AIOneDraftSource = function (runtime) {
             '<div class="rec-card-head">' +
             '<span class="rec-top-badge hidden">TOP</span>' +
             '<label class="rec-checkbox">' +
-            '<input class="checkbox-control checkbox-control-md" type="checkbox" aria-label="관련자료 선택" />' +
+            '<input type="checkbox" aria-label="관련자료 선택" />' +
             '<span class="file-select-check-ui" aria-hidden="true"></span>' +
             "</label>" +
             '<strong class="rec-title"></strong>' +
@@ -131,7 +149,6 @@ window.AIOneDraftSource = function (runtime) {
     function createReferenceSourceCard(item) {
         const card = clonePrototypeElement("referenceSourceCardTemplate");
         const isUpload = item.category === "upload";
-        card.classList.add(isUpload ? "reference-source-card--upload" : "reference-source-card--search");
         card.classList.toggle("active", item.key === state.activeReferenceKey);
         card.classList.toggle("is-selected", isUpload ? isUploadedFileSelected(item.raw) : state.selectedReferenceKeys.has(item.key));
         card.dataset.referenceKey = item.key;
@@ -140,6 +157,7 @@ window.AIOneDraftSource = function (runtime) {
         card.querySelector(".reference-source-title").textContent = item.title;
         const badge = card.querySelector(".sub-badge");
         badge.classList.toggle("blue", !isUpload);
+        badge.classList.toggle("green", isUpload);
         badge.textContent = isUpload ? "업로드소스" : "검색소스";
         return card;
     }
@@ -164,7 +182,7 @@ window.AIOneDraftSource = function (runtime) {
             '<div class="rec-card-head">' +
             '<span class="rec-top-badge">TOP</span>' +
             '<label class="rec-checkbox">' +
-            '<input class="checkbox-control checkbox-control-md" type="checkbox" aria-label="관련자료 선택" />' +
+            '<input type="checkbox" aria-label="관련자료 선택" />' +
             '<span class="file-select-check-ui" aria-hidden="true"></span>' +
             "</label>" +
             '<strong class="rec-title"></strong>' +
@@ -268,7 +286,7 @@ window.AIOneDraftSource = function (runtime) {
         const recommendResults = recommendPanel?.querySelector("[data-answer-recommend-results]");
         const recommendStatus = recommendPanel?.querySelector("[data-answer-recommend-status]");
         const emptyMessages = {
-            history: ["추천된 관련자료가 없습니다", "우측 AI 채팅에 국회질의나 검색 키워드를 입력하면 유사답변서와 참고자료를 추천합니다."],
+            history: ["추천된 관련자료가 없습니다", "우측 AI 채팅에 국회질의나 검색 키워드를 입력하면 \n 유사답변서와 참고자료를 추천합니다."],
             search: ["검색자료가 없습니다", "AI 참조소스에서 검색 후 자료를 가져오면 여기에 표시됩니다."],
             upload: ["업로드자료가 없습니다", "AI 참조소스에서 파일을 업로드하면 여기에 표시됩니다."],
         };
@@ -301,17 +319,32 @@ window.AIOneDraftSource = function (runtime) {
     }
 
     function onSourceListChanged() {
-    if (el.compareTabCount) {
-        const hasCompare = !!(state.reportId && getCompareSimilarSources().length && getCompareVersionNumbers().length);
-        el.compareTabCount.textContent = hasCompare ? "1" : "0";
-    }
-    if (!el.comparePanel?.hidden) {
-        renderCompareWorkspace().catch((error) => {
-            console.error("[답변서 비교] 추천자료 갱신 실패", error);
-        });
-    }
+        if (el.compareTabCount) {
+            const hasCompare = !!(state.reportId && getCompareSimilarSources().length && getCompareVersionNumbers().length);
+            el.compareTabCount.textContent = hasCompare ? "1" : "0";
+        }
+        if (!el.comparePanel?.hidden) {
+            renderCompareWorkspace().catch((error) => {
+                console.error("[답변서 비교] 추천자료 갱신 실패", error);
+            });
+        }
     }
     Object.assign(runtime.page, { renderSources: renderRecommendations, onSourceListChanged });
 
-    Object.assign(runtime, { createFallbackRecommendationCard, createRecommendationCardFromPublicPrototype, syncRecommendationCardPublic, bindDynamicRecommendationCard, getReferenceFilter, renderReferenceFilterBanner, createReferenceSourceCard, getVisibleRecommendationItems, createPublicRecommendationCardPrototype, clonePublicRecommendationCard, createPublicRecommendationTag, syncPublicRecommendationTags, syncPublicRecommendationCard, renderRecommendations });
+    Object.assign(runtime, {
+        createFallbackRecommendationCard,
+        createRecommendationCardFromPublicPrototype,
+        syncRecommendationCardPublic,
+        bindDynamicRecommendationCard,
+        getReferenceFilter,
+        renderReferenceFilterBanner,
+        createReferenceSourceCard,
+        getVisibleRecommendationItems,
+        createPublicRecommendationCardPrototype,
+        clonePublicRecommendationCard,
+        createPublicRecommendationTag,
+        syncPublicRecommendationTags,
+        syncPublicRecommendationCard,
+        renderRecommendations,
+    });
 };

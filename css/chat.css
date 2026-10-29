@@ -1,6 +1,9 @@
 @charset "utf-8";
 
 /*
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 홈 입력창과 챗봇의 대화·메뉴·반응형 배치를 관리합니다. 공통 오류신고 UI 사용에 따라 기존 전용·대체 팝업 스타일을 비활성화한 구간을 구분합니다.
+ *
  * 홈·챗봇 공통 입력창과 일반 챗봇 전용 UI 및 레이아웃 보정.
  * 적용 페이지: html/home.html, html/chatbot.html. 대화·메뉴 동작은 js/chat.js에서 관리합니다.
  * 공통 기본형과 답변 액션·오류신고는 common.css, 페이지 전용 보정은 이 파일에서 관리합니다.
@@ -770,7 +773,7 @@ a.chat-sources-name:hover {
 .chat-preview {
     position: relative;
     flex: 0 0 min(48%, 880px);
-    min-width: 380px;
+    min-width: 0;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -781,6 +784,16 @@ a.chat-sources-name:hover {
 
 .chat-preview[hidden] {
     display: none;
+}
+
+.chatbot-app:not(.has-preview) > .chat-preview-resize {
+    display: none;
+}
+
+@media (max-width: 1100px) {
+    .chatbot-app > .chat-preview-resize {
+        display: none;
+    }
 }
 
 .chat-preview-head {
@@ -829,6 +842,7 @@ a.chat-sources-name:hover {
     white-space: nowrap;
     font-size: calc(14px * var(--ui-font-scale));
     color: var(--text, #1f2328);
+    max-width: 440px;
 }
 
 .chat-preview-sub {
@@ -868,11 +882,17 @@ a.chat-preview-btn:not([href]) {
 }
 
 .chat-preview-zoom {
+    min-width: 80px;
     height: 30px;
-    padding: 0px 6px;
+    padding: 0px 24px 0px 8px;
+    appearance: none;
     border: 1px solid var(--border, #d1d9e0);
     border-radius: 8px;
-    background: var(--surface, #fff);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23656d76' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 12px 12px;
+    background-color: var(--surface, #fff);
     color: var(--text, #1f2328);
     font-style: inherit;
     font-variant: inherit;
@@ -888,7 +908,9 @@ a.chat-preview-btn:not([href]) {
     font-language-override: inherit;
     font-size: calc(12px * var(--ui-font-scale));
 }
-
+.chat-preview-zoom:focus {
+    border-color: var(--primary);
+}
 .chat-preview-body {
     flex: 1 1 0%;
     min-height: 0px;
@@ -935,7 +957,7 @@ a.chat-preview-btn:not([href]) {
     inset: 0px;
     z-index: 1600;
     min-width: 0px;
-    width: 100%;
+    width: 100% !important;
 }
 
 @media (max-width: 1100px) {
@@ -1019,7 +1041,7 @@ a.chat-preview-btn:not([href]) {
 
 .chatbot-section-add:hover {
     background: var(--surface-el);
-    color: var(--primary);
+    color: var(--text);
 }
 
 .chatbot-section-add svg {
@@ -3362,12 +3384,59 @@ body[data-page="chatbot"] {
 }
 
 .chatbot-search {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 8px 10px;
     border-radius: 8px;
     color: var(--text-sub);
+}
+
+.chatbot-search input {
+    padding-right: 24px;
+}
+
+#chatHistorySearch::-webkit-search-cancel-button {
+    display: none;
+    -webkit-appearance: none;
+}
+
+.chat-search-clear {
+    position: absolute;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 5px;
+    color: var(--text-muted);
+    font-size: calc(17px * var(--ui-font-scale));
+    line-height: 1;
+    background: transparent;
+    cursor: pointer;
+}
+
+.chat-search-clear:hover {
+    background: var(--surface-el);
+    color: var(--text);
+}
+
+.chat-search-clear[hidden],
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .chatbot-sidebar:not(.is-search-open) .chat-search-clear {
+    display: none;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .is-search-open .chatbot-search input {
+    padding-right: 36px;
+}
+
+.chatbot-app.is-sidebar-collapsed:not(.is-rail-mode) .is-search-open .chat-search-clear {
+    left: calc(100% + min(280px, 100vw - 72px) - 24px);
+    right: auto;
+    z-index: 52;
 }
 
 .chatbot-search:focus-within {
@@ -3554,6 +3623,31 @@ body[data-page="chatbot"] {
 .chatbot-app.is-chatting .chat-messages {
     flex: 1 1 0%;
     min-height: 0px;
+}
+
+/* 스크롤 영역만 우측 8px까지 확장하고 대화는 본문 중앙에 유지한다. */
+.chatbot-app:not(.has-preview) .chat-messages {
+    --chat-scroll-extension: 16px;
+    width: calc(100% + var(--chat-scroll-extension));
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 0 var(--chat-scroll-extension);
+    scrollbar-gutter: stable both-edges;
+    box-sizing: border-box;
+}
+
+.chatbot-app:not(.has-preview) .chat-messages > .chat-msg {
+    width: 100%;
+    max-width: 752px;
+    min-width: 0;
+    margin-inline: auto;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .chatbot-app:not(.has-preview) .chat-messages {
+        --chat-scroll-extension: 4px;
+    }
 }
 
 .chatbot-app .sr-only,
@@ -4087,22 +4181,7 @@ html[data-theme="dark"] .chatbot-sidebar .user-avatar {
     min-height: 3.2em;
 }
 /* End: 261021 수정 - 홈 전용 입력창 순서 및 한 줄·여러 줄 배치 */
-/* 입력창과 동일한 글꼴로 측정하되 페이지 배치와 접근성 트리에서는 제외한다. */
-.home-composer-measure {
-    position: fixed;
-    top: 0;
-    left: -10000px;
-    visibility: hidden;
-    pointer-events: none;
-    contain: strict;
-    box-sizing: border-box;
-    height: 0;
-    min-height: 0;
-    padding: 0;
-    border: 0;
-    overflow: hidden;
-    resize: none;
-}
+
 
 /* ───────── 입력창 드롭다운(작업 선택 · 모델 선택) 밝은 메뉴 : 흰 바탕 · 검정 글자 ─────────
  * 공통 CSS 의 어두운 메뉴(.dropdown-menu-model) 대신, 선택된 항목은 연한 강조색 바탕 + 강조색 글자 + 체크.
@@ -4239,7 +4318,8 @@ html[data-theme="dark"] .chatbot-sidebar .user-avatar {
 }
 
 /* 오류 신고 창 */
-.chat-issue-modal .chat-action-modal-box {
+/* Start: 261028 수정 - 공통 오류신고 사용으로 기존 팝업 스타일 비활성화 */
+/* .chat-issue-modal .chat-action-modal-box {
     width: min(480px, calc(100vw - 32px));
 }
 .chat-issue-types {
@@ -4336,10 +4416,12 @@ html[data-theme="dark"] .chatbot-sidebar .user-avatar {
     color: var(--text-muted, #6b7280);
     font-size: 1rem;
     cursor: pointer;
-}
-
+} */
+/* End: 261028 수정 - 공통 오류신고 사용으로 기존 팝업 스타일 비활성화 */
 /* 오류신고 대체 창 : 퍼블 common.css 가 있으면 그쪽 규칙이 이기도록 :where() 로 우선순위를 0 으로 둔다 */
-:where(.chat-issue-backdrop) {
+
+/* Start: 261028 수정 - 공통 오류신고 사용으로 대체 팝업 스타일 비활성화 */
+/* :where(.chat-issue-backdrop) {
     position: fixed;
     inset: 0;
     z-index: 1400;
@@ -4465,5 +4547,6 @@ html[data-theme="dark"] .chatbot-sidebar .user-avatar {
     border-color: var(--primary, #0969da);
     background: var(--primary, #0969da);
     color: #fff;
-}
+} */
+/* End: 261028 수정 - 공통 오류신고 사용으로 대체 팝업 스타일 비활성화 */
 /* End: 261019 운영 반영 (MD_chatbot.jsp · MD_home.jsp + 공통 레이아웃 MD_Manage.jsp) */

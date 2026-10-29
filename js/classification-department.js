@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 소관·실국과 알림 담당자 설정을 관리합니다. 질의 수정 후 AI 재분류 요청·결과 병합과 소관 선택 검증을 처리합니다.
+ *
  * AI-ONE 질의분류 - 부서/담당자 모듈
  *
  * 역할
@@ -947,16 +950,16 @@
                 if (original)
                     original.innerHTML = `<div class="report-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>원본 문서가 없습니다</strong>
-            <span>질의 파일을 업로드하면 원본 문서가 표시됩니다.</span>
-            <span>업로드한 문서를 선택하면 상세 내용을 확인할 수 있습니다.</span>
+            <strong class="empty-title">원본 문서가 없습니다</strong>
+            <span class="empty-desc">질의 파일을 업로드하면 원본 문서가 표시됩니다.</span>
+            <span class="empty-desc">업로드한 문서를 선택하면 상세 내용을 확인할 수 있습니다.</span>
             </div>`;
                 if (docContent)
                     docContent.innerHTML = `<div class="report-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>질의 추출 결과가 없습니다</strong>
-            <span>질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
-            <span>분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
+            <strong class="empty-title">질의 추출 결과가 없습니다</strong>
+            <span class="empty-desc">질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
+            <span class="empty-desc">분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
             </div>`;
                 updateDocStatusBar("");
             }
@@ -975,7 +978,7 @@
                 if (!id) throw new Error("대화 생성 응답에 conversation id가 없습니다.");
                 actualConversationId = String(id);
                 activeSessionId = actualConversationId;
-                workspaceTitle = String(conversation?.title || title || "제목없는 국회질의").trim() || "제목없는 국회질의";
+                workspaceTitle = String(conversation?.title || title || "제목없는 국회질의분류").trim() || "제목없는 국회질의분류";
                 renderWorkspaceMeta();
                 try {
                     await loadConversationSettingsV15(actualConversationId);

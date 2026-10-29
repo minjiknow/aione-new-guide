@@ -1,6 +1,37 @@
 @charset "utf-8";
 
 /*
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 질의분류 패널·질의 카드·편집/재분류 확인·담당자 설정과 업로드/필터 빈 화면을 관리합니다. 공통 반응형은 ai-workspace.css를 사용합니다.
+ */
+
+/* 질의분류 탑 바 실행 목록 버튼 */
+.app-topbar-actions #runDrawerBtn {
+    width: 32px;
+    height: 32px;
+    border-color: rgba(130, 80, 223, 0.42);
+    background: rgba(130, 80, 223, 0.09);
+    color: var(--purple, #8250df);
+    box-shadow: 0 1px 2px rgba(130, 80, 223, 0.06);
+}
+
+.app-topbar-actions #runDrawerBtn:hover:not(:disabled, [aria-disabled="true"]) {
+    border-color: var(--purple, #8250df);
+    background: var(--purple, #8250df);
+    color: #fff;
+    box-shadow: 0 5px 14px rgba(130, 80, 223, 0.22);
+}
+
+.app-topbar-actions #runDrawerBtn :is(img, svg) {
+    width: 18px;
+    height: 18px;
+}
+
+.app-topbar-actions #runDrawerBtn:hover:not(:disabled, [aria-disabled="true"]) img[data-icon] {
+    filter: var(--icon-filter-white);
+}
+
+/*
  * 질의 분류 전용 UI 및 보정. 공통 반응형은 먼저 로드하는 ai-workspace.css에서 관리합니다.
  * 공통 기본형은 common.css, 페이지 전용 보정은 각 페이지 CSS에 작성합니다.
  * 구간 목차 (이름으로 검색)
@@ -60,6 +91,7 @@
     box-shadow:
         0 0 0 1px rgba(var(--primary-rgb, 21, 110, 221), 0.08),
         0 8px 20px rgba(var(--primary-rgb, 21, 110, 221), 0.06);
+    font-weight: 600;
 }
 
 /* End: Workspace Base */
@@ -150,7 +182,7 @@
 
 .question-toolbar {
     justify-content: space-between;
-    padding: 9px 14px;
+    min-height: 45px;
     border-bottom: 1px solid var(--border, #d1d9e0);
 }
 
@@ -282,6 +314,7 @@ html[data-theme="dark"] .query-card:is(.active, .is-selected, .mapped) {
     -webkit-line-clamp: 2;
     color: var(--text-sub, #656d76);
     font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 500;
     line-height: 1.5;
 }
 
@@ -345,7 +378,8 @@ html[data-theme="dark"] .query-card:is(.active, .is-selected, .mapped) {
     display: block;
     margin: 0;
     color: var(--text-sub, #656d76);
-    font-size: calc(9px * var(--ui-font-scale));
+    font-size: calc(10px * var(--ui-font-scale));
+    font-weight: 500;
     line-height: 1.5;
 }
 
@@ -1408,6 +1442,7 @@ html[data-theme="dark"] .orig-query-box-text {
     margin: 0;
     color: var(--text-sub, #656d76);
     font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 500;
     line-height: 1.65;
     word-break: keep-all;
 }
@@ -1439,12 +1474,14 @@ html[data-theme="dark"] .orig-query-box-text {
     border: 1px solid var(--border, #d1d9e0);
     background: var(--surface-elevated, #f0f3f6);
     color: var(--text, #1f2328);
+    font-weight: 500;
 }
 
 .qd-box-summary {
     border: 1px solid rgba(130, 80, 223, 0.2);
     background: rgba(130, 80, 223, 0.06);
     color: var(--text, #1f2328);
+    font-weight: 500;
 }
 
 .qd-box-text {
@@ -1537,6 +1574,7 @@ html[data-theme="dark"] .orig-query-box-text {
 .qd-reason-text {
     color: var(--text-sub, #656d76);
     font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 500;
     line-height: 1.6;
 }
 
@@ -1624,6 +1662,7 @@ html[data-theme="dark"] .orig-query-box-text {
     overflow: hidden;
     color: var(--text-muted, #8b949e);
     font-size: calc(11px * var(--ui-font-scale));
+    font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -3654,9 +3693,9 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
 @media (min-width: 1025px) {
     #classificationApp .three-panel.left-small.right-large {
         grid-template-columns:
-            300px
+            350px
             2px
-            minmax(340px, 1fr)
+            minmax(350px, 1fr)
             2px
             420px;
     }
@@ -3749,10 +3788,11 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
     color: var(--text-sub, #656d76);
 }
 
-#classificationApp .report-empty-state strong {
+/* #classificationApp .report-empty-state strong {
     display: block;
+    margin-top: 14px;
     margin-bottom: 7px;
-    color: var(--text, #1f2328);
+    color: var(--text-sub, #656d76);
     font-size: 14px;
     line-height: 1.45;
     font-weight: 700;
@@ -3763,11 +3803,7 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
     color: var(--text-muted, #8b949e);
     font-size: 12px;
     line-height: 1.55;
-}
-
-#classificationApp .report-empty-state span + span {
-    margin-top: 2px;
-}
+} */
 
 /* 중앙 원본/결과와 우측 질의목록의 빈 상태를 실제 영역 중앙에 배치 */
 #classificationApp #docOriginal > .report-empty-state,
@@ -4355,6 +4391,7 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
     border-radius: 10px;
     background: var(--surface-elevated, #eff2f5);
     font-size: calc(10px * var(--ui-font-scale, 1));
+    font-weight: 500;
     line-height: 1.5;
 }
 .query-rule-heading,
@@ -4365,8 +4402,10 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
     flex-wrap: wrap;
     gap: 6px;
 }
+.query-rule-match-heading > strong,
 .query-rule-heading strong {
     font-size: calc(10px * var(--ui-font-scale));
+    font-weight: 800;
 }
 .query-rule-heading > strong::before {
     display: inline-block;
@@ -4385,11 +4424,13 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
 .query-rule-description {
     margin: 6px 0;
     color: var(--text-sub, #656d76);
+    font-weight: 500;
 }
 .query-rule-meta {
     margin: 3px 0 0;
     color: var(--text-muted, #85909e);
-    font-size: 0.85em;
+    font-size: calc(10px * var(--ui-font-scale, 1));
+    font-weight: 500;
 }
 .query-rule-disclosure {
     justify-content: space-between;
@@ -4408,6 +4449,11 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
     font: inherit;
     font-weight: 700;
     cursor: pointer;
+}
+.query-rule-toggle span {
+    color: var(--text-sub, #656d76);
+    font-size: calc(10px * var(--ui-font-scale));
+    font-weight: 500;
 }
 .query-rule-toggle:focus-visible {
     outline: 2px solid var(--primary, #156edd);
@@ -4468,7 +4514,8 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
     border-radius: 12px;
     background: var(--surface-elevated, #eff2f5);
     color: var(--text-sub, #656d76);
-    font-size: 0.85em;
+    font-size: calc(10px * var(--ui-font-scale));
+    font-weight: 500;
     white-space: nowrap;
 }
 .query-rule-badge.is-department {
@@ -4684,3 +4731,33 @@ body[data-page="intake"] .filter-btn-excluded:is(.active, [aria-pressed="true"])
     color: var(--primary);
 }
 /* End: 261026 수정 - 수정 모달 위 토스트 및 조건부 실국 안내 */
+
+/* 질의 업로드 빈 목록: 정책변경의 파일 목록과 동일한 외형 */
+#classificationApp .file-list > .file-list-empty {
+    min-height: 0;
+    padding: 48px 20px;
+    border: 1px solid var(--border, #d1d9e0) !important;
+    background: transparent;
+}
+
+#classificationApp .file-list > .file-list-empty:hover {
+    border-color: var(--primary, #156edd) !important;
+}
+
+.file-list-empty > .query-upload-empty {
+    min-height: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 0;
+}
+
+.file-list-empty .query-upload-empty > .no-file-icon {
+    display: grid;
+}
+
+/* 질의 목록 빈 화면의 설명 줄바꿈 유지 */
+#queryList > .filter-empty-state > span {
+    white-space: pre-line;
+}

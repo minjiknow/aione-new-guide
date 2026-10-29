@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 답변서 상태·DOM과 관련자료 필터·미리보기·전체선택 이벤트를 연결합니다. 전체선택은 현재 필터에만 적용하고 업로드와 문서 선택 상태를 구분합니다.
+ *
  * AI-ONE 답변서 상태·화면 연결
  * 적용 화면: ai-answer.html
  * 역할: 답변서 전용 상태·DOM, 관련자료 필터와 문서 확대·편집 이벤트
@@ -113,14 +116,8 @@ window.AIOneDraftWorkspace = {
         // Start: 261015 수정 - 관련자료 필터·미리보기·전체선택 이벤트
         // 필터를 바꾸면 카드·안내 배너·건수를 갱신한다. 검색·업로드 카드 클릭은 미리보기 대상만 바꾼다.
         // 전체선택은 현재 필터의 자료만 처리하며, 업로드 자료는 uploadedFiles, 문서는 selectedReferenceKeys에 반영한다.
-        document.querySelectorAll("[data-reference-filter]").forEach((button) => {
-            button.addEventListener("click", () => {
-                document.querySelectorAll("[data-reference-filter]").forEach((item) => {
-                    item.classList.toggle("active", item === button);
-                    item.setAttribute("aria-pressed", String(item === button));
-                });
-                renderRecommendations();
-            });
+        document.querySelectorAll(".answer-reference-filters").forEach((filters) => {
+            window.AIOneReferenceFilters.init(filters, () => renderRecommendations());
         });
         // 261020: work-support.html은 관련자료 영역을 생략하므로, 해당 요소가 있을 때만
         // 이벤트를 연결한다. 영역 부재로 채팅목록과 참조소스 초기화가 중단되지 않게 한다.
@@ -171,7 +168,6 @@ window.AIOneDraftWorkspace = {
             state.zoom = Math.min(200, state.zoom + 10);
             applyZoom();
         });
-        runtime.bindDocumentFullscreen(el.fitBtn, document.querySelector(".answer-draft-panel"), el.draftScroll);
         el.draftScroll?.addEventListener("scroll", updateDraftDocumentStats);
         el.draftScroll?.addEventListener(
             "wheel",

@@ -1,6 +1,9 @@
 "use strict";
 
 /*
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 공통 사이드바·모달·툴팁·제목 편집·목록·로딩·패널 배치와 답변 액션을 제공합니다. 페이지별 데이터와 이벤트 계약을 유지하면서 공통 UI를 재사용합니다.
+ *
  * 목록 관련 적용 페이지: html/ai-answer.html의 채팅 목록, html/work-support.html의 작업 목록 (#runDrawer > #chatTopics).
  * html/chatbot.html의 #chatHistoryList는 chat.js의 별도 목록이다.
  * 초기 주석 정리 기준일: 261022. 이후 변경은 날짜별 요약과 구간 주석에 기록한다.
@@ -419,7 +422,6 @@
                 detail: { target, value: config.value },
             }),
         );
-
     });
 })();
 
@@ -455,12 +457,6 @@
         return trigger.dataset.tooltip || "";
     }
 
-    function resolvePlacement(trigger, options) {
-        if (trigger.closest(".sidebar, .chatbot-sidebar")) return "right";
-        const placement = trigger.dataset.tooltipPlacement || options.placement || "top";
-        return ["top", "right", "bottom", "left"].includes(placement) ? placement : "top";
-    }
-
     function setDescribedBy(trigger, tooltip) {
         if (!describedByStates.has(trigger)) {
             describedByStates.set(trigger, trigger.getAttribute("aria-describedby"));
@@ -478,20 +474,15 @@
         describedByStates.delete(trigger);
     }
 
-    function positionTooltip(tooltip, trigger, placement, gap) {
+    function positionTooltip(tooltip, trigger, gap) {
         const triggerRect = trigger.getBoundingClientRect();
         const tooltipRect = tooltip.getBoundingClientRect();
         let left = triggerRect.left + (triggerRect.width - tooltipRect.width) / 2;
-        let top = triggerRect.top - tooltipRect.height - gap;
+        let top = triggerRect.bottom + gap;
 
-        if (placement === "right") {
-            left = triggerRect.right + gap;
-            top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2;
-        } else if (placement === "bottom") {
-            top = triggerRect.bottom + gap;
-        } else if (placement === "left") {
-            left = triggerRect.left - tooltipRect.width - gap;
-            top = triggerRect.top + (triggerRect.height - tooltipRect.height) / 2;
+        // 모든 공통 툴팁은 아래에 표시하고, 아래 공간이 부족하면 위로 전환한다.
+        if (top + tooltipRect.height > window.innerHeight - VIEWPORT_PADDING) {
+            top = triggerRect.top - tooltipRect.height - gap;
         }
 
         left = Math.max(VIEWPORT_PADDING, Math.min(left, window.innerWidth - tooltipRect.width - VIEWPORT_PADDING));
@@ -518,9 +509,7 @@
         if (!(trigger instanceof Element)) return null;
         const sidebar = trigger.closest(".sidebar, .chatbot-sidebar");
         // 문서 전체 바인딩에서도 사이드바의 표시 조건을 동일하게 적용한다.
-        const isCollapsed = sidebar?.matches(".chatbot-sidebar")
-            ? sidebar.closest(".chatbot-app")?.classList.contains("is-sidebar-collapsed")
-            : sidebar?.classList.contains("collapsed");
+        const isCollapsed = sidebar?.matches(".chatbot-sidebar") ? sidebar.closest(".chatbot-app")?.classList.contains("is-sidebar-collapsed") : sidebar?.classList.contains("collapsed");
         // Start: 261022 수정 - 펼친 사이드바 모드 툴팁 허용
         if (sidebar && !isCollapsed && !trigger.closest(".nav-mode, .sidebar-collapse-btn")) {
             hide();
@@ -544,7 +533,7 @@
         tooltip.style.visibility = "hidden";
         tooltip.classList.remove("is-visible");
         setDescribedBy(trigger, tooltip);
-        positionTooltip(tooltip, trigger, resolvePlacement(trigger, options), Number.isFinite(Number(options.gap)) ? Math.max(0, Number(options.gap)) : DEFAULT_GAP);
+        positionTooltip(tooltip, trigger, Number.isFinite(Number(options.gap)) ? Math.max(0, Number(options.gap)) : DEFAULT_GAP);
         tooltip.style.visibility = "";
         window.requestAnimationFrame(() => {
             if (activeTrigger === trigger) tooltip.classList.add("is-visible");
@@ -610,7 +599,9 @@
         });
         const iconButtons = [...root.querySelectorAll("button.icon-button[aria-label]:not([data-tooltip])")];
         if (root.matches("button.icon-button[aria-label]:not([data-tooltip])")) iconButtons.unshift(root);
-        iconButtons.forEach((button) => { button.dataset.tooltip = button.getAttribute("aria-label"); });
+        iconButtons.forEach((button) => {
+            button.dataset.tooltip = button.getAttribute("aria-label");
+        });
         const names = [...root.querySelectorAll(fileNameSelector)];
         if (root.matches(fileNameSelector)) names.unshift(root);
         names.forEach((name) => {
@@ -812,40 +803,42 @@
 (() => {
     // 기존 ID·data-*·전용 이벤트는 유지한다. 배경·취소·확인 버튼은 대상에서 제외한다.
     const selector = [
-        'button.query-edit-modal-close',
-        'button.history-modal-close',
-        'button.service-notice-close',
-        'button.chat-issue-close',
-        'button.answer-new-chat-notice-close',
-        'button.icon-button[data-modal-close]',
-        'button.icon-button[data-sidepop-close]',
-        'button.icon-button[data-drawer-close]',
-    ].join(',');
+        "button.query-edit-modal-close",
+        "button.history-modal-close",
+        "button.service-notice-close",
+        "button.chat-issue-close",
+        "button.answer-new-chat-notice-close",
+        "button.icon-button[data-modal-close]",
+        "button.icon-button[data-sidepop-close]",
+        "button.icon-button[data-drawer-close]",
+    ].join(",");
 
     function init(root = document) {
         const buttons = [];
         if (root instanceof Element && root.matches(selector)) buttons.push(root);
-        root.querySelectorAll?.(selector).forEach(button => buttons.push(button));
-        buttons.forEach(button => {
-            button.classList.add('drawer-close');
+        root.querySelectorAll?.(selector).forEach((button) => buttons.push(button));
+        buttons.forEach((button) => {
+            button.classList.add("drawer-close");
             // 이전 모달 클래스의 페이지별 20px 덮어쓰기를 제거한다.
-            button.classList.remove('query-edit-modal-close', 'icon-button', 'icon-button-ghost');
+            button.classList.remove("query-edit-modal-close", "icon-button", "icon-button-ghost");
         });
     }
 
     function start() {
         init();
         // 동적으로 생성되는 담당자 설정 drawer 및 모달에도 같은 스타일을 적용한다.
-        new MutationObserver(records => {
-            records.forEach(record => record.addedNodes.forEach(node => {
-                if (node instanceof Element) init(node);
-            }));
+        new MutationObserver((records) => {
+            records.forEach((record) =>
+                record.addedNodes.forEach((node) => {
+                    if (node instanceof Element) init(node);
+                }),
+            );
         }).observe(document.body, { childList: true, subtree: true });
     }
 
     window.AIOneCloseButton = Object.freeze({ init });
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', start, { once: true });
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start, { once: true });
     } else {
         start();
     }
@@ -1535,9 +1528,7 @@
 
         const brandButton = sidebar.querySelector("#sidebarBrandButton, .sidebar-brand");
         if (brandButton) {
-            const label = brandButton.dataset.sidebarBrandAction === "navigate"
-                ? brandButton.dataset.tooltip
-                : collapsed ? "사이드바 펼치기" : "AI-ONE 홈";
+            const label = brandButton.dataset.sidebarBrandAction === "navigate" ? brandButton.dataset.tooltip : collapsed ? "사이드바 펼치기" : "AI-ONE 홈";
             brandButton.setAttribute("aria-label", label);
             brandButton.title = label;
         }
@@ -1655,8 +1646,7 @@
     // Start: 261022 수정 - 공통 사이드바 너비 저장 및 복원
     // 우측 경계의 공통 크기 조절: 펼친 데스크톱 사이드바에만 적용합니다.
     function bindSidebarResize(sidebar) {
-        if (sidebar.classList.contains("chatbot-account-host") ||
-            sidebar.querySelector(":scope > .sidebar-resize-handle")) return;
+        if (sidebar.classList.contains("chatbot-account-host") || sidebar.querySelector(":scope > .sidebar-resize-handle")) return;
         const min = 180;
         const max = 360;
         const defaultWidth = 220;
@@ -1672,9 +1662,7 @@
         handle.setAttribute("aria-valuenow", String(defaultWidth));
         sidebar.append(handle);
 
-        const enabled = () => window.innerWidth > 768 &&
-            !sidebar.classList.contains("collapsed") &&
-            !sidebar.closest(".is-sidebar-collapsed, .is-rail-mode");
+        const enabled = () => window.innerWidth > 768 && !sidebar.classList.contains("collapsed") && !sidebar.closest(".is-sidebar-collapsed, .is-rail-mode");
         const saveWidth = (width) => {
             try {
                 localStorage.setItem(storageKey, String(width));
@@ -2453,6 +2441,7 @@
     const rootSelector = "[data-document-statusbar]";
     const fullscreenClass = "document-statusbar-fullscreen";
     let pageSyncFrame = 0;
+    let fullscreenOrigin = null;
 
     function resolveRoot(target) {
         if (target instanceof Element) {
@@ -2523,7 +2512,9 @@
         const step = Math.max(1, readNumber(root.dataset.documentZoomStep, 10));
         const target = resolveSelector(root, root.dataset.documentTarget);
         const scrollTarget = resolveSelector(root, root.dataset.documentScrollTarget);
-        const fullscreenTarget = resolveSelector(root, root.dataset.documentFullscreenTarget) || root.parentElement;
+        const configuredFullscreenTarget = resolveSelector(root, root.dataset.documentFullscreenTarget) || root.parentElement;
+        // 상태바가 속한 패널의 헤더까지 함께 확대하고, 독립 뷰어는 지정 대상을 유지한다.
+        const fullscreenTarget = configuredFullscreenTarget?.closest(".panel:has(> .panel-head)") || configuredFullscreenTarget;
         return {
             root,
             min,
@@ -2604,8 +2595,11 @@
         const button = root.querySelector('[data-document-statusbar-action="fullscreen"]');
         if (!button) return;
         button.setAttribute("aria-pressed", String(isFullscreen));
-        button.setAttribute("aria-label", isFullscreen ? "문서 전체보기 종료" : "문서 전체보기");
-        button.title = isFullscreen ? "문서 전체보기 종료" : "문서 전체보기";
+        const label = isFullscreen ? "패널 전체보기 종료" : "패널 전체보기";
+        button.setAttribute("aria-label", label);
+        button.dataset.tooltip = label;
+        button.removeAttribute("title");
+        window.AIOneTooltip?.hide(button);
     }
 
     function toggleFullscreen(target, force) {
@@ -2614,17 +2608,48 @@
         if (!state?.fullscreenTarget) return null;
 
         const nextState = typeof force === "boolean" ? force : !state.fullscreenTarget.classList.contains(fullscreenClass);
-        document.querySelectorAll(`.${fullscreenClass}`).forEach((element) => {
-            if (element !== state.fullscreenTarget) element.classList.remove(fullscreenClass);
-        });
+        // DOM 위치와 인라인 크기는 유지하고, 해제 시 각 스크롤 영역을 복원한다.
+        if (fullscreenOrigin && (fullscreenOrigin.root !== root || !nextState)) {
+            const origin = fullscreenOrigin;
+            fullscreenOrigin = null;
+            origin.panel.classList.remove(fullscreenClass);
+            // 탭을 전환했더라도 종료하는 패널의 문서 배율과 표시값을 함께 초기화한다.
+            origin.panel.querySelectorAll(rootSelector).forEach((statusbar) => {
+                if (stateFor(statusbar)?.fullscreenTarget === origin.panel) setZoom(statusbar, 100);
+            });
+            origin.scrollPositions.forEach(({ element, left, top }) => element.scrollTo(left, top));
+            window.scrollTo(origin.x, origin.y);
+            origin.root.querySelector('[data-document-statusbar-action="fullscreen"]')?.focus({ preventScroll: true });
+            origin.root.dispatchEvent(
+                new CustomEvent("document-statusbar:fullscreenchange", {
+                    bubbles: true,
+                    detail: { fullscreen: false, target: origin.panel },
+                }),
+            );
+        }
+        if (nextState && !fullscreenOrigin) {
+            const panel = state.fullscreenTarget;
+            const scrollElements = [panel, ...panel.querySelectorAll("*")];
+            for (let ancestor = panel.parentElement; ancestor; ancestor = ancestor.parentElement) {
+                scrollElements.push(ancestor);
+            }
+            fullscreenOrigin = {
+                root,
+                panel,
+                x: window.scrollX,
+                y: window.scrollY,
+                scrollPositions: scrollElements.filter((element) => element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth).map((element) => ({ element, left: element.scrollLeft, top: element.scrollTop })),
+            };
+        }
         state.fullscreenTarget.classList.toggle(fullscreenClass, nextState);
         document.querySelectorAll(rootSelector).forEach(syncFullscreenState);
-        root.dispatchEvent(
-            new CustomEvent("document-statusbar:fullscreenchange", {
-                bubbles: true,
-                detail: { fullscreen: nextState, target: state.fullscreenTarget },
-            }),
-        );
+        if (nextState)
+            root.dispatchEvent(
+                new CustomEvent("document-statusbar:fullscreenchange", {
+                    bubbles: true,
+                    detail: { fullscreen: nextState, target: state.fullscreenTarget },
+                }),
+            );
         return root;
     }
 
@@ -2668,10 +2693,7 @@
 
     document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;
-        const fullscreenTarget = document.querySelector(`.${fullscreenClass}`);
-        if (!fullscreenTarget) return;
-        fullscreenTarget.classList.remove(fullscreenClass);
-        document.querySelectorAll(rootSelector).forEach(syncFullscreenState);
+        if (fullscreenOrigin) toggleFullscreen(fullscreenOrigin.root, false);
     });
 
     window.AIOneDocumentStatusBar = Object.freeze({
@@ -3544,6 +3566,39 @@
 
 /* End: 분할 핸들러 (Split Handler) */
 
+/* Start: 내부 패널 전환 */
+// 페이지별 초기화 없이 동적으로 생성된 패널에도 공통 전환을 적용한다.
+(() => {
+    const paneSelector = ".split-handler-left, .split-handler-right, .split-handler-pane";
+    const isVisible = (element) => element && element.getClientRects().length > 0 && window.getComputedStyle(element).visibility !== "hidden";
+
+    document.addEventListener("click", (event) => {
+        const button = event.target.closest(".panel-switch-btn");
+        const panel = button?.closest(".panel");
+        if (!panel || button.disabled) return;
+
+        const containers = panel.querySelectorAll('[data-component="split-handler"], .split-handler');
+        for (const container of containers) {
+            // 다른 탭, 중첩된 외부 패널, 세로 분할 및 모바일 세로 배치는 제외한다.
+            if (container.closest(".panel") !== panel || !isVisible(container) || container.classList.contains("type2") || window.getComputedStyle(container).flexDirection !== "row") continue;
+
+            const handle = Array.from(container.children).find((child) => child.matches(".split-handler-handle") && isVisible(child));
+            const left = handle?.previousElementSibling;
+            const right = handle?.nextElementSibling;
+            if (!left?.matches(paneSelector) || !right?.matches(paneSelector) || !isVisible(left) || !isVisible(right)) continue;
+
+            event.preventDefault();
+            // 기존 노드를 이동하여 콘텐츠, 이벤트, 패널별 리사이즈 너비를 유지한다.
+            container.insertBefore(right, left);
+            container.insertBefore(handle, left);
+            window.AIOneSplitHandler?.init?.(container);
+            button.focus({ preventScroll: true });
+            break;
+        }
+    });
+})();
+/* End: 내부 패널 전환 */
+
 /* Start: 사이드 팝업 (Side Pop) */
 
 (() => {
@@ -4343,11 +4398,16 @@
     function syncFullscreenButton(button) {
         const enabled = Boolean(document.fullscreenElement);
         if (!button) return enabled;
-        const label = enabled ? "전체화면 종료" : "전체화면 전환";
+        const label = enabled ? "전체화면 종료" : "전체화면";
         button.classList.toggle("active", enabled);
         button.setAttribute("aria-pressed", String(enabled));
         button.setAttribute("aria-label", label);
-        button.title = label;
+        button.dataset.tooltip = label;
+        button.removeAttribute("title");
+        const icon = button.querySelector("svg");
+        icon?.setAttribute("aria-hidden", "true");
+        icon?.querySelector("path")?.setAttribute("d", enabled ? "M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5" : "M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5");
+        window.AIOneTooltip?.hide(button);
         return enabled;
     }
 
@@ -4477,8 +4537,7 @@
     // saveTitle은 저장 성공 후 화면 데이터를 갱신합니다. 실패 시 기존 데이터를 유지하고 오류를 처리합니다.
     // 같은 버튼을 다시 연결해도 이벤트는 한 번만 등록합니다.
     const titleEditors = new WeakMap();
-    function createTitleEditor({ button, text, input, getTitle, saveTitle, editLabel,
-        maxDisplayLength = 30, emptyTitle = "", onError } = {}) {
+    function createTitleEditor({ button, text, input, getTitle, saveTitle, editLabel, maxDisplayLength = 30, emptyTitle = "", onError } = {}) {
         if (!button || !text || !input) return null;
         if (titleEditors.has(button)) return titleEditors.get(button);
         let editing = false;
@@ -4493,9 +4552,8 @@
         function render() {
             const title = readTitle();
             const characters = Array.from(title);
-            text.textContent = characters.length > maxDisplayLength
-                ? characters.slice(0, maxDisplayLength).join("").trimEnd() + "..." : title;
-            text.setAttribute("data-tooltip", title);
+            text.textContent = characters.length > maxDisplayLength ? characters.slice(0, maxDisplayLength).join("").trimEnd() + "..." : title;
+            text.removeAttribute("data-tooltip");
             text.removeAttribute("title");
             if (!editing) input.value = title;
             button.classList.toggle("hidden", editing);
@@ -4539,7 +4597,9 @@
                 void close(event.key === "Enter", true);
             }
         });
-        input.addEventListener("blur", () => { void close(true); });
+        input.addEventListener("blur", () => {
+            void close(true);
+        });
         ["pointerdown", "mousedown", "click"].forEach((type) => {
             input.addEventListener(type, (event) => event.stopPropagation());
         });
@@ -4581,6 +4641,23 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
 
 (() => {
     const DEFAULT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+    // 원문을 유지하고 모바일 표시 전환은 CSS에서 처리합니다.
+    function renderDisplayTitle(element, value, maxLength = 30) {
+        const title = String(value ?? "");
+        const characters = Array.from(title);
+        if (characters.length <= maxLength) {
+            element.textContent = title;
+            return;
+        }
+        const full = document.createElement("span");
+        full.className = "display-title-full";
+        full.textContent = title;
+        const short = document.createElement("span");
+        short.className = "display-title-short";
+        short.textContent = characters.slice(0, maxLength).join("").trimEnd() + "...";
+        element.replaceChildren(full, short);
+    }
 
     function escapeHtml(value) {
         return String(value ?? "")
@@ -4643,7 +4720,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
                 await document.documentElement.requestFullscreen();
             }
         } catch (error) {
-            console.warn("전체화면 전환 실패", error);
+            console.warn("전체화면 실패", error);
             options.onError?.(error);
         }
     }
@@ -4741,6 +4818,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
     /* End: 261023 추가 - 기존 빈 화면 컴포넌트를 사용하는 필터 결과 안내 */
 
     window.AIOneWorkspaceCommon = Object.freeze({
+        renderDisplayTitle,
         createFilterEmpty,
         escapeHtml,
         showToast,
@@ -4876,14 +4954,16 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
     }
 
     function filterItems(items, query) {
-        const keyword = String(query || "").trim().toLocaleLowerCase("ko-KR");
-        return (items || []).filter(item => getTitle(item).toLocaleLowerCase("ko-KR").includes(keyword));
+        const keyword = String(query || "")
+            .trim()
+            .toLocaleLowerCase("ko-KR");
+        return (items || []).filter((item) => getTitle(item).toLocaleLowerCase("ko-KR").includes(keyword));
     }
 
     // 모달 완료 이벤트의 형식은 공통에서 정규화하고 저장 방식은 화면에 위임한다.
     function bindActions({ drawer, type = "chat", onAction, onError }) {
         const eventName = type === "run" ? "sidepop:run-action" : "sidepop:chat-action";
-        const listener = async event => {
+        const listener = async (event) => {
             const detail = event.detail || {};
             const conversationId = String(detail.item?.dataset?.conversationId || "");
             if (!detail.completed || !conversationId) return;
@@ -4904,14 +4984,14 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
 
     // 미리보기 목록만 사용한다. 실제 API 화면은 bindActions의 onAction에서 저장한다.
     function applyLocalAction(items, detail) {
-        const item = items.find(entry => normalizeId(entry) === detail.conversationId);
+        const item = items.find((entry) => normalizeId(entry) === detail.conversationId);
         if (!item) return { items, item: null };
         if (detail.action === "pin") item.is_favorite = detail.pinned;
         if (detail.action === "rename") {
             item.title = detail.title;
             if (Object.hasOwn(item, "display_title")) item.display_title = detail.title;
         }
-        return { items: detail.action === "delete" ? items.filter(entry => entry !== item) : items, item };
+        return { items: detail.action === "delete" ? items.filter((entry) => entry !== item) : items, item };
     }
 
     function bindControls(options = {}) {
@@ -5037,7 +5117,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
                 '" aria-hidden="true"></span>' +
                 '<span class="drawer-run-main drawer-chat-main">' +
                 '<span class="drawer-chat-name sidepop-chat-name">' +
-                (options.showIcon !== false ? '<span class="drawer-chat-icon sidepop-chat-icon" aria-hidden="true">💬</span>' : "") +
+                // (options.showIcon !== false ? '<span class="drawer-chat-icon sidepop-chat-icon" aria-hidden="true">💬</span>' : "") +
                 (completed ? '<span class="nav-complete-dot" aria-hidden="true"></span>' : "") +
                 '<span class="drawer-chat-name-text" title="' +
                 escapeHtml(title) +
@@ -5098,24 +5178,28 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
                 list.scrollTop = 0;
                 resetKey = key;
             }
-            const rows = Array.from(list.children).filter(row => row.matches("[data-conversation-id]"));
+            const rows = Array.from(list.children).filter((row) => row.matches("[data-conversation-id]"));
             pending = rows.slice(visibleCount);
-            pending.forEach(row => row.remove());
+            pending.forEach((row) => row.remove());
         }
 
-        list.addEventListener("scroll", () => {
-            if (timer !== null || !pending.length || list.getAttribute("aria-busy") === "true") return;
-            if (list.scrollHeight - list.scrollTop - list.clientHeight > SCROLL_THRESHOLD) return;
-            window.AIOneDrawerLoading.show(list, "목록", { append: true });
-            // 로컬 예시도 첫 조회와 동일한 준비 시간을 사용한다.
-            timer = setTimeout(() => {
-                timer = null;
-                window.AIOneDrawerLoading.hide(list);
-                const next = pending.splice(0, size);
-                visibleCount += next.length;
-                list.append(...next);
-            }, 400);
-        }, { passive: true });
+        list.addEventListener(
+            "scroll",
+            () => {
+                if (timer !== null || !pending.length || list.getAttribute("aria-busy") === "true") return;
+                if (list.scrollHeight - list.scrollTop - list.clientHeight > SCROLL_THRESHOLD) return;
+                window.AIOneDrawerLoading.show(list, "목록", { append: true });
+                // 로컬 예시도 첫 조회와 동일한 준비 시간을 사용한다.
+                timer = setTimeout(() => {
+                    timer = null;
+                    window.AIOneDrawerLoading.hide(list);
+                    const next = pending.splice(0, size);
+                    visibleCount += next.length;
+                    list.append(...next);
+                }, 400);
+            },
+            { passive: true },
+        );
         drawer?.addEventListener("sidepop:close", cancel);
         drawer?.addEventListener("sidepop:open", () => {
             cancel();
@@ -5229,8 +5313,66 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
     }
     /* End: 261026 추가 - 공통 문서·목록 로딩 UI 생성 */
 
+    // 문서 렌더러가 내용을 교체해도 로딩 UI는 유지하고, 최신 요청만 해제한다.
+    const documentLoads = new WeakMap();
+    async function preview(container, fileName, render) {
+        if (!container?.parentElement) return render();
+        const host = container.parentElement;
+        documentLoads.get(container)?.remove();
+        if (!fileName) {
+            documentLoads.delete(container);
+            container.classList.remove("document-preview-loading-content");
+            host.classList.remove("document-preview-loading-host");
+            host.removeAttribute("aria-busy");
+            return render();
+        }
+        const overlay = create({ preview: true, title: "문서 미리보기를 불러오는 중입니다", message: fileName });
+        overlay.classList.add("document-preview-loading");
+        documentLoads.set(container, overlay);
+        host.classList.add("document-preview-loading-host");
+        container.classList.add("document-preview-loading-content");
+        mount({ container: host, overlay });
+        // 초기 스크립트 실행 시간이 아닌, 브라우저가 로딩 UI를 그린 뒤부터 표시 시간을 센다.
+        const visible = new Promise((resolve) => {
+            requestAnimationFrame(() =>
+                requestAnimationFrame(() => {
+                    setTimeout(resolve, window.AIOnePreview?.enabled ? 600 : 200);
+                }),
+            );
+        });
+        try {
+            return await render();
+        } finally {
+            await visible;
+            if (documentLoads.get(container) === overlay) {
+                documentLoads.delete(container);
+                overlay.remove();
+                container.classList.remove("document-preview-loading-content");
+                host.classList.remove("document-preview-loading-host");
+                host.removeAttribute("aria-busy");
+            }
+        }
+    }
+
+    // 정적 목업과 페이지 전용 렌더러도 같은 문서 로딩 계약을 사용한다.
+    function initDocumentPreviews() {
+        document.querySelectorAll("[data-document-loading-name]").forEach((container) => {
+            const show = () => {
+                if (documentLoads.has(container) || container.hidden || !container.children.length) return;
+                if (container.querySelector(".empty-state, .answer-recommend-empty, .answer-pdf-error, .answer-pdf-loading")) return;
+                const name = document.querySelector(container.dataset.documentLoadingName)?.textContent.trim();
+                if (name) preview(container, name, () => {});
+            };
+            new MutationObserver(show).observe(container, { childList: true });
+            show();
+        });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initDocumentPreviews, { once: true });
+    else initDocumentPreviews();
+
     window.AIOneLoadingOverlay = Object.freeze({
         create,
+        preview,
         mount,
         remove,
     });
@@ -5289,12 +5431,13 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
             // 로컬 예시도 첫 목록을 준비하는 동안 동일한 상태를 표시한다.
             await new Promise((resolve) => setTimeout(resolve, 400));
             return await render();
-        } finally { hide(list); }
+        } finally {
+            hide(list);
+        }
     }
     window.AIOneDrawerLoading = Object.freeze({ show, hide, run });
 })();
 /* End: 261026 추가 - Drawer 목록 공통 조회 상태 */
-
 
 /* Start: 워크스페이스 UI 컨트롤러 */
 
@@ -5364,7 +5507,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         if (window.matchMedia("(max-width: 1024px)").matches) return false;
 
         // 각 패널의 너비를 기억하여 이동 시 함께 옮긴다.
-        const sizes = panels.map(panel => panel.getBoundingClientRect().width);
+        const sizes = panels.map((panel) => panel.getBoundingClientRect().width);
         const nextPanels = [panels[2], panels[0], panels[1]];
         const nextSizes = [sizes[2], sizes[0], sizes[1]];
         const fragment = document.createDocumentFragment();
@@ -5378,7 +5521,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         container.classList.remove("panel-resize-mode");
         button?.classList.remove("active");
         button?.setAttribute("aria-pressed", "false");
-        handles.forEach(handle => handle.classList.remove("active"));
+        handles.forEach((handle) => handle.classList.remove("active"));
         // 양쪽 화면에서 이미 연결한 레이아웃 저장 리스너를 재사용한다.
         container.dispatchEvent(new CustomEvent("split-handler:resize", { bubbles: true }));
         container.dispatchEvent(new CustomEvent("workspace:panel-order-changed", { bubbles: true }));
@@ -5396,7 +5539,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
             entry = {
                 children: Array.from(container.children),
                 grid: container.style.gridTemplateColumns,
-                panels: panels.map(panel => ({
+                panels: panels.map((panel) => ({
                     panel,
                     width: panel.style.width,
                     flexBasis: panel.style.flexBasis,
@@ -5428,13 +5571,13 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
             panelExpandedWidths.delete(panel);
             if (minimum === null) panel.removeAttribute("data-panel-min");
             else panel.setAttribute("data-panel-min", minimum);
-            panel.querySelectorAll('.answer-source-file-section, .file-list-section').forEach(section => section.classList.remove("is-collapsed"));
+            panel.querySelectorAll(".answer-source-file-section, .file-list-section").forEach((section) => section.classList.remove("is-collapsed"));
             syncPanelCollapseButton(panel, false);
         });
         // 순서가 같으면 iframe/canvas를 떼어내지 않습니다.
         if (orderChanged) container.replaceChildren(...entry.children);
-        container.querySelectorAll('.panel-resize-handle.active, .doc-split-handle.active').forEach(handle => handle.classList.remove("active"));
-        document.querySelectorAll('[data-accessory-action="panel-size"]').forEach(button => {
+        container.querySelectorAll(".panel-resize-handle.active, .doc-split-handle.active").forEach((handle) => handle.classList.remove("active"));
+        document.querySelectorAll('[data-accessory-action="panel-size"]').forEach((button) => {
             button.classList.remove("active");
             button.setAttribute("aria-pressed", "false");
         });
@@ -5519,68 +5662,54 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         container.style.gridTemplateColumns = `${Math.round(widths[0])}px ${handleWidths[0] || 2}px ` + `${Math.round(widths[1])}px ${handleWidths[1] || 2}px ` + `${Math.round(widths[2])}px`;
     }
 
-            function applyPanelLayout(container, state, { flexibleKey = 'center', minimumWidths = {} } = {}) {
-              const workspaceCommon = window.AIOneWorkspaceCommon;
-              if (!container || !state || !Array.isArray(state.order) || state.order.length !== 3) {
-                return;
-              }
-              const handles = workspaceCommon.getPanelHandles(container);
-              const currentPanels = workspaceCommon.getPanels(container);
-              const currentOrder = currentPanels.map((panel, index) =>
-                workspaceCommon.getPanelKey(panel, index, { includeSlot: true })
-              );
-              const panelMap = new Map();
-              currentPanels.forEach((panel, index) => {
-                panelMap.set(workspaceCommon.getPanelKey(panel, index, { includeSlot: true }), panel);
-              });
-              const orderedPanels = state.order
-                .map((key) => panelMap.get(key))
-                .filter(Boolean);
-              if (orderedPanels.length !== currentPanels.length) return;
-              const orderChanged = currentOrder.some(
-                (key, index) => key !== state.order[index]
-              );
-              if (orderChanged) {
-                // 접힌 참조소스를 옮긴 뒤 펼쳐도 원래 폭이 같은 패널에 적용되도록 복원용 순서도 갱신한다.
-                const expandedTracks = container.dataset.sourceExpandedGrid?.match(/minmax\([^)]*\)|\S+/g);
-                if (expandedTracks?.length === currentPanels.length + handles.length) {
-                  const tracksByPanel = new Map(currentOrder.map((key, index) => [key, expandedTracks[index * 2]]));
-                  container.dataset.sourceExpandedGrid = state.order.flatMap((key, index) =>
-                    index < orderedPanels.length - 1
-                      ? [tracksByPanel.get(key), expandedTracks[index * 2 + 1]]
-                      : [tracksByPanel.get(key)]
-                  ).join(' ');
-                }
-                const fragment = document.createDocumentFragment();
-                orderedPanels.forEach((panel, index) => {
-                  fragment.appendChild(panel);
-                  if (index < orderedPanels.length - 1 && handles[index]) {
-                    fragment.appendChild(handles[index]);
-                  }
-                });
-                container.replaceChildren(fragment);
-              }
-              // 핵심: "자리의 폭"을 유지하지 않고 "패널이 갖고 있던 폭"까지 같이 이동시킨다.
-              const widths = workspaceCommon.fitPanelWidths({
-                order: state.order,
-                widthsByPanel: state.widthsByPanel || {},
-                flexibleKey,
-                getMinimum: (key) => {
-                  const panel = panelMap.get(key);
-                  if (panel?.classList.contains('panel-collapsed')) return 44;
-                  return minimumWidths[key] || Math.max(180, Number(panel?.dataset?.panelMin) || 180);
-                },
-                getAvailableWidth: () => workspaceCommon.getAvailablePanelWidth(
-                  container,
-                  workspaceCommon.getPanelHandles(container)
-                )
-              });
-              // 새 배치를 적용하기 전에 공통 리사이즈가 기억한 이전 폭을 지운다.
-              window.AIOneSplitHandler?.reset?.(container);
-              window.AIOneWorkspaceUi.applyPanelWidths(container, widths);
-              window.AIOneSplitHandler?.init?.(container);
+    function applyPanelLayout(container, state, { flexibleKey = "center", minimumWidths = {} } = {}) {
+        const workspaceCommon = window.AIOneWorkspaceCommon;
+        if (!container || !state || !Array.isArray(state.order) || state.order.length !== 3) {
+            return;
+        }
+        const handles = workspaceCommon.getPanelHandles(container);
+        const currentPanels = workspaceCommon.getPanels(container);
+        const currentOrder = currentPanels.map((panel, index) => workspaceCommon.getPanelKey(panel, index, { includeSlot: true }));
+        const panelMap = new Map();
+        currentPanels.forEach((panel, index) => {
+            panelMap.set(workspaceCommon.getPanelKey(panel, index, { includeSlot: true }), panel);
+        });
+        const orderedPanels = state.order.map((key) => panelMap.get(key)).filter(Boolean);
+        if (orderedPanels.length !== currentPanels.length) return;
+        const orderChanged = currentOrder.some((key, index) => key !== state.order[index]);
+        if (orderChanged) {
+            // 접힌 참조소스를 옮긴 뒤 펼쳐도 원래 폭이 같은 패널에 적용되도록 복원용 순서도 갱신한다.
+            const expandedTracks = container.dataset.sourceExpandedGrid?.match(/minmax\([^)]*\)|\S+/g);
+            if (expandedTracks?.length === currentPanels.length + handles.length) {
+                const tracksByPanel = new Map(currentOrder.map((key, index) => [key, expandedTracks[index * 2]]));
+                container.dataset.sourceExpandedGrid = state.order.flatMap((key, index) => (index < orderedPanels.length - 1 ? [tracksByPanel.get(key), expandedTracks[index * 2 + 1]] : [tracksByPanel.get(key)])).join(" ");
             }
-
+            const fragment = document.createDocumentFragment();
+            orderedPanels.forEach((panel, index) => {
+                fragment.appendChild(panel);
+                if (index < orderedPanels.length - 1 && handles[index]) {
+                    fragment.appendChild(handles[index]);
+                }
+            });
+            container.replaceChildren(fragment);
+        }
+        // 핵심: "자리의 폭"을 유지하지 않고 "패널이 갖고 있던 폭"까지 같이 이동시킨다.
+        const widths = workspaceCommon.fitPanelWidths({
+            order: state.order,
+            widthsByPanel: state.widthsByPanel || {},
+            flexibleKey,
+            getMinimum: (key) => {
+                const panel = panelMap.get(key);
+                if (panel?.classList.contains("panel-collapsed")) return 44;
+                return minimumWidths[key] || Math.max(180, Number(panel?.dataset?.panelMin) || 180);
+            },
+            getAvailableWidth: () => workspaceCommon.getAvailablePanelWidth(container, workspaceCommon.getPanelHandles(container)),
+        });
+        // 새 배치를 적용하기 전에 공통 리사이즈가 기억한 이전 폭을 지운다.
+        window.AIOneSplitHandler?.reset?.(container);
+        window.AIOneWorkspaceUi.applyPanelWidths(container, widths);
+        window.AIOneSplitHandler?.init?.(container);
+    }
 
     const panelDragContainers = new WeakSet();
 
@@ -5743,29 +5872,29 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
     const panelExpandedWidths = new WeakMap();
     const collapseLayouts = new WeakSet();
     function syncPanelCollapseButton(panel, collapsed) {
-        const button = panel.querySelector('.panel-head .panel-collapse-btn:not(.source-expand)');
+        const button = panel.querySelector(".panel-head .panel-collapse-btn:not(.source-expand)");
         if (!button) return;
-        const name = (button.getAttribute('aria-label') || '패널').replace(/\s*(접기|펼치기)$/, '');
-        const label = `${name} ${collapsed ? '펼치기' : '접기'}`;
-        button.setAttribute('aria-expanded', String(!collapsed));
-        button.setAttribute('aria-label', label);
-        button.setAttribute('title', label);
-        button.setAttribute('data-tooltip', label);
+        const name = (button.getAttribute("aria-label") || "패널").replace(/\s*(접기|펼치기)$/, "");
+        const label = `${name} ${collapsed ? "펼치기" : "접기"}`;
+        button.setAttribute("aria-expanded", String(!collapsed));
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
+        button.setAttribute("data-tooltip", label);
     }
-    function setPanelCollapsed(panel, collapsed, { flexibleKey = 'center' } = {}) {
-        const container = panel?.closest('.three-panel');
+    function setPanelCollapsed(panel, collapsed, { flexibleKey = "center" } = {}) {
+        const container = panel?.closest(".three-panel");
         if (!container) return;
         const common = window.AIOneWorkspaceCommon;
         const state = getLayoutState(container);
         const key = panel.dataset.panel;
-        if (collapsed && !panel.classList.contains('panel-collapsed')) {
+        if (collapsed && !panel.classList.contains("panel-collapsed")) {
             panelExpandedWidths.set(panel, state.widthsByPanel[key]);
         }
-        panel.classList.toggle('panel-collapsed', collapsed);
-        panel.querySelectorAll('.answer-source-file-section, .file-list-section').forEach(section => {
-            section.classList.toggle('is-collapsed', collapsed);
+        panel.classList.toggle("panel-collapsed", collapsed);
+        panel.querySelectorAll(".answer-source-file-section, .file-list-section").forEach((section) => {
+            section.classList.toggle("is-collapsed", collapsed);
         });
-        if (key === 'folder') container.classList.toggle('is-source-collapsed', collapsed);
+        if (key === "folder") container.classList.toggle("is-source-collapsed", collapsed);
         state.widthsByPanel[key] = collapsed ? 44 : panelExpandedWidths.get(panel) || Number(panel.dataset.panelMin) || 320;
         syncPanelCollapseButton(panel, collapsed);
         const panels = common.getPanels(container);
@@ -5774,7 +5903,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
             flexibleKey,
             getMinimum: (name) => {
                 const target = panels.find((item) => item.dataset.panel === name);
-                return target?.classList.contains('panel-collapsed') ? 44 : Number(target?.dataset.panelMin) || 180;
+                return target?.classList.contains("panel-collapsed") ? 44 : Number(target?.dataset.panelMin) || 180;
             },
             getAvailableWidth: () => common.getAvailablePanelWidth(container, common.getPanelHandles(container)),
         });
@@ -5782,15 +5911,15 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         applyPanelWidths(container, widths);
         window.AIOneSplitHandler?.init?.(container);
     }
-    function initPanelCollapse({ container, flexibleKey = 'center' } = {}) {
+    function initPanelCollapse({ container, flexibleKey = "center" } = {}) {
         if (!container || collapseLayouts.has(container)) return;
         collapseLayouts.add(container);
-        container.addEventListener('click', (event) => {
-            const button = event.target.closest('.panel-collapse-btn:not(.source-expand)');
-            const panel = button?.closest('.panel[data-panel]');
+        container.addEventListener("click", (event) => {
+            const button = event.target.closest(".panel-collapse-btn:not(.source-expand)");
+            const panel = button?.closest(".panel[data-panel]");
             if (!panel || panel.parentElement !== container) return;
             event.preventDefault();
-            setPanelCollapsed(panel, !panel.classList.contains('panel-collapsed'), { flexibleKey });
+            setPanelCollapsed(panel, !panel.classList.contains("panel-collapsed"), { flexibleKey });
         });
     }
 
@@ -5812,7 +5941,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         createDefaultWorkspaceTitle,
     });
     // defer 로드 시 페이지별 저장 상태를 복원하기 전의 기본 배치를 기록합니다.
-    document.querySelectorAll(".three-panel").forEach(container => configurePanelLayout(container));
+    document.querySelectorAll(".three-panel").forEach((container) => configurePanelLayout(container));
 })();
 
 /* End: 워크스페이스 UI 컨트롤러 */
@@ -5835,7 +5964,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         },
         research: {
             className: "chat-research-btn",
-            label: "관련자료 재검색",
+            label: "다시 생성",
             icon: '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
         },
         copy: {
@@ -6182,7 +6311,6 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         }
     }
 
-
     window.AIOneChatBlocks = Object.freeze({ decorate: addBlockCopyBars, copyPlain });
     document.addEventListener("click", (event) => {
         const button = event.target.closest?.("[data-common-block-copy]");
@@ -6203,57 +6331,75 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         const modal = source.cloneNode(true);
         const prefix = `upload-action-${++sequence}`;
         const ids = new Map();
-        [modal, ...modal.querySelectorAll('[id]')].forEach(node => {
+        [modal, ...modal.querySelectorAll("[id]")].forEach((node) => {
             if (!node.id) return;
             ids.set(node.id, `${prefix}-${node.id}`);
             node.id = ids.get(node.id);
         });
-        modal.querySelectorAll('[for], [aria-labelledby], [aria-describedby]').forEach(node => {
-            ['for', 'aria-labelledby', 'aria-describedby'].forEach(attr => {
-                if (node.hasAttribute(attr)) node.setAttribute(attr, node.getAttribute(attr).split(' ').map(id => ids.get(id) || id).join(' '));
+        modal.querySelectorAll("[for], [aria-labelledby], [aria-describedby]").forEach((node) => {
+            ["for", "aria-labelledby", "aria-describedby"].forEach((attr) => {
+                if (node.hasAttribute(attr))
+                    node.setAttribute(
+                        attr,
+                        node
+                            .getAttribute(attr)
+                            .split(" ")
+                            .map((id) => ids.get(id) || id)
+                            .join(" "),
+                    );
             });
         });
-        modal.removeAttribute('data-sidepop-actions-ready');
-        const input = modal.querySelector('[data-sidepop-rename-input]');
-        const error = modal.querySelector('[data-sidepop-rename-error]');
+        modal.removeAttribute("data-sidepop-actions-ready");
+        const input = modal.querySelector("[data-sidepop-rename-input]");
+        const error = modal.querySelector("[data-sidepop-rename-error]");
         const confirm = modal.querySelector(`[data-sidepop-${action}-confirm]`);
-        modal.querySelectorAll('*').forEach(node => {
-            Array.from(node.attributes).filter(attr => attr.name.startsWith('data-sidepop-')).forEach(attr => node.removeAttribute(attr.name));
+        modal.querySelectorAll("*").forEach((node) => {
+            Array.from(node.attributes)
+                .filter((attr) => attr.name.startsWith("data-sidepop-"))
+                .forEach((attr) => node.removeAttribute(attr.name));
         });
-        const title = action === 'rename' ? '제목 변경' : '문서 삭제';
-        modal.querySelector('.modal-title').textContent = title;
-        modal.querySelector('[role="dialog"]').setAttribute('aria-label', title);
+        const title = action === "rename" ? "제목 변경" : "문서 삭제";
+        modal.querySelector(".modal-title").textContent = title;
+        modal.querySelector('[role="dialog"]').setAttribute("aria-label", title);
         if (input) {
             input.value = context.title();
-            modal.querySelector('.modal-rename-label').textContent = '제목';
-            modal.querySelector('.modal-rename-helper').textContent = context.renameDescription || '목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.';
-            error.textContent = '제목을 입력해 주세요.';
+            modal.querySelector(".modal-rename-label").textContent = "제목";
+            modal.querySelector(".modal-rename-helper").textContent = context.renameDescription || "목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.";
+            error.textContent = "제목을 입력해 주세요.";
             error.hidden = true;
-            input.addEventListener('keydown', event => {
-                if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); confirm.click(); }
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Enter" && !event.isComposing) {
+                    event.preventDefault();
+                    confirm.click();
+                }
             });
         } else {
-            const description = modal.querySelector('.modal-msg');
-            const name = document.createElement('strong');
+            const description = modal.querySelector(".modal-msg");
+            const name = document.createElement("strong");
             name.textContent = context.title();
-            const message = document.createElement('p');
-            message.textContent = context.listName
-                ? `${context.listName}에서 삭제하시겠습니까?`
-                : context.deleteDescription || '이 문서를 목록에서 삭제하시겠습니까?';
+            const message = document.createElement("p");
+            message.textContent = context.listName ? `${context.listName}에서 삭제하시겠습니까?` : context.deleteDescription || "이 문서를 목록에서 삭제하시겠습니까?";
             description.replaceChildren(name, message);
         }
-        confirm.addEventListener('click', async () => {
+        confirm.addEventListener("click", async () => {
             const value = input?.value.trim();
-            if (input && !value) { error.hidden = false; input.setAttribute('aria-invalid', 'true'); input.focus(); return; }
+            if (input && !value) {
+                error.hidden = false;
+                input.setAttribute("aria-invalid", "true");
+                input.focus();
+                return;
+            }
             confirm.disabled = true;
             try {
-                const completed = await (action === 'rename' ? context.onRename(value) : context.onDelete());
+                const completed = await (action === "rename" ? context.onRename(value) : context.onDelete());
                 if (completed !== false) window.AIOneModal.close(modal);
             } catch (failure) {
-                window.AIOneWorkspaceCommon?.showToast?.(failure.message || '변경하지 못했습니다. 다시 시도해 주세요.');
-            } finally { confirm.disabled = false; }
+                window.AIOneWorkspaceCommon?.showToast?.(failure.message || "변경하지 못했습니다. 다시 시도해 주세요.");
+            } finally {
+                confirm.disabled = false;
+            }
         });
-        modal.addEventListener('modal:close', () => modal.remove(), { once: true });
+        modal.addEventListener("modal:close", () => modal.remove(), { once: true });
         document.body.append(modal);
         window.AIOneModal.open(modal, trigger);
         input?.focus();
@@ -6261,49 +6407,387 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
     }
 
     function attach(row, context) {
-        const prototype = document.getElementById('commonSidepopActionPrototype');
+        const prototype = document.getElementById("commonSidepopActionPrototype");
         if (!prototype) return;
-        row.querySelector('.file-action-wrap')?.remove();
+        row.querySelector(".file-action-wrap")?.remove();
         const component = prototype.cloneNode(true);
-        component.removeAttribute('id');
-        component.removeAttribute('hidden');
-        component.removeAttribute('data-dom-prototype');
-        component.classList.add('file-action-wrap');
-        component.setAttribute('data-dropdown-menu', '');
-        component.setAttribute('data-file-action-menu', '');
-        const trigger = document.createElement('button');
-        trigger.type = 'button';
-        trigger.className = 'btn-more small';
-        trigger.setAttribute('data-dropdown-trigger', '');
-        trigger.setAttribute('aria-label', '파일 더보기');
-        trigger.setAttribute('aria-haspopup', 'menu');
-        trigger.setAttribute('aria-expanded', 'false');
+        component.removeAttribute("id");
+        component.removeAttribute("hidden");
+        component.removeAttribute("data-dom-prototype");
+        component.classList.add("file-action-wrap");
+        component.setAttribute("data-dropdown-menu", "");
+        component.setAttribute("data-file-action-menu", "");
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "btn-more small";
+        trigger.setAttribute("data-dropdown-trigger", "");
+        trigger.setAttribute("aria-label", "파일 더보기");
+        trigger.setAttribute("aria-haspopup", "menu");
+        trigger.setAttribute("aria-expanded", "false");
         trigger.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>';
         component.prepend(trigger);
         const menu = component.querySelector('[role="menu"]');
         menu.id = `upload-menu-${++sequence}`;
-        trigger.setAttribute('aria-controls', menu.id);
+        trigger.setAttribute("aria-controls", menu.id);
         const pinned = context.pinned();
-        component.querySelector('[data-menu-value="pin"]').setAttribute('aria-pressed', String(pinned));
-        component.querySelector('[data-menu-value="pin"] .drawer-list-action-label').textContent = pinned ? '고정 해제' : '고정';
-        component.querySelector('[data-menu-value="rename"] .drawer-list-action-label').textContent = '제목 변경';
-        (row.querySelector('.file-item-side') || row).append(component);
-        component.addEventListener('dropdownmenu:select', event => {
+        component.querySelector('[data-menu-value="pin"]').setAttribute("aria-pressed", String(pinned));
+        component.querySelector('[data-menu-value="pin"] .drawer-list-action-label').textContent = pinned ? "고정 해제" : "고정";
+        component.querySelector('[data-menu-value="rename"] .drawer-list-action-label').textContent = "제목 변경";
+        (row.querySelector(".file-item-side") || row).append(component);
+        component.addEventListener("dropdownmenu:select", (event) => {
             event.stopPropagation();
             const action = event.detail.value;
-            if (action === 'pin') context.onPin();
+            if (action === "pin") context.onPin();
             else queueMicrotask(() => openModal(action, context, trigger));
         });
-        component.addEventListener('dropdownmenu:toggle', event => {
+        component.addEventListener("dropdownmenu:toggle", (event) => {
             if (!event.detail.open) return;
             const rect = trigger.getBoundingClientRect();
-            menu.style.position = 'fixed';
-            menu.style.zIndex = '100000';
-            menu.style.right = 'auto';
+            menu.style.position = "fixed";
+            menu.style.zIndex = "100000";
+            menu.style.right = "auto";
             menu.style.left = `${Math.max(8, Math.min(rect.right - menu.offsetWidth, innerWidth - menu.offsetWidth - 8))}px`;
             menu.style.top = `${Math.max(8, Math.min(rect.bottom + 6, innerHeight - menu.offsetHeight - 8))}px`;
         });
         window.AIOneDropdownMenu.init(component);
     }
     window.AIOneFileActions = Object.freeze({ attach, confirmDelete: (context, trigger) => openModal("delete", context, trigger) });
+})();
+
+/* 홈·챗봇·가이드에서 같은 모델·작업 선택 동작을 사용합니다. */
+(() => {
+    "use strict";
+    /** 열린 메뉴 전체를 기준으로 화면 안에 배치한다. 기존 입력창의 이동 효과도 유지한다. */
+    function initChatMenuPosition(composer, component, trigger, panels, { floating, placement }) {
+        const gap = 8;
+        const viewportPadding = 12;
+        const modelMenu = panels.querySelector('[role="menu"]');
+        const syncTaskHeight = () => panels.style.setProperty("--chat-model-menu-height", `${modelMenu.getBoundingClientRect().height}px`);
+        let frame = 0;
+
+        const position = () => {
+            if (!component.classList.contains("is-open")) return;
+            const viewport = window.visualViewport;
+            const viewportTop = (viewport?.offsetTop || 0) + viewportPadding;
+            const viewportLeft = (viewport?.offsetLeft || 0) + viewportPadding;
+            const viewportBottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - viewportPadding;
+            const viewportRight = (viewport?.offsetLeft || 0) + (viewport?.width || document.documentElement.clientWidth) - viewportPadding;
+            const triggerRect = trigger.getBoundingClientRect();
+            const spaceAbove = Math.max(0, triggerRect.top - viewportTop - gap);
+            const spaceBelow = Math.max(0, viewportBottom - triggerRect.bottom - gap);
+
+            // 이전 방향의 높이 제한을 풀고 현재 메뉴에 필요한 높이를 다시 잰다.
+            panels.style.removeProperty("--chat-menu-available-height");
+            syncTaskHeight();
+            const openAbove = placement === "top" || (panels.getBoundingClientRect().height > spaceBelow && spaceAbove > spaceBelow);
+            panels.style.setProperty("--chat-menu-available-height", `${openAbove ? spaceAbove : spaceBelow}px`);
+            syncTaskHeight();
+            panels.dataset.placement = openAbove ? "top" : "bottom";
+
+            const panelRect = panels.getBoundingClientRect();
+            const modelWidth = panels.querySelector('[role="menu"]').getBoundingClientRect().width;
+            const left = Math.max(viewportLeft, Math.min(triggerRect.right - modelWidth, viewportRight - panelRect.width));
+            const top = openAbove ? triggerRect.top - gap - panelRect.height : triggerRect.bottom + gap;
+            if (floating) {
+                panels.style.left = `${left}px`;
+                panels.style.top = `${Math.max(viewportTop, top)}px`;
+                return;
+            }
+            const parent = panels.offsetParent;
+            const parentRect = parent.getBoundingClientRect();
+            panels.style.left = `${left - parentRect.left + parent.scrollLeft - parent.clientLeft}px`;
+            panels.style.top = `${top - parentRect.top + parent.scrollTop - parent.clientTop}px`;
+        };
+        const schedule = () => {
+            if (frame || !component.classList.contains("is-open")) return;
+            frame = window.requestAnimationFrame(() => {
+                frame = 0;
+                position();
+            });
+        };
+        window.addEventListener("resize", schedule, { passive: true });
+        document.addEventListener(
+            "scroll",
+            (event) => {
+                if (!panels.contains(event.target)) schedule();
+            },
+            { capture: true, passive: true },
+        );
+        window.visualViewport?.addEventListener("resize", schedule, { passive: true });
+        window.visualViewport?.addEventListener("scroll", schedule, { passive: true });
+        const observer = new ResizeObserver(schedule);
+        observer.observe(composer);
+        observer.observe(trigger);
+        observer.observe(panels);
+        return position;
+    }
+
+    /** 모델·작업 목록은 HTML을 그대로 사용한다. aria-controls로 각 작업 메뉴를 연결한다.
+     * 모델은 임시 선택하고 작업 선택 시 두 값을 확정한다.
+     */
+    function init({ composer, input, placeholders = {}, floating = false, placement = "auto" } = {}) {
+        const component = composer?.querySelector('[data-dropdown-menu][data-chat-menu="model"]');
+        const modelMenu = component?.querySelector('[role="menu"]');
+        const panels = component?.querySelector(".chat-menu-panels");
+        if (!modelMenu || !panels || component.dataset.taskSubmenuReady === "true") return;
+        const trigger = component.querySelector("[data-dropdown-trigger]");
+        const modelLabel = trigger.querySelector("[data-chat-model-label]");
+        const taskLabel = trigger.querySelector("[data-chat-task-label]");
+        const itemLabel = (item) => item.dataset.menuLabel || item.querySelector(".dropdown-model-name")?.textContent.trim() || "";
+        const models = Array.from(modelMenu.querySelectorAll("[data-menu-value]"))
+            .map((item) => {
+                const menu = document.getElementById(item.getAttribute("aria-controls"));
+                if (!menu || !panels.contains(menu)) return null;
+                const tasks = Array.from(menu.querySelectorAll("[data-menu-value]"));
+                return tasks.length ? { item, menu, tasks, value: item.dataset.menuValue, label: itemLabel(item) } : null;
+            })
+            .filter(Boolean);
+        if (!models.length) return;
+        component.dataset.taskSubmenuReady = "true";
+        // Popover keeps the existing DOM/events/styles while escaping table clipping.
+        if (floating) panels.setAttribute("popover", "manual");
+        const positionPanels = initChatMenuPosition(composer, component, trigger, panels, { floating, placement });
+        const modelItems = models.map((model) => model.item);
+        let selectedModel = models.find((model) => model.value === composer.dataset.chatModelCurrent) || models[0];
+        let selectedTask = selectedModel.tasks.find((task) => task.dataset.menuValue === (composer.dataset.chatTaskCurrent || "chat")) || selectedModel.tasks[0];
+        let pendingModel = selectedModel;
+        let hoverCloseTimer = 0;
+        const cancelHoverClose = () => window.clearTimeout(hoverCloseTimer);
+        const closeAfterLeave = (event) => {
+            if (event.pointerType === "touch") return;
+            cancelHoverClose();
+            // 버튼과 메뉴 사이의 간격을 지나갈 시간을 둔다.
+            hoverCloseTimer = window.setTimeout(() => {
+                window.AIOneDropdownMenu.setOpen(component, false);
+            }, 160);
+        };
+        trigger.addEventListener("pointerenter", (event) => {
+            if (event.pointerType === "touch") return;
+            cancelHoverClose();
+            if (!component.classList.contains("is-open")) {
+                window.AIOneDropdownMenu.setOpen(component, true, "none");
+            }
+        });
+        trigger.addEventListener("pointerleave", closeAfterLeave);
+        panels.addEventListener("pointerenter", cancelHoverClose);
+        panels.addEventListener("pointerleave", closeAfterLeave);
+        trigger.addEventListener("click", (event) => {
+            // 마우스는 hover로 열고, 터치·키보드는 기존 클릭 동작을 사용한다.
+            if (event.detail > 0 && event.pointerType !== "touch" && window.matchMedia("(hover: hover)").matches) {
+                event.stopPropagation();
+            }
+        });
+        const updateLabel = () => {
+            modelLabel.textContent = selectedModel.label;
+            taskLabel.textContent = itemLabel(selectedTask);
+            trigger.setAttribute("aria-label", `${selectedModel.label} · ${itemLabel(selectedTask)}`);
+            trigger.title = trigger.getAttribute("aria-label");
+            composer.dataset.chatModelCurrent = selectedModel.value;
+            composer.dataset.chatTaskCurrent = selectedTask.dataset.menuValue;
+            models.forEach((model) =>
+                model.tasks.forEach((task) => {
+                    task.setAttribute("aria-checked", String(model === selectedModel && task === selectedTask));
+                }),
+            );
+        };
+        const close = () => {
+            models.forEach((model) => {
+                model.menu.hidden = true;
+            });
+            pendingModel = selectedModel;
+            modelItems.forEach((item) => {
+                item.setAttribute("aria-expanded", "false");
+                item.setAttribute("aria-checked", String(item.dataset.menuValue === selectedModel.value));
+            });
+        };
+        // Hover previews tasks without committing a model or moving keyboard focus.
+        const openTasks = (item, focusTask = false) => {
+            const model = models.find((option) => option.item === item);
+            if (!model || !component.classList.contains("is-open")) return;
+            pendingModel = model;
+            modelMenu.hidden = false;
+            models.forEach((option) => {
+                option.menu.hidden = option !== model;
+            });
+            component.dataset.taskModel = model.value;
+            modelItems.forEach((option) => option.setAttribute("aria-expanded", String(option === item)));
+            positionPanels();
+            if (focusTask) (model.menu.querySelector('[aria-checked="true"]') || model.tasks[0])?.focus({ preventScroll: true });
+        };
+        modelItems.forEach((item) => {
+            item.addEventListener("pointerenter", (event) => {
+                if (event.pointerType !== "touch") openTasks(item);
+            });
+        });
+        component.addEventListener("dropdownmenu:select", (event) => {
+            const { item } = event.detail;
+            if (modelMenu.contains(item)) {
+                openTasks(item, true);
+            } else {
+                const model = models.find((option) => option.tasks.includes(item));
+                if (!model) return;
+                selectedModel = model;
+                selectedTask = item;
+                updateLabel();
+                const value = item.dataset.menuValue;
+                if (input)
+                    input.placeholder =
+                        selectedModel.value === "government"
+                            ? `${itemLabel(item)} 요청을 입력하세요 (API 연결 준비 중)`
+                            : placeholders[value] || (value === "search" ? "찾을 내부 업무자료를 입력해 보세요" : "AI-ONE에게 요청해 보세요");
+            }
+        });
+        component.addEventListener("dropdownmenu:toggle", (event) => {
+            if (!event.detail.open) {
+                cancelHoverClose();
+                close();
+                if (floating && panels.matches(":popover-open")) panels.hidePopover();
+            } else {
+                if (floating && !panels.matches(":popover-open")) panels.showPopover();
+                positionPanels();
+            }
+        });
+        component.addEventListener("keydown", (event) => {
+            const item = event.target.closest("[data-menu-value]");
+            if (event.key === "ArrowRight" && item && modelMenu.contains(item)) {
+                event.preventDefault();
+                item.click();
+            } else if (pendingModel.menu.contains(event.target) && ["ArrowLeft", "Escape"].includes(event.key)) {
+                event.preventDefault();
+                event.stopPropagation();
+                const parent = modelItems.find((option) => option.dataset.menuValue === pendingModel.value);
+                close();
+                positionPanels();
+                parent?.focus({ preventScroll: true });
+            }
+        });
+        updateLabel();
+        close();
+    }
+
+    window.AIOneModelTaskMenu = Object.freeze({ init });
+})();
+
+/* 홈 입력창의 자동 줄바꿈·개행 배치를 가이드에서도 재사용합니다. */
+(() => {
+    "use strict";
+    /** 한 줄 배치의 너비로 판단하여 펼친 뒤에도 배치가 반복 전환되지 않게 한다. */
+    function init(input) {
+        const form = input?.closest(".prompt-composer");
+        if (!form || input.tagName !== "TEXTAREA") return () => {};
+        // 실제 입력창을 접었다 펼치지 않아 커서·스크롤과 주변 레이아웃을 유지한다.
+        const mirror = document.createElement("textarea");
+        mirror.className = "home-composer-measure";
+        mirror.tabIndex = -1;
+        mirror.setAttribute("aria-hidden", "true");
+        mirror.setAttribute("inert", "");
+        mirror.rows = 1;
+        document.body.append(mirror);
+        const controls = [...form.querySelectorAll(":scope > .prompt-composer-tools, :scope > .prompt-composer-bar")];
+        const textProperties = [
+            "font-family",
+            "font-size",
+            "font-weight",
+            "font-style",
+            "font-stretch",
+            "font-variant",
+            "font-feature-settings",
+            "font-variation-settings",
+            "font-optical-sizing",
+            "font-size-adjust",
+            "font-kerning",
+            "line-height",
+            "letter-spacing",
+            "word-spacing",
+            "text-indent",
+            "text-transform",
+            "tab-size",
+            "white-space",
+            "word-break",
+            "overflow-wrap",
+            "direction",
+        ];
+        let metrics = null;
+        let frame = 0;
+        const measure = () => {
+            frame = 0;
+            if (!metrics) {
+                if (!form.getClientRects().length) return;
+                const style = getComputedStyle(input);
+                const formStyle = getComputedStyle(form);
+                const lineHeight = parseFloat(style.lineHeight);
+                if (!Number.isFinite(lineHeight)) return;
+                const inlinePadding = parseFloat(formStyle.getPropertyValue("--composer-inline-padding-left")) + parseFloat(formStyle.getPropertyValue("--composer-inline-padding-right"));
+                const fullWidth = form.clientWidth - 2 * parseFloat(formStyle.getPropertyValue("--composer-multiline-padding"));
+                const controlsWidth = controls.reduce((width, node) => width + node.getBoundingClientRect().width, 0);
+                metrics = {
+                    lineHeight,
+                    maximum: parseFloat(style.maxHeight) || 200,
+                    fullWidth,
+                    inlineWidth: Math.max(1, form.clientWidth - inlinePadding - controlsWidth - (parseFloat(formStyle.columnGap) || 0) * controls.length),
+                };
+                textProperties.forEach((property) => mirror.style.setProperty(property, style.getPropertyValue(property)));
+                mirror.wrap = input.wrap;
+            }
+            const { lineHeight, maximum, inlineWidth, fullWidth } = metrics;
+            mirror.value = input.value;
+            mirror.style.width = `${inlineWidth}px`;
+            const multiline = input.value.length > 0 && mirror.scrollHeight > lineHeight + 1;
+            const minimum = lineHeight * (multiline ? 2 : 1);
+            if (multiline) mirror.style.width = `${fullWidth}px`;
+            const contentHeight = input.value ? mirror.scrollHeight : minimum;
+            const height = Math.min(maximum, Math.max(minimum, contentHeight)) + "px";
+            // 안내 문구의 줄바꿈·소수점 높이 차이로 불필요한 스크롤바가 생기지 않게 합니다.
+            const overflow = input.value && contentHeight > maximum ? "auto" : "hidden";
+            if (input.style.overflowY !== overflow) input.style.overflowY = overflow;
+            if (form.classList.contains("is-multiline") !== multiline) form.classList.toggle("is-multiline", multiline);
+            if (input.style.getPropertyValue("--composer-input-height") !== height) input.style.setProperty("--composer-input-height", height);
+        };
+        const schedule = () => {
+            if (!frame) frame = requestAnimationFrame(measure);
+        };
+        const invalidate = () => {
+            metrics = null;
+            schedule();
+        };
+        // 높이 변경에는 반응하지 않고 화면 및 버튼 너비 변경에만 다시 측정한다.
+        const widths = new WeakMap();
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const width = entry.borderBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
+                if (widths.get(entry.target) === width) continue;
+                widths.set(entry.target, width);
+                invalidate();
+            }
+        });
+        observer.observe(form);
+        controls.forEach((node) => observer.observe(node));
+        window.addEventListener("resize", invalidate, { passive: true });
+        document.fonts?.ready.then(invalidate);
+        document.fonts?.addEventListener("loadingdone", invalidate);
+        input.addEventListener("input", schedule);
+        form.addEventListener("reset", schedule);
+        measure();
+        return schedule;
+    }
+
+    window.AIOneHomeComposerLayout = Object.freeze({ init });
+})();
+
+/* 관련자료 필터: 실제 화면과 가이드가 같은 선택 상태 계약을 사용합니다. */
+(() => {
+    function init(root, onChange = () => {}) {
+        if (!root || root.dataset.referenceFiltersReady === "true") return;
+        root.dataset.referenceFiltersReady = "true";
+        root.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-reference-filter]");
+            if (!button || !root.contains(button) || button.disabled) return;
+            root.querySelectorAll("[data-reference-filter]").forEach((item) => {
+                item.classList.toggle("active", item === button);
+                item.setAttribute("aria-pressed", String(item === button));
+            });
+            onChange(button.dataset.referenceFilter);
+        });
+    }
+    window.AIOneReferenceFilters = Object.freeze({ init });
 })();

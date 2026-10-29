@@ -1,6 +1,9 @@
 @charset "utf-8";
 
 /*
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 홈 서비스 카드·사용 이력·반응형 배치를 관리합니다. 홈 이력 테이블의 셀 패딩을 보정하며 공통 입력창은 chat.css에서 관리합니다.
+ *
  * 홈 서비스 카드, 최근·전체 사용 이력 및 홈 레이아웃 보정.
  * 적용 페이지: html/home.html. html/chatbot.html에서도 로드합니다. 홈 서비스 카드·이력 동작은 js/ai-home.js에서 관리합니다.
  * - 261016 주석 정리 - 현재 구현을 기준으로 수정·추가 내용과 연결 위치를 보완합니다.
@@ -279,6 +282,12 @@ tbody tr[data-history-title] {
 
 /* End: 서비스 카드 테마별 강조 및 호버 효과 */
 
+/* Start: 261028 수정 - 홈 이력 테이블 패딩 */
+.table td {
+    padding: 13px 16px;
+}
+/* End: 261028 수정 - 홈 이력 테이블 패딩 */
+
 /* Start: History Modal */
 
 .history-modal-layer {
@@ -389,6 +398,11 @@ body:has(.history-modal-layer:not(.hidden)) {
         box-shadow 0.15s ease,
         background 0.15s ease;
 }
+/* 홈 검색창은 직접 만든 검색어 지우기 버튼만 표시한다. */
+#homeHistorySearch::-webkit-search-cancel-button {
+    display: none;
+    -webkit-appearance: none;
+}
 .history-search-box input::placeholder {
     color: var(--text-muted);
 }
@@ -434,11 +448,10 @@ body:has(.history-modal-layer:not(.hidden)) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 7px;
     color: var(--text-muted);
     text-align: center;
 }
-.history-search-empty :is(svg, img) {
+.history-search-empty > :is(svg, img) {
     width: 34px;
     height: 34px;
     fill: none;
@@ -446,7 +459,7 @@ body:has(.history-modal-layer:not(.hidden)) {
     stroke-width: 1.7;
     margin-bottom: 4px;
 }
-.history-search-empty img {
+.history-search-empty > img {
     opacity: 0.35;
     filter: var(--icon-filter-text);
 }
@@ -461,7 +474,7 @@ body:has(.history-modal-layer:not(.hidden)) {
     font-size: calc(11px * var(--ui-font-scale));
 }
 .history-table.full td {
-    padding: 10px 12px;
+    padding: 11px 12px;
     font-size: calc(12px * var(--ui-font-scale));
 }
 .history-table.full thead th {

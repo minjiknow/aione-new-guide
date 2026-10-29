@@ -13,8 +13,6 @@
   // 기존 페이지 JS는 원래 fetch()와 렌더러를 그대로 사용합니다.
   const LOCAL_PREVIEW_DEFAULT = true;
   const local = location.protocol === "file:" || ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
-  // 가이드 배포 주소에서도 옵션 없이 더미데이터를 표시합니다.
-  const previewHost = location.hostname === "aione-new-guide.vercel.app";
   const requested = new URLSearchParams(location.search).get("preview");
   let override = null;
   try {
@@ -22,7 +20,7 @@
     override = sessionStorage.getItem("ai-one:preview");
   } catch { /* 파일 직접 열기 등 저장소를 사용할 수 없는 환경 */ }
   const choice = requested === "1" || requested === "0" ? requested : override;
-  const enabled = choice === null ? (local && LOCAL_PREVIEW_DEFAULT) || previewHost : choice === "1";
+  const enabled = choice === null ? local && LOCAL_PREVIEW_DEFAULT : choice === "1";
   // HTML을 파일로 열거나 하위 경로에 배포해도 같은 프로젝트의 로그인으로 이동한다.
   const loginUrl = new URL("../../html/login.html", document.currentScript.src).href;
   document.documentElement.dataset.runtime = enabled ? "static" : "live";

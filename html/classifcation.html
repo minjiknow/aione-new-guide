@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <!--
+[261028 누적 변경 요약 (현재 구현 기준)]
+문서 업로드·원본/추출 결과·질의분류 패널을 구성합니다. 질의 수정·재분류 확인, 제외/복원, 실행 목록과 담당자 설정을 기존 모듈에 연결합니다.
+
 [파일 요약]
 질의분류 화면: html/classifcation.html.
 연결 파일: js/classification.js와 classification-*.js, css/classification.css·css/ai-workspace.css.
@@ -7,6 +10,11 @@
 UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 사용하며 사이드바·툴팁은 common.js/common.css에서 관리합니다.
 
 [변경 내용]
+- 261028 수정 - 패널 내부 툴팁 전환 가능하도록 수정, 더불어 내부 split-handler도 되도록 수정
+- 261028 수정 - workspace-topbar-context를 타 페이지와 동일하게 30글자만 나오는 것 제한
+- 261028 수정 -  workspace-topbar-context 데이터 툴팁 이름 통일
+- 261028 수정 - 값이 없을 시 이미지/아이콘 나오도록 통일
+						(유형1: 가운데 패널쪽 - 아이콘에 배경 있음, 제목 12px / 유형2: 사이드에 있는 패널쪽 - 아이콘에 배경 없음, 크기 작음, 제목 11px  )
 - 261026 수정 - 질의 내용 수정 placeholder 및 수정 저장·AI 재분류 선택 확인 팝업
 - 261026 수정 - 복구 탭 표시명을 제외로 변경 (data-filter="deleted" 및 복원 동작 유지)
 - 261023 수정 - AI 재분류 ai-sort 적용 및 필터 빈 화면 공통화
@@ -14,6 +22,8 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 - 수정: 원본 문서 도구·소관구분 필터 및 분류 결과 빈 화면 정리
 - 수정: Work·Chat 사이드바, 서비스 아이콘 및 공통 툴팁 적용
 - 연동: 파일·질의·실행 목록은 기존 API 렌더러로 표시
+
+
 
 [최근 변경 내용]
 - 261023 추가 - AI 재분류 확인 팝업 템플릿
@@ -172,14 +182,14 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link" href="ai-answer.html?newChat=Y" data-route="answer" data-page="answer"
-						data-tooltip="국회 답변서 초안" aria-label="국회 답변서 초안">
+						data-tooltip="국회 답변서 초안 생성" aria-label="국회 답변서 초안 생성">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18"
 								height="18" alt="">
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18"
 								height="18" alt="">
 						</span>
-						<span class="nav-text">국회 답변서 초안</span>
+						<span class="nav-text">국회 답변서 초안 생성</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
@@ -210,14 +220,14 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link" href="work-support.html" data-route="searchwrite" data-page="searchwrite"
-						data-tooltip="내부 자료 검색 · 업무 지원" aria-label="내부 자료 검색 · 업무 지원" aria-expanded="false">
+						data-tooltip="내부자료 검색 · 업무지원​" aria-label="내부자료 검색 · 업무지원​" aria-expanded="false">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-search.svg" width="17"
 								height="17" alt="">
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-search-hover.svg" width="17"
 								height="17" alt="">
 						</span>
-						<span class="nav-text">내부 자료 검색 · 업무 지원</span>
+						<span class="nav-text">내부자료 검색 · 업무지원​</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
@@ -508,16 +518,16 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 						<div class="topbar-workspace-slot" data-slot="workspace">
 							<div aria-label="현재 질의분류 작업 정보" class="workspace-topbar-context">
 								<div class="workspace-input-count">
-									<button aria-label="대화 제목 수정" class="workspace-edit-button"
+									<button aria-label="클릭하여 제목 수정" class="workspace-edit-button"
 										data-workspace-title-button="" id="workspaceTitleBtn" type="button"
-										data-tooltip="대화 제목 수정" data-tooltip-auto data-tooltip-placement="bottom">
-										<span data-workspace-title-text="" id="workspaceTitleText">제목없는 국회질의</span>
+										data-tooltip="클릭하여 제목 수정" data-tooltip-auto data-tooltip-placement="bottom">
+										<span data-workspace-title-text="" id="workspaceTitleText">제목없는 국회질의분류</span>
 										<img alt="" aria-hidden="true" class="icon icon-small workspace-topbar-edit"
 											src="../assets/icons/edit-compact.svg" data-icon="edit-compact">
 									</button>
 									<input aria-label="대화 제목 수정" class="workspace-topbar-input hidden"
 										data-workspace-title-input="" id="workspaceTitleInput" maxlength="60"
-										type="text" draggable="false" data-tooltip="대화 제목 수정">
+										type="text" draggable="false">
 								</div>
 								<label class="member-counter-field">
 									<span>의원수</span>
@@ -535,10 +545,10 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 									src="../assets/icons/plus.svg">
 								<span>새 질의분류</span>
 							</button>
-							<button aria-label="실행 목록" class="icon-button icon-button-purple" data-pages="intake"
-								id="runDrawerBtn" type="button" data-sidepop-open="runDrawer" data-sidepop-size="large"
+							<button aria-label="질의분류 목록" class="icon-button icon-button-purple" data-pages="intake"
+								id="runDrawerBtn" type="button" data-sidepop-open="runDrawer" data-sidepop-size="medium"
 								data-sidepop-variant="run-list" aria-haspopup="dialog" aria-expanded="false"
-								data-tooltip="실행 목록" data-tooltip-auto data-tooltip-placement="bottom">
+								data-tooltip="질의분류 목록" data-tooltip-auto data-tooltip-placement="bottom">
 								<img alt="" aria-hidden="true" class="icon" data-icon="list"
 									src="../assets/icons/list.svg">
 							</button>
@@ -564,8 +574,8 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 												aria-hidden="true"><small>A</small><strong>A</strong></span></span>
 									</button>
 									<button type="button" class="accessory-action" data-accessory-action="fullscreen"
-										id="fullscreenBtn" aria-label="전체화면 전환" aria-pressed="false"
-										data-tooltip="전체화면 전환" data-tooltip-auto data-tooltip-placement="bottom">
+										id="fullscreenBtn" aria-label="전체화면" aria-pressed="false" data-tooltip="전체화면"
+										data-tooltip-auto data-tooltip-placement="bottom">
 										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
 												width="14" height="14">
 												<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
@@ -574,8 +584,8 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 											</svg></span>
 									</button>
 									<button type="button" class="accessory-action" data-accessory-action="panel-size"
-										id="panelSizeBtn" aria-label="패널 위치 순환" aria-pressed="false"
-										data-tooltip="패널 위치 순환" data-tooltip-auto data-tooltip-placement="bottom">
+										id="panelSizeBtn" aria-label="패널 위치 변경" aria-pressed="false"
+										data-tooltip="패널 위치 변경" data-tooltip-auto data-tooltip-placement="bottom">
 										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
 												<path d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4"></path>
 											</svg></span>
@@ -671,7 +681,9 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 						</header>
 						<div class="file-upload-area" data-component-type="type1" data-component-variant="compact">
 							<div aria-label="질의 파일 업로드" class="upload-zone upload-zone-type1 compact"
-								data-file-upload-zone="" id="uploadZone" role="button" tabindex="0">
+								data-tooltip="허용 확장자: PDF, HWP, HWPX, DOCX, TXT, PNG, JPG, JPEG"
+								data-tooltip-placement="bottom" data-file-upload-zone="" id="uploadZone" role="button"
+								tabindex="0">
 								<svg class="upload-zone-default-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none"
 									stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
 									stroke-linejoin="round">
@@ -709,8 +721,9 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 								</div>
 								<!-- Start: 261023 수정 - 업로드 목록 공통 정렬 -->
 								<select class="drawer-list-sort" id="uploadFileSort" aria-label="질의 업로드 목록 정렬">
-									<option value="latest">최신 순</option>
-									<option value="oldest">과거 순</option>
+									<option value="latest">최신순</option>
+									<option value="oldest">과거순</option>
+									<option value="part">부처순</option>
 								</select>
 								<!-- End: 261023 수정 - 업로드 목록 공통 정렬 -->
 								<span class="visually-hidden" id="fileCount">0건</span>
@@ -722,14 +735,6 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 							새 파일 업로드: ../js/classification-file.js의 addFiles() / ND_uploadDocuments.do.
 							-->
 							<ul class="file-list workspace-file-list upload-panel-scroll-list" id="fileList">
-							</ul>
-							<ul class="file-list workspace-file-empty-list" data-workspace-empty="files" hidden="">
-								<li class="file-list-empty">
-									<div>
-										<strong>질의 업로드 목록이 없습니다.</strong>
-										<span>질의 파일을 업로드하면 이 영역에 목록이 표시됩니다.</span>
-									</div>
-								</li>
 							</ul>
 							<div aria-label="입수 현황" class="upload-summary-footer">
 								<span class="upload-summary-footer-copy">
@@ -791,14 +796,14 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 									추출</span>
 								<button type="button"
 									class="icon-button icon-button-ghost icon-button-sm panel-switch-btn"
-									aria-label="패널 전환" draggable="false" data-tooltip="패널 전환"><img
-										class="icon icon-small" data-icon="switch" alt="" aria-hidden="true"
-										src="../assets/icons/switch.svg"></button>
+									aria-label="위치 전환" draggable="false" data-tooltip="위치 전환"
+									data-tooltip-placement="bottom"><img class="icon icon-small" data-icon="switch"
+										alt="" aria-hidden="true" src="../assets/icons/switch.svg"></button>
 							</div>
 
 						</header>
 						<!-- Start: 원본 문서 보기 -->
-						<div class="doc-split-view split-handler" data-split-min="300">
+						<div class="doc-split-view split-handler" data-component="split-handler" data-split-min="240">
 
 							<!-- Start: 원본 문서 본문 영역 -->
 							<section aria-label="원본 문서 본문 영역" class="doc-split-left split-handler-left">
@@ -812,7 +817,8 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 								<p class="ocr-original-guide">
 									문서 본문의 영역을 클릭하면 왼쪽 질의 추출결과에서 상세 정보를 확인할 수 있습니다.
 								</p>
-								<div class="doc-content-original" id="docOriginal">
+								<div class="doc-content-original" id="docOriginal"
+									data-document-loading-name=".doc-split-left .file-name">
 								</div>
 							</section>
 
@@ -855,8 +861,8 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 									</span>
 									<span aria-hidden="true" class="document-statusbar-separator">|</span>
 									<span class="document-statusbar-stat">
-										페이지 <strong data-page-count=""><strong id="docPageNum">1</strong> / <strong
-												id="docPageTotal">1</strong></strong>
+										페이지 <strong data-page-count=""><strong id="docPageNum">0</strong> / <strong
+												id="docPageTotal">0</strong></strong>
 									</span>
 								</div>
 								<div aria-label="문서 확대 축소 및 전체보기" class="document-statusbar-controls">
@@ -870,16 +876,22 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 										class="icon-button icon-button-sm document-statusbar-button" id="docZoomIn"
 										type="button" data-document-statusbar-action="zoom-in"
 										data-tooltip="문서 확대">＋</button>
-									<button aria-label="문서 전체보기" aria-pressed="false"
+									<button aria-label="패널 전체보기" aria-pressed="false"
 										class="icon-button icon-button-sm document-statusbar-button document-statusbar-fullscreen-button"
 										id="docFitBtn" type="button" data-document-statusbar-action="fullscreen"
-										data-tooltip="문서 전체보기">
-										<img alt="" aria-hidden="true"
-											class="icon icon-small document-statusbar-expand-icon"
-											src="../assets/icons/fullscreen-expand.svg">
-										<img alt="" aria-hidden="true"
-											class="icon icon-small document-statusbar-shrink-icon"
-											src="../assets/icons/fullscreen-shrink.svg">
+										data-tooltip="패널 전체보기">
+										<svg class="document-statusbar-expand-icon" viewBox="0 0 24 24" width="14"
+											height="14" aria-hidden="true">
+											<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
+												stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+												stroke-linejoin="round"></path>
+										</svg>
+										<svg class="document-statusbar-shrink-icon" viewBox="0 0 24 24" width="14"
+											height="14" aria-hidden="true">
+											<path d="M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5" fill="none"
+												stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+												stroke-linejoin="round"></path>
+										</svg>
 									</button>
 								</div>
 							</footer>
@@ -903,7 +915,7 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 								질의목록 · 추천실국
 							</h2>
 						</header>
-						<div class="question-toolbar">
+						<div class="question-toolbar center-sub-head">
 							<div class="question-actions" data-question-confirm-actions=""><button
 									class="button button-sm button-outline ai-sort" id="aiReclassifyBtn"
 									type="button">AI재분류</button><button
@@ -911,8 +923,8 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 									type="button">확정</button><button class="button button-sm button-danger hidden"
 									id="confirmCancelBtn" type="button">확정
 									취소</button></div>
-							<button aria-label="질의목록 다운로드" class="icon-button icon-button-ghost icon-button-sm"
-								id="queryExcelBtn" type="button" data-tooltip="질의목록 다운로드"><img alt="" aria-hidden="true"
+							<button aria-label="분류결과 다운로드" class="icon-button icon-button-ghost icon-button-sm"
+								id="queryExcelBtn" type="button" data-tooltip="분류결과 다운로드"><img alt="" aria-hidden="true"
 									class="icon icon-small" src="../assets/icons/download.svg"
 									data-icon="download"></button>
 						</div>
@@ -966,7 +978,7 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 			<button aria-label="사이드 팝업 닫기" class="drawer-backdrop hidden" id="drawerBackdrop" type="button"
 				data-sidepop-close="" hidden=""></button>
 			<aside aria-label="보조 작업 Drawer" aria-modal="true"
-				class="drawer-contents drawer-large drawer-variant-run-list" data-sidepop-size="large"
+				class="drawer-contents drawer-medium drawer-variant-run-list" data-sidepop-size="medium"
 				data-sidepop-variant="run-list" role="dialog">
 				<section class="drawer-variant-panel" data-sidepop-panel="run-list">
 					<header class="drawer-header">

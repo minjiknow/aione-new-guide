@@ -194,6 +194,7 @@ UI 관리: 고정 UI는 이 페이지의 template, 데이터 바인딩·이벤�
 						</svg>
 						<span class="sr-only">채팅 검색</span>
 						<input type="search" id="chatHistorySearch" placeholder="채팅 검색" autocomplete="off">
+						<button type="button" class="chat-search-clear" aria-label="검색어 지우기" hidden>×</button>
 					</label>
 				</nav>
 				<!-- End: 261021 수정 - 챗봇 일반 메뉴 및 검색 -->
@@ -1073,14 +1074,11 @@ UI 관리: 고정 UI는 이 페이지의 template, 데이터 바인딩·이벤�
 						<textarea id="chatIssueContent" maxlength="2000" placeholder="문제 상황을 자세히 설명해 주세요"></textarea>
 					</div>
 					<div class="chat-issue-field">
-						<label>파일 첨부 (선택)</label>
-						<label class="chat-issue-upload" for="chatIssueFiles">
-							<svg viewBox="0 0 24 24" aria-hidden="true">
-								<path d="M12 16V4m0 0-4 4m4-4 4 4"></path>
-								<path d="M5 15v4h14v-4"></path>
-							</svg>
-							<span>클릭하거나 파일을 드래그하세요</span>
-							<small>스크린샷 등 최대 5개, 각 10MB 이내</small>
+						<label class="chat-issue-upload-title" for="chatIssueFiles">파일 첨부 (선택)</label>
+						<label class="chat-issue-upload upload-zone upload-zone-type1 compact" for="chatIssueFiles">
+							<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt="" aria-hidden="true">
+							<span class="upload-text">파일을 드롭하거나 클릭하여 업로드</span>
+							<span class="upload-hint">스크린샷 등 최대 5개, 각 10MB 이내</span>
 						</label>
 						<input type="file" id="chatIssueFiles" multiple="" accept="image/*,.pdf,.txt" hidden="">
 						<div class="chat-issue-file-list" data-issue-file-list=""></div>

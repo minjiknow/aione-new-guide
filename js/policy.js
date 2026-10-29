@@ -1,3 +1,8 @@
+
+/*
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 정책 검증 예시의 업로드 안내·과제 필터·체크리스트·분석 이력·CSV 다운로드를 처리합니다. 제목 편집·목록 제어·레이아웃 초기화는 공통 UI를 사용하며 실제 분석 API는 미연결입니다.
+ */
 /** 정책 퍼블리싱 예시. 검증 결과는 샘플이며 실제 업로드·분석 API는 연결하지 않습니다.
  * 변경 내용
  * - 신규: 체크리스트 예시 데이터·결과 렌더링 및 정책과제 검색·필터
@@ -129,7 +134,7 @@
   let pendingWorkspaceTitle = '';
   function getWorkspaceTitle() {
     return historyItems.find(item => item.id === activeHistoryId)?.title
-      || pendingWorkspaceTitle || '새 정책변경보고서 검증';
+      || pendingWorkspaceTitle || '제목없는 정책변경보고서 검증';
   }
   const workspaceTitleEditor = window.AIOneTopbar.createTitleEditor({
     button: $('#policyWorkspaceTitleBtn'),
@@ -176,21 +181,23 @@
   }
   /* End: 신규 - 실행 목록 예시 데이터 및 선택 상태 */
   /* Start: 신규 - 문서·검증 결과 빈 화면 생성 */
-  function createContentEmpty(title, description = '') {
+  function createContentEmpty(title, description = '', compact = false) {
     const empty = document.createElement('div');
     empty.className = 'empty-state answer-recommend-empty policy-content-empty';
     const iconWrap = document.createElement('div');
-    iconWrap.className = 'no-file-icon';
+    iconWrap.className = compact ? 'no-file-icon type1' : 'no-file-icon';
     iconWrap.setAttribute('aria-hidden', 'true');
     const icon = document.createElement('img');
     icon.src = '../assets/icons/no-file.svg'; icon.alt = ''; icon.setAttribute('aria-hidden', 'true');
     const heading = document.createElement('strong'); heading.textContent = title;
+    heading.className = compact ? 'empty-title type1' : 'empty-title';
     const detail = document.createElement('span'); detail.textContent = description;
+    detail.className = compact ? 'empty-desc type1' : 'empty-desc';
     iconWrap.append(icon);
     empty.append(iconWrap, heading, detail);
     return empty;
   }
-  const resultEmpty = createContentEmpty('검증결과가 없습니다', '보고서를 업로드하고 분석하면 검증 결과를 여기에서 확인할 수 있습니다.');
+  const resultEmpty = createContentEmpty('검증결과가 없습니다', '보고서를 업로드하고 분석하면 검증 결과를 여기에서 확인할 수 있습니다.', true);
   resultEmpty.hidden = true;
   $('#resultBody').after(resultEmpty);
   const documentEmpty = createContentEmpty('미리 볼 문서가 없습니다', '보고서를 업로드하고 목록에서 문서를 선택해 주세요.');
@@ -218,11 +225,16 @@
     bindFileActions();
     if (!hasSample) {
       const row = document.createElement('li');
-      row.append(createContentEmpty('업로드된 파일이 없습니다', '분석할 보고서를 업로드해 주세요.'));
+      row.append(createContentEmpty('보고서 업로드 목록이 없습니다.', '보고서를 업로드하면 이 영역에 목록이 표시됩니다', true));
       $('#policyFiles').append(row);
     }
     $('#policyFileCount').textContent = hasSample ? '1건' : '0건';
     $('#policyDocument').hidden = !hasSample;
+    window.AIOneLoadingOverlay.preview(
+      $('#policyDocument'),
+      hasSample ? $('#policyFiles .file-name')?.textContent.trim() : '',
+      () => {}
+    );
     $('.policy-document-pane .sub-badge').hidden = !hasSample;
     $('#resultBody').hidden = !hasSample;
     documentEmpty.hidden = hasSample;

@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <!--
+[261028 누적 변경 요약 (현재 구현 기준)]
+서비스 카드와 최근·전체 사용 이력을 구성하고 질문·첨부를 챗봇으로 전달합니다. 이력 행은 ai-home.js에서 더보기 버튼 없이 표시합니다.
+
 [파일 요약]
 홈 화면: html/home.html.
 연결 파일: js/ai-home.js(서비스·이력), js/chat.js(질문 전달), css/ai-home.css·css/chat.css.
@@ -21,6 +24,7 @@ UI 관리: 홈 정적 마크업과 기존 이력 렌더러를 사용하며 사�
 	2) 내용을 한 줄로 줄이거나 삭제하면 기존 가로 배치로 복귀, 화면 너비 변경 시에도 재판단
 	3) textarea rows="1" 적용, 높이는 chat.js의 initHomeComposerLayout에서 최대 200px까지 조절 (기존 인라인 높이 이벤트 제거)
 	4) css/chat.css의 홈 전용 배치 규칙과 js/chat.js의 초기화·갱신 호출을 함께 반영, 챗봇은 적용 제외
+- 홈 화면 수정 (10/28) 더보기 버튼 삭제, 전체 사용 이력 중복 x 표시 제거
 
 [주요 구성]
 - 261021 - 입력창 order를 홈 전용으로 한정해 한 줄·여러 줄 배치를 유지하고 챗봇과 분리
@@ -30,6 +34,7 @@ UI 관리: 홈 정적 마크업과 기존 이력 렌더러를 사용하며 사�
 - 공통 사이드바 및 사용자 메뉴
 - 질문 입력창 및 AI 서비스 카드
 - 최근 사용 이력 및 전체 사용 이력 모달
+
 
 [개발 연동 안내]
 js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거합니다.
@@ -83,8 +88,8 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 		<aside class="sidebar app-sidebar" id="sidebar" aria-label="주요 메뉴">
 
 			<div class="sidebar-top-bar">
-				<a class="sidebar-brand" id="sidebarBrandButton" href="common-ui-guide.html" aria-label="공통 UI 가이드"
-					data-tooltip="공통 UI 가이드" data-sidebar-brand-action="navigate">
+				<a class="sidebar-brand" id="sidebarBrandButton" href="home.html" aria-label="AI-ONE 홈"
+					data-tooltip="AI-ONE 홈">
 					<span class="brand-logo">
 						<img class="brand-symbol" src="../assets/icons/ai-one-logo.svg" alt="AI-ONE"
 							data-icon="ai-one-logo">
@@ -136,7 +141,7 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 				</button>
 				 -->
 				<div class="nav-group">
-					<a class="nav-link active" href="home.html" data-route="home" data-page="home"
+					<a class="nav-link active" href="common-ui-guide.html" data-route="home" data-page="home"
 						data-tooltip="AI-ONE 홈" aria-label="AI-ONE 홈" aria-current="page">
 						<span class="nav-service-icon" aria-hidden="true"><img class="nav-service-icon-default"
 								src="../assets/icons/home.svg" data-icon="home" width="18" height="16" alt=""><img
@@ -163,19 +168,19 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link" href="ai-answer.html?newChat=Y" data-route="answer" data-page="answer"
-						data-tooltip="국회 답변서 초안" aria-label="국회 답변서 초안">
+						data-tooltip="국회 답변서 초안 생성" aria-label="국회 답변서 초안 생성">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18"
 								height="18" alt="">
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18"
 								height="18" alt="">
 						</span>
-						<span class="nav-text">국회 답변서 초안</span>
+						<span class="nav-text">국회 답변서 초안 생성</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
-					<a class="nav-link" href="sale-review.html" data-route="asset" data-page="asset" data-tooltip="매각표준검토서 검증"
-						aria-label="매각표준검토서 검증">
+					<a class="nav-link" href="sale-review.html" data-route="asset" data-page="asset"
+						data-tooltip="매각표준검토서 검증" aria-label="매각표준검토서 검증">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-sale.svg" width="17"
 								height="18" alt="">
@@ -201,14 +206,14 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link" href="work-support.html" data-route="searchwrite" data-page="searchwrite"
-						data-tooltip="내부 자료 검색 · 업무 지원" aria-label="내부 자료 검색 · 업무 지원" aria-expanded="false">
+						data-tooltip="내부자료 검색 · 업무지원​" aria-label="내부자료 검색 · 업무지원​" aria-expanded="false">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-search.svg" width="17"
 								height="17" alt="">
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-search-hover.svg" width="17"
 								height="17" alt="">
 						</span>
-						<span class="nav-text">내부 자료 검색 · 업무 지원</span>
+						<span class="nav-text">내부자료 검색 · 업무지원​</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
@@ -682,7 +687,8 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 								</a>
 							</li>
 							<li class="service-item swiper-slide">
-								<a class="service-card" data-service-tone="orange" data-service-version="1" href="sale-review.html" aria-label="매각표준검토서 검증">
+								<a class="service-card" data-service-tone="orange" data-service-version="1"
+									href="sale-review.html" aria-label="매각표준검토서 검증">
 									<div class="service-icon">
 										<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
 											xmlns="http://www.w3.org/2000/svg">
@@ -724,7 +730,8 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 								</a>
 							</li>
 							<li class="service-item swiper-slide">
-								<a class="service-card" data-service-tone="purple" data-service-version="1" href="policy.html" aria-label="정책변경보고서 검증">
+								<a class="service-card" data-service-tone="purple" data-service-version="1"
+									href="policy.html" aria-label="정책변경보고서 검증">
 									<div class="service-icon">
 										<svg width="34" height="34" viewBox="0 0 34 34" fill="none"
 											xmlns="http://www.w3.org/2000/svg">
@@ -764,7 +771,7 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 							</li>
 							<li class="service-item swiper-slide">
 								<a class="service-card" data-service-tone="teal" data-service-version="1"
-									href="work-support.html" aria-label="내부 자료 검색 · 업무 지원">
+									href="work-support.html" aria-label="내부자료 검색 · 업무지원​">
 									<div class="service-icon">
 										<svg width="35" height="34" viewBox="0 0 35 34" fill="none"
 											xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
@@ -818,7 +825,7 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 
 									</div>
 									<div class="service-card-top">
-										<h3 class="service-title">내부 자료 검색 · 업무 지원</h3>
+										<h3 class="service-title">내부자료 검색 · 업무지원​</h3>
 										<span class="service-arrow" aria-hidden="true">›</span>
 									</div>
 									<p class="service-desc">내부 자료 검색 · 원본 미리보기 ·
@@ -829,7 +836,7 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 						</ul>
 					</div>
 				</section>
-					<!-- End: Service Cards -->
+				<!-- End: Service Cards -->
 
 
 
@@ -861,8 +868,6 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 										<th class="table-col-updated" scope="col">최근 이용일</th>
 										<th class="table-col-status" scope="col">상태</th>
 										<th class="table-col-created" scope="col">등록일</th>
-										<th class="table-col-actions" scope="col"><span class="sr-only">작업</span>
-										</th>
 									</tr>
 								</thead>
 								<!-- Start: 최근 사용 이력데이터 -->
@@ -921,7 +926,8 @@ js/dummy의 스크립트 3개는 화면 확인용이며 실제 연동 시 제거
 					</div>
 					<!-- Start: 검색 결과 없을 시 표시되는 영역 -->
 					<div class="history-search-empty" data-home-history-empty="" hidden="">
-						<img src="../assets/icons/search.svg" alt="" aria-hidden="true">
+						<div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt="">
+						</div>
 						<strong class="empty-title">검색 결과가 없습니다.</strong>
 						<span class="empty-desc">다른 검색어를 입력해 보세요.</span>
 					</div>

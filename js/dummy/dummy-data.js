@@ -21,8 +21,9 @@
  * 주석 정리 내역
  * - 261023 주석 정리 - 구간 표시와 변경 내용 표기를 통일합니다. 기존 작업 날짜와 기능 설명은 유지합니다.
  */
-if (window.AIOnePreview?.enabled) window.AIOneDummyData = {
-  // 홈 테이블에 서비스 메뉴 6종을 한 행씩 표시합니다. 준비 중인 메뉴는 기존 안내 모달을 엽니다.
+// 가이드는 같은 예시 값을 직접 읽으며 API 가로채기는 사용하지 않습니다.
+if (window.AIOnePreview?.enabled || document.body?.dataset.page === "common-ui-guide") window.AIOneDummyData = {
+  // 홈 테이블에 서비스 메뉴 6종을 한 행씩 표시하며 각 서비스 페이지로 이동합니다.
   "home": {
     "history": [
       {
@@ -35,29 +36,29 @@ if (window.AIOnePreview?.enabled) window.AIOneDummyData = {
       {
         "id": "c58c70da-8ac3-4460-9564-7bd265c6119b", "agentId": "report_generator",
         "serviceName": "답변서 초안 생성", "title": "기재부 특화 데이터플랫폼·생성형 AI 답변서 초안",
-        "typeText": "AI초안", "badgeClass": "ai", "icon": "nav-answer",
+        "typeText": "답변서", "badgeClass": "ai", "icon": "nav-answer",
         "target": "ai-answer.html", "status": { "text": "완료", "css": "done" },
         "createdAt": "2026-10-16T08:50:00+09:00", "updatedAt": "2026-10-16T09:50:00+09:00"
       },
       {
         "id": "dummy-home-sale", "agentId": "asset",
         "serviceName": "매각표준검토서 검증", "title": "국유재산 매각표준검토서 필수 항목 검증",
-        "typeText": "검증", "badgeClass": "search", "icon": "nav-sale",
-        "target": "#", "status": { "text": "완료", "css": "done" },
+        "typeText": "국유재산", "badgeClass": "search", "icon": "nav-sale",
+        "target": "sale-review.html", "status": { "text": "완료", "css": "done" },
         "createdAt": "2026-10-16T08:40:00+09:00", "updatedAt": "2026-10-16T09:40:00+09:00"
       },
       {
         "id": "dummy-home-policy", "agentId": "policy-verify",
         "serviceName": "정책변경보고서 검증", "title": "재정지원 정책변경보고서 변경 사항 검증",
-        "typeText": "검증", "badgeClass": "search", "icon": "nav-policy",
-        "target": "#", "status": { "text": "완료", "css": "done" },
+        "typeText": "정책안내", "badgeClass": "search", "icon": "nav-policy",
+        "target": "policy.html", "status": { "text": "완료", "css": "done" },
         "createdAt": "2026-10-16T08:30:00+09:00", "updatedAt": "2026-10-16T09:30:00+09:00"
       },
       {
         "id": "dummy-home-search", "agentId": "searchwrite",
         "serviceName": "내부자료 검색", "title": "지방채 인수 제도 및 예산 현황 자료 검색",
-        "typeText": "검색", "badgeClass": "search", "icon": "nav-search",
-        "target": "#", "status": { "text": "완료", "css": "done" },
+        "typeText": "내부자료", "badgeClass": "search", "icon": "nav-search",
+        "target": "work-support.html", "status": { "text": "완료", "css": "done" },
         "createdAt": "2026-10-16T08:20:00+09:00", "updatedAt": "2026-10-16T09:20:00+09:00"
       },
       {

@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 검토서·증빙 파일과 원본 미리보기·검증결과·필터·분석 이력을 처리합니다. 검증 상태와 파일 변경을 동기화하며 완료 결과는 미리보기 모드에서 제공하고 실제 검증 API는 별도 연결합니다.
+ *
  * AI-ONE 매각 검증 전용 기능
  * 적용 화면: sale-review.html
  * 역할: 검토서·증빙 업로드 데이터, 원본 표시, 검증결과·필터·예시 다운로드
@@ -52,7 +55,8 @@
     let previewUrl = null;
     let activeFile = files.get(1)[0];
     // Start: 261026 수정 - 현재 분석 제목 관리
-    let analysisTitle = example ? sampleName : window.AIOneWorkspaceUi.createDefaultWorkspaceTitle("매각 검토");
+    const DEFAULT_WORKSPACE_TITLE = "제목없는 매각표준검토서 검증";
+    let analysisTitle = example ? sampleName : DEFAULT_WORKSPACE_TITLE;
     let titleRuntime = null;
     function setAnalysisTitle(title) {
         analysisTitle = title;
@@ -82,28 +86,29 @@
                 const remove = row.querySelector("[data-sale-file-remove]");
                 remove.setAttribute("aria-label", `${file.name} 삭제`);
                 remove.addEventListener("click", () => {
-                    window.AIOneFileActions.confirmDelete({
-                        title: () => file.name,
-                        listName: group === 1 ? "검토서 파일 목록" : "검증자료 목록",
-                        onDelete: () => {
-                            files.set(group, files.get(group).filter((item) => item !== file));
-                            invalidateResults();
-                            renderFiles(group);
-                            if (activeFile === file) preview(files.get(1)[0]);
+                    window.AIOneFileActions.confirmDelete(
+                        {
+                            title: () => file.name,
+                            listName: group === 1 ? "검토서 파일 목록" : "검증자료 목록",
+                            onDelete: () => {
+                                files.set(
+                                    group,
+                                    files.get(group).filter((item) => item !== file),
+                                );
+                                invalidateResults();
+                                renderFiles(group);
+                                if (activeFile === file) preview(files.get(1)[0]);
+                            },
                         },
-                    }, remove);
+                        remove,
+                    );
                 });
                 return row;
             }),
         );
         if (!files.get(group).length) {
-            const label = group === 1 ? "검토서 파일" : "검증자료";
-            const empty = createContentEmpty(
-                `등록된 ${label}이 없습니다`,
-                group === 1 ? "검토서 파일 1건을 업로드해 주세요." : "검증에 필요한 자료를 업로드해 주세요.",
-                "li",
-                false,
-            );
+            const label = group === 1 ? "검토서" : "검증자료";
+            const empty = createContentEmpty(`${label} 목록이 없습니다`, `${label}를 업로드하면 이 영역에 목록이 표시됩니다`, "li");
             empty.classList.add("generate-result-empty");
             list.append(empty);
         }
@@ -113,24 +118,39 @@
 
     /* Start: 261026 수정 - 검증 상태 전환 및 공통 로딩 UI */
     function invalidateResults() {
+        const needsReverification = verificationState === "completed" || verificationState === "changed";
         example = false;
         resetVerification();
+        if (needsReverification) verificationState = "changed";
         syncVerification();
         renderResults();
     }
 
     // 검증 API 연결 전에는 미리보기 모드에서만 완료 결과를 표시한다.
     function syncVerification() {
+        const hasReview = files.get(1).length > 0;
+        const hasEvidence = files.get(2).length > 0;
+        const hasRequiredFiles = hasReview && hasEvidence;
         const count = `검토서 ${files.get(1).length}건과 검증자료 ${files.get(2).length}건`;
         const completed = verificationState === "completed";
         const loading = verificationState === "loading";
-        $("saleVerify").textContent = completed ? "재검증" : "검증";
-        $("saleVerify").disabled = completed || loading || !files.get(1).length;
-        $("saleUploadStatus").textContent = !files.get(1).length
-            ? "검토서 1건과 검증자료를 등록해 주세요."
-            : loading ? `${count}의 검증을 수행하고 있습니다.`
-            : completed ? `${count}의 검증을 완료하였습니다.`
-            : `${count}의 검증을 수행할 수 있습니다.`;
+        const changed = verificationState === "changed";
+        $("saleVerify").textContent = hasRequiredFiles && (completed || changed) ? "재검증" : "검증";
+        $("saleVerify").disabled = completed || loading || !hasRequiredFiles;
+        $("saleUploadStatus").textContent =
+            !hasReview && !hasEvidence
+                ? "검토서와 검증자료를 업로드하면 검증을 수행할 수 있습니다."
+                : !hasReview
+                  ? "검토서를 1건 이상 업로드하면 검증을 수행할 수 있습니다."
+                  : !hasEvidence
+                    ? "검증자료를 1건 이상 업로드하면 검증을 수행할 수 있습니다."
+                    : loading
+                      ? `${count}의 검증을 수행하고 있습니다.`
+                      : completed
+                        ? `${count}의 검증을 완료하였습니다.`
+                        : changed
+                          ? "검증자료가 변경되었습니다. 재검증을 실행할 수 있습니다."
+                          : `${count}의 검증을 수행할 수 있습니다.`;
     }
 
     function resetVerification() {
@@ -142,19 +162,20 @@
 
     function showVerificationLoading() {
         const mount = (container, isPreview) => {
-            const overlay = $("saleVerificationSkeletonTemplate").content.firstElementChild.cloneNode(true);
-            overlay.classList.add(isPreview ? "answer-loading-preview" : "answer-loading-list");
-            overlay.querySelector(".skeleton-loading-label").textContent = isPreview
-                ? "검증을 수행하며 원본 미리보기와 근거 위치를 준비하고 있습니다."
-                : "검증결과를 생성하고 있습니다";
             if (isPreview) {
-                overlay.querySelector(".answer-skeleton-columns").remove();
-                const title = document.createElement("strong");
-                title.textContent = "검토서 원본을 불러오고 있습니다.";
-                overlay.prepend(title);
-            } else {
-                overlay.querySelector(".answer-skeleton-preview").remove();
+                const overlay = window.AIOneLoadingOverlay.create({
+                    preview: true,
+                    title: "문서 미리보기를 불러오는 중입니다",
+                    message: files.get(1)[0]?.name || "",
+                });
+                overlay.classList.add("sale-verification-loading");
+                window.AIOneLoadingOverlay.mount({ container, overlay });
+                return;
             }
+            const overlay = $("saleVerificationSkeletonTemplate").content.firstElementChild.cloneNode(true);
+            overlay.classList.add("answer-loading-list");
+            overlay.querySelector(".skeleton-loading-label").textContent = "검증결과를 생성하고 있습니다";
+            overlay.querySelector(".answer-skeleton-preview").remove();
             window.AIOneLoadingOverlay.mount({ container, overlay });
         };
         mount($("saleDocumentPages").closest(".doc-viewer-body"), true);
@@ -162,7 +183,7 @@
     }
 
     function startVerification() {
-        if (verificationState !== "ready" || !files.get(1).length) return;
+        if (!["ready", "changed"].includes(verificationState) || !files.get(1).length || !files.get(2).length) return;
         if (!window.AIOnePreview?.enabled) {
             notify("파일은 등록되었습니다. 실제 검증은 API 연결 후 이용할 수 있습니다.");
             return;
@@ -190,7 +211,7 @@
         empty.className = "empty-state answer-recommend-empty sale-content-empty";
         if (showIcon) {
             const iconWrap = document.createElement("div");
-            iconWrap.className = "no-file-icon";
+            iconWrap.className = tagName === "li" ? "no-file-icon type1" : "no-file-icon";
             iconWrap.setAttribute("aria-hidden", "true");
             const icon = document.createElement("img");
             icon.src = "../assets/icons/no-file.svg";
@@ -200,15 +221,21 @@
             empty.append(iconWrap);
         }
         const heading = document.createElement("strong");
-        if (tagName === "li") heading.classList.add("small", "gray");
+        heading.className = tagName === "li" ? "empty-title type1" : "empty-title";
         heading.textContent = title;
         const detail = document.createElement("span");
+        detail.className = tagName === "li" ? "empty-desc type1" : "empty-desc";
         detail.textContent = description;
         empty.append(heading, detail);
         return empty;
     }
 
     function preview(file) {
+        if (verificationState === "loading") return;
+        return window.AIOneLoadingOverlay.preview($("saleDocumentPages"), file?.name, () => renderPreviewContent(file));
+    }
+
+    function renderPreviewContent(file) {
         /* Start: 261026 수정 - 검증 중 원본 미리보기 유지 */
         if (verificationState === "loading") return;
         /* End: 261026 수정 - 검증 중 원본 미리보기 유지 */
@@ -241,10 +268,7 @@
             }
             pages.append(viewer);
         } else if (!file) {
-            pages.append(createContentEmpty(
-                "미리 볼 문서가 없습니다",
-                "검토서와 검증자료를 업로드하면 선택한 문서를 여기에서 확인할 수 있습니다.",
-            ));
+            pages.append(createContentEmpty("미리 볼 문서가 없습니다", "검토서와 검증자료를 업로드하면 선택한 문서를 여기에서 확인할 수 있습니다."));
             $("salePreviewStatus").textContent = "미리보기 대기";
         } else {
             pages.append(sampleDocument.cloneNode(true));
@@ -366,10 +390,12 @@
         );
         if (!visible.length) {
             // 261023 수정: 필터 0건은 공통 아이콘·제목·설명을 사용합니다.
-            $("saleResults").append(window.AIOneWorkspaceCommon.createFilterEmpty(
-                example ? "검색 조건에 맞는 검증결과가 없습니다" : "검증결과가 없습니다",
-                example ? "검색어나 필터를 변경해 주세요." : "검토서와 검증자료를 업로드하고 검증을 실행하면 결과를 여기에서 확인할 수 있습니다.",
-            ));
+            $("saleResults").append(
+                window.AIOneWorkspaceCommon.createFilterEmpty(
+                    example ? "검색 조건에 맞는 검증결과가 없습니다" : "검증결과가 없습니다",
+                    example ? "검색어나 필터를 변경해 주세요." : "검토서와 검증자료를 업로드하고 검증을 실행하면 \n 결과를 여기에서 확인할 수 있습니다.",
+                ),
+            );
         }
     }
 
@@ -405,11 +431,13 @@
     /* End: 261026 수정 - 검증 실행 이벤트 */
     // 분석 내역은 공통 drawer UI를 사용한다. 저장 API 연결 전에는 미리보기 자료만 제공한다.
     const historyFiles = new Map([...files].map(([group, items]) => [group, items.slice()]));
-    let historyItems = example ? [
-        { id: "sale-preview-1", title: sampleName, created_at: "2026-10-22T09:00:00+09:00", reviewCount: 3, status: "completed" },
-        { id: "sale-preview-2", title: "매각표준검토서(신도리 856-2).pdf", created_at: "2026-10-21T16:55:00+09:00", reviewCount: 3, status: "completed" },
-        { id: "sale-preview-3", title: "매각표준검토서(하만리 산195).pdf", created_at: "2026-10-21T15:20:00+09:00", reviewCount: null, status: "pending" },
-    ] : [];
+    let historyItems = example
+        ? [
+              { id: "sale-preview-1", title: sampleName, created_at: "2026-10-22T09:00:00+09:00", reviewCount: 3, status: "completed" },
+              { id: "sale-preview-2", title: "매각표준검토서(신도리 856-2).pdf", created_at: "2026-10-21T16:55:00+09:00", reviewCount: 3, status: "completed" },
+              { id: "sale-preview-3", title: "매각표준검토서(하만리 산195).pdf", created_at: "2026-10-21T15:20:00+09:00", reviewCount: null, status: "pending" },
+          ]
+        : [];
     let activeHistoryId = historyItems[0]?.id || "";
     const historyDrawer = $("saleHistoryDrawer");
     const historyList = $("saleHistoryItems");
@@ -428,10 +456,7 @@
             showIcon: false,
             titleMax: 120,
             isPending: (item) => item.status === "pending",
-            getBadges: (item) => [
-                { text: "검토서 1건" },
-                { text: item.reviewCount == null ? "확인 필요 집계 중" : `확인 필요 ${item.reviewCount}건`, variant: "query" },
-            ],
+            getBadges: (item) => [{ text: "검토서 1건" }, { text: item.reviewCount == null ? "확인 필요 집계 중" : `확인 필요 ${item.reviewCount}건`, variant: "query" }],
             onSelect(item) {
                 /* Start: 261026 수정 - 분석 내역 전환 시 진행 중 검증 취소 */
                 resetVerification();
@@ -483,33 +508,36 @@
     /* Start: 261026 수정 - Drawer 목록 최초 로딩 */
     historyDrawer.addEventListener("sidepop:open", () => window.AIOneDrawerLoading.run(historyList, "분석 목록", renderHistory));
     /* End: 261026 수정 - Drawer 목록 최초 로딩 */
-    window.AIOneConversationDrawer.bindActions({ drawer: historyDrawer, onAction(detail) {
-        const { items, item } = window.AIOneConversationDrawer.applyLocalAction(historyItems, detail);
-        if (!item) return;
-        historyItems = items;
-        if (item.id === activeHistoryId) {
-            /* Start: 261026 수정 - 내역 이름 변경 동기화 */
-            if (detail.action === "rename") setAnalysisTitle(detail.title);
-            /* End: 261026 수정 - 내역 이름 변경 동기화 */
-            if (detail.action === "delete") activeHistoryId = "";
-        }
-        queueMicrotask(renderHistory);
-    } });
+    window.AIOneConversationDrawer.bindActions({
+        drawer: historyDrawer,
+        onAction(detail) {
+            const { items, item } = window.AIOneConversationDrawer.applyLocalAction(historyItems, detail);
+            if (!item) return;
+            historyItems = items;
+            if (item.id === activeHistoryId) {
+                /* Start: 261026 수정 - 내역 이름 변경 동기화 */
+                if (detail.action === "rename") setAnalysisTitle(detail.title);
+                /* End: 261026 수정 - 내역 이름 변경 동기화 */
+                if (detail.action === "delete") activeHistoryId = "";
+            }
+            queueMicrotask(renderHistory);
+        },
+    });
     renderHistory();
     $("newChatBtn").addEventListener("click", () => {
         activeHistoryId = "";
         // Start: 261026 수정 - 새 분석 제목 초기화
-        setAnalysisTitle(window.AIOneWorkspaceUi.createDefaultWorkspaceTitle("매각 검토"));
+        setAnalysisTitle(DEFAULT_WORKSPACE_TITLE);
         // End: 261026 수정 - 새 분석 제목 초기화
         files.set(1, []);
         files.set(2, []);
         filter = "all";
         $("saleResultSearch").value = "";
+        resetVerification();
         invalidateResults();
         renderFiles(1);
         renderFiles(2);
         preview(null);
-        $("saleUploadStatus").textContent = "검토서 1건과 검증자료를 등록해 주세요.";
         // 대화 취소·메시지·입력 상태 초기화는 공통 패널에서 처리한다.
         delete $("chatInput").parentElement.dataset.inputSize;
         window.AIOneChatInput.resize($("chatInput"));
@@ -557,8 +585,9 @@
     syncVerification();
     /* End: 261026 수정 - 페이지 종료 정리 및 최초 검증 상태 반영 */
     renderResults();
-    if (!example) {
+    if (example) {
+        preview(files.get(1)[0]);
+    } else {
         preview(null);
-        $("saleUploadStatus").textContent = "검토서 1건과 검증자료를 등록해 주세요.";
     }
 })();

@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 공통 입력창·채팅·자료 이벤트와 페이지 모듈 초기화를 조립합니다. 추천 프롬프트 전송과 chatOnly 화면의 제목 편집을 공통 처리에 연결합니다.
+ *
  * AI-ONE 공통 패널 진입점
  * 적용 화면: ai-answer.html, work-support.html, sale-review.html
  * [공통 입력창] AIOneChatInput.resize: 자동 높이, 내부 스크롤, 펼침·접힘 및 상태별 툴팁을 관리한다.
@@ -117,7 +120,6 @@ window.AIOnePanel = {
     initShell({ container = document.querySelector(".three-panel"), collapse = true, accessory = true } = {}) {
         if (!container || container.dataset.panelShellReady) return;
         container.dataset.panelShellReady = "true";
-        this.initInnerSwitch(container);
         window.AIOneWorkspaceUi.initPanelDragDrop({ container });
         if (collapse) window.AIOneWorkspaceUi.initPanelCollapse({ container });
         if (accessory) window.AIOneWorkspaceUi.initAccessoryController({ container: () => container });
@@ -141,35 +143,6 @@ window.AIOnePanel = {
             });
         else button.addEventListener("click", () => onSend());
         return { sync };
-    },
-    initInnerSwitch(root = document) {
-        const paneSelector = ".split-handler-left, .split-handler-right, .split-handler-pane";
-        const isVisible = (element) => element && element.getClientRects().length > 0 && window.getComputedStyle(element).visibility !== "hidden";
-
-        root.addEventListener("click", (event) => {
-            const button = event.target.closest(".panel-switch-btn");
-            const panel = button?.closest(".panel");
-            if (!panel || button.disabled) return;
-
-            const containers = panel.querySelectorAll('[data-component="split-handler"]');
-            for (const container of containers) {
-                // 다른 탭, 중첩된 외부 패널, 세로 분할 및 모바일 세로 배치는 제외한다.
-                if (container.closest(".panel") !== panel || !isVisible(container) || container.classList.contains("type2") || window.getComputedStyle(container).flexDirection !== "row") continue;
-
-                const handle = Array.from(container.children).find((child) => child.matches(".split-handler-handle") && isVisible(child));
-                const left = handle?.previousElementSibling;
-                const right = handle?.nextElementSibling;
-                if (!left?.matches(paneSelector) || !right?.matches(paneSelector) || !isVisible(left) || !isVisible(right)) continue;
-
-                event.preventDefault();
-                // 기존 노드를 이동하여 콘텐츠, 이벤트, 패널별 리사이즈 너비를 유지한다.
-                container.insertBefore(right, left);
-                container.insertBefore(handle, left);
-                window.AIOneSplitHandler?.init?.(container);
-                button.focus({ preventScroll: true });
-                break;
-            }
-        });
     },
 
     init({ config = {}, configure = () => {}, installPage = () => {}, bindPage = () => {} } = {}) {
@@ -222,7 +195,7 @@ window.AIOnePanel = {
             actionModalTrigger: null,
         };
         const pendingConversationIds = new Set();
-        // 작업 완료 알림은 공통 Manage 메뉴가 아니라 실제 작업이 끝난 대화방에 표시한다.
+        // 사이드바 메뉴와 별개로 대화방의 미확인 완료 상태를 관리한다.
         const completedConversationIds = new Set();
         const pendingNewWorkspaceEpochs = new Set();
         let workspaceEpoch = 0;
@@ -900,45 +873,6 @@ window.AIOnePanel = {
             applyRecommendZoom,
         });
 
-        const documentFullscreenPanels = new Map();
-        let documentFullscreenOrigin = null;
-        function bindDocumentFullscreen(button, panel, scrollTarget = null) {
-            if (!button || !panel) return;
-            documentFullscreenPanels.set(panel, button);
-            button.addEventListener("click", async () => {
-                try {
-                    if (document.fullscreenElement === panel) await document.exitFullscreen();
-                    else if (panel.requestFullscreen) {
-                        const scrollElement = scrollTarget || panel.querySelector(".doc-viewer-body, [data-document-scroll]");
-                        documentFullscreenOrigin = { x: window.scrollX, y: window.scrollY, scrollElement, innerLeft: scrollElement?.scrollLeft || 0, innerTop: scrollElement?.scrollTop || 0 };
-                        await panel.requestFullscreen();
-                    }
-                } catch (error) {
-                    console.error("[문서 전체보기 오류]", error);
-                }
-            });
-        }
-        function syncDocumentFullscreen() {
-            const active = document.fullscreenElement;
-            documentFullscreenPanels.forEach((button, panel) => {
-                const isActive = panel === active;
-                panel.classList.toggle("is-document-fullscreen", isActive);
-                button.setAttribute("aria-pressed", String(isActive));
-                if (!isActive) ["position", "inset", "z-index"].forEach((name) => panel.style.removeProperty(name));
-            });
-            if (!active && documentFullscreenOrigin) {
-                const origin = documentFullscreenOrigin;
-                documentFullscreenOrigin = null;
-                requestAnimationFrame(() => {
-                    origin.scrollElement?.scrollTo(origin.innerLeft, origin.innerTop);
-                    window.scrollTo(origin.x, origin.y);
-                });
-            }
-        }
-        document.addEventListener("fullscreenchange", syncDocumentFullscreen);
-        document.addEventListener("fullscreenerror", syncDocumentFullscreen);
-        featureRuntime.bindDocumentFullscreen = bindDocumentFullscreen;
-
         configure(featureRuntime);
 
         Object.values(featureInstallers).forEach((install) => {
@@ -1184,7 +1118,7 @@ window.AIOnePanel = {
         });
         window.AIOnePanel.bindChatInput({ input: el.chatInput, button: el.sendBtn, onSend: () => sendChat(), onInput: syncSendButton });
         el.newChatBtn.addEventListener("click", () => {
-            resetWorkspace();
+            resetWorkspace({ advanceTitleNumber: true });
             // Start: 261021 수정 - 업무지원 새 작업 생성결과 초기화
             featureRuntime.page.onNewWorkspace?.();
             // End: 261021 수정 - 업무지원 새 작업 생성결과 초기화
@@ -1317,7 +1251,6 @@ window.AIOnePanel = {
             state.recommendZoom = Math.min(200, state.recommendZoom + 10);
             applyRecommendZoom();
         });
-        bindDocumentFullscreen(el.recommendFullscreenBtn, document.querySelector(".recommend-view-wrapper"));
         el.sourcePreview?.closest(".doc-viewer-body")?.addEventListener("scroll", updateRecommendDocumentStats);
         document.addEventListener("keydown", (event) => {
             if (event.key !== "Escape") return;

@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <!--
+[261028 누적 변경 요약 (현재 구현 기준)]
+보고서 업로드·원본·정책과제·체크리스트와 분석 이력 템플릿을 구성합니다. 현재 policy.js의 퍼블리싱 예시를 사용하며 실제 검증 API는 별도 연동 대상입니다.
+
 [파일 요약]
 정책변경보고서 검증 화면: html/policy.html.
 연결 파일: js/policy.js, css/policy.css. 공통 UI·목록·보조도구는 common.js/common.css를 재사용합니다.
@@ -154,14 +157,14 @@
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link" href="ai-answer.html?newChat=Y" data-route="answer" data-page="answer"
-						data-tooltip="국회 답변서 초안" aria-label="국회 답변서 초안">
+						data-tooltip="국회 답변서 초안 생성" aria-label="국회 답변서 초안 생성">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18"
 								height="18" alt="">
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18"
 								height="18" alt="">
 						</span>
-						<span class="nav-text">국회 답변서 초안</span>
+						<span class="nav-text">국회 답변서 초안 생성</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
@@ -192,14 +195,14 @@
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link" href="work-support.html" data-route="searchwrite" data-page="searchwrite"
-						data-tooltip="내부 자료 검색 · 업무 지원" aria-label="내부 자료 검색 · 업무 지원" aria-expanded="false">
+						data-tooltip="내부자료 검색 · 업무지원​" aria-label="내부자료 검색 · 업무지원​" aria-expanded="false">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-search.svg" width="17"
 								height="17" alt="">
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-search-hover.svg" width="17"
 								height="17" alt="">
 						</span>
-						<span class="nav-text">내부 자료 검색 · 업무 지원</span>
+						<span class="nav-text">내부자료 검색 · 업무지원​</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
@@ -473,99 +476,104 @@
 
 			<!-- Start: 신규 - 워크스페이스 상단 바 -->
 			<div class="topbar-area">
-				<header class="topbar app-topbar">
+				<header class="topbar app-topbar type1">
 					<div class="topbar-title">
 						<h1 class="topbar-maintit">정책변경보고서 검증 AI 워크스페이스</h1>
 						<p class="topbar-subtit">보고서 업로드 · 분석 대상 식별 · AI 분석 · 검증결과 확인</p>
 					</div>
-					<div class="topbar-workspace-slot">
-						<div class="workspace-input-count">
-							<button type="button" class="workspace-edit-button" id="policyWorkspaceTitleBtn"
-								aria-label="정책변경보고서 제목 수정" data-tooltip="클릭하여 제목 수정" data-tooltip-auto=""
-								data-tooltip-placement="bottom">
-								<span id="policyWorkspaceTitle" data-workspace-title-text
-									data-tooltip="클릭하여 제목 수정">2026년 하반기_이렇게 달라집니다.</span>
-								<img class=" icon icon-small workspace-topbar-edit"
-									src="../assets/icons/edit-compact.svg" data-icon="edit-compact" alt=""
-									aria-hidden="true">
-							</button>
-							<input type="text" class="workspace-topbar-input hidden" id="policyWorkspaceTitleInput"
-								maxlength="60" aria-label="정책변경보고서 제목 입력">
-						</div>
-					</div>
-					<div class="topbar-right app-topbar-actions">
-						<button aria-label="새 분석" class="button button-soft-primary" id="policyReset" type="button"
-							data-tooltip="새 분석" data-tooltip-auto="" data-tooltip-placement="bottom">
-							<img alt="" aria-hidden="true" class="icon icon-small" data-icon="plus"
-								src="../assets/icons/plus.svg">
-							<span>새 분석</span>
-						</button>
-						<button aria-label="실행 목록" class="icon-button icon-button-purple" id="runDrawerBtn"
-							type="button" data-sidepop-open="runDrawer" data-sidepop-size="medium"
-							data-sidepop-variant="chat-list" aria-haspopup="dialog" aria-expanded="false"
-							data-tooltip="실행 목록" data-tooltip-auto="" data-tooltip-placement="bottom">
-							<img alt="" aria-hidden="true" class="icon" data-icon="list" src="../assets/icons/list.svg">
-						</button>
-						<div class="accessory-tool" data-accessory-tools="">
-							<button type="button" class="accessory-trigger" aria-label="보조도구 모음" aria-haspopup="true"
-								aria-expanded="false" data-tooltip="보조도구 모음" data-tooltip-auto=""
-								data-tooltip-placement="bottom">
-								<span class="accessory-icon-closed" aria-hidden="true"><svg viewBox="0 0 24 24">
-										<rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect>
-										<rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect>
-										<rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect>
-										<path d="M17 14v6M14 17h6"></path>
-									</svg></span>
-								<span class="accessory-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24">
-										<path d="M6 6l12 12M18 6 6 18"></path>
-									</svg></span>
-							</button>
-							<div class="accessory-rail" role="toolbar" aria-label="보조도구 기능">
-								<button type="button" class="accessory-action" data-accessory-action="font"
-									aria-label="전체 글자크기" aria-haspopup="dialog" aria-expanded="false"
-									data-tooltip="전체 글자크기" data-tooltip-auto="" data-tooltip-placement="bottom">
-									<span class="accessory-action-icon"><span class="accessory-font-symbol"
-											aria-hidden="true"><small>A</small><strong>A</strong></span></span>
-								</button>
-								<button type="button" class="accessory-action" data-accessory-action="fullscreen"
-									id="fullscreenBtn" aria-label="전체화면 전환" aria-pressed="false" data-tooltip="전체화면 전환"
-									data-tooltip-auto="" data-tooltip-placement="bottom">
-									<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
-											width="14" height="14">
-											<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
-												stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-												stroke-linejoin="round"></path>
-										</svg></span>
-								</button>
-								<button type="button" class="accessory-action" data-accessory-action="panel-size"
-									id="panelSizeBtn" aria-label="패널 위치 순환" aria-pressed="false" data-tooltip="패널 위치 순환"
-									data-tooltip-auto="" data-tooltip-placement="bottom">
-									<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
-											<path d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4"></path>
-										</svg></span>
-								</button>
-								<button type="button" class="accessory-action" data-accessory-action="layout"
-									id="layoutResetBtn" aria-label="레이아웃 초기화" data-tooltip="레이아웃 초기화"
-									data-tooltip-auto="" data-tooltip-placement="bottom">
-									<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
-											<rect x="3" y="3" width="18" height="18" rx="2"></rect>
-											<path d="M9 3v18M15 3v18"></path>
-										</svg></span>
-								</button>
-							</div>
-							<div class="accessory-font-panel hidden" role="dialog" aria-label="전체 글자크기">
-								<div class="accessory-font-head"><strong>전체 글자크기</strong><span>100~150%</span></div>
-								<div class="accessory-font-control">
-									<button type="button" data-accessory-font-decrease="" aria-label="글자 작게" disabled=""
-										data-tooltip="글자 작게" data-tooltip-auto=""
-										data-tooltip-placement="bottom">−</button>
-									<span data-accessory-font-value="" aria-live="polite">100%</span>
-									<button type="button" data-accessory-font-increase="" aria-label="글자 크게"
-										data-tooltip="글자 크게" data-tooltip-auto=""
-										data-tooltip-placement="bottom">＋</button>
+					<div class="topbar-bottom">
+						<div class="topbar-workspace-slot" data-slot="workspace">
+							<div class="workspace-topbar-context" aria-label="현재 정책변경보고서 작업 정보">
+								<div class="workspace-input-count">
+									<button type="button" class="workspace-edit-button" id="policyWorkspaceTitleBtn"
+										aria-label="정책변경보고서 제목 수정" data-tooltip="클릭하여 제목 수정" data-tooltip-auto=""
+										data-tooltip-placement="bottom">
+										<span id="policyWorkspaceTitle" data-workspace-title-text>2026년 하반기_이렇게
+											달라집니다.</span>
+										<img class=" icon icon-small workspace-topbar-edit"
+											src="../assets/icons/edit-compact.svg" data-icon="edit-compact" alt=""
+											aria-hidden="true">
+									</button>
+									<input type="text" class="workspace-topbar-input hidden"
+										id="policyWorkspaceTitleInput" maxlength="60" aria-label="정책변경보고서 제목 입력">
 								</div>
-								<button type="button" class="accessory-font-default" data-tooltip="기본 크기로"
-									data-tooltip-auto="" data-tooltip-placement="bottom">기본 크기로</button>
+							</div>
+						</div>
+						<div class="topbar-right app-topbar-actions">
+							<button aria-label="새 분석" class="button button-soft-primary" id="policyReset" type="button"
+								data-tooltip="새 분석" data-tooltip-auto="" data-tooltip-placement="bottom">
+								<img alt="" aria-hidden="true" class="icon icon-small" data-icon="plus"
+									src="../assets/icons/plus.svg">
+								<span>새 분석</span>
+							</button>
+							<button aria-label="실행 목록" class="icon-button icon-button-purple" id="runDrawerBtn"
+								type="button" data-sidepop-open="runDrawer" data-sidepop-size="medium"
+								data-sidepop-variant="chat-list" aria-haspopup="dialog" aria-expanded="false"
+								data-tooltip="실행 목록" data-tooltip-auto="" data-tooltip-placement="bottom">
+								<img alt="" aria-hidden="true" class="icon icon-text" data-icon="list"
+									src="../assets/icons/list.svg">
+							</button>
+							<div class="accessory-tool" data-accessory-tools="">
+								<button type="button" class="accessory-trigger" aria-label="보조도구 모음"
+									aria-haspopup="true" aria-expanded="false" data-tooltip="보조도구 모음"
+									data-tooltip-auto="" data-tooltip-placement="bottom">
+									<span class="accessory-icon-closed" aria-hidden="true"><svg viewBox="0 0 24 24">
+											<rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect>
+											<rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect>
+											<rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect>
+											<path d="M17 14v6M14 17h6"></path>
+										</svg></span>
+									<span class="accessory-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24">
+											<path d="M6 6l12 12M18 6 6 18"></path>
+										</svg></span>
+								</button>
+								<div class="accessory-rail" role="toolbar" aria-label="보조도구 기능">
+									<button type="button" class="accessory-action" data-accessory-action="font"
+										aria-label="전체 글자크기" aria-haspopup="dialog" aria-expanded="false"
+										data-tooltip="전체 글자크기" data-tooltip-auto="" data-tooltip-placement="bottom">
+										<span class="accessory-action-icon"><span class="accessory-font-symbol"
+												aria-hidden="true"><small>A</small><strong>A</strong></span></span>
+									</button>
+									<button type="button" class="accessory-action" data-accessory-action="fullscreen"
+										id="fullscreenBtn" aria-label="전체화면" aria-pressed="false" data-tooltip="전체화면"
+										data-tooltip-auto="" data-tooltip-placement="bottom">
+										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
+												width="14" height="14">
+												<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
+													stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+													stroke-linejoin="round"></path>
+											</svg></span>
+									</button>
+									<button type="button" class="accessory-action" data-accessory-action="panel-size"
+										id="panelSizeBtn" aria-label="패널 위치 변경" aria-pressed="false"
+										data-tooltip="패널 위치 변경" data-tooltip-auto="" data-tooltip-placement="bottom">
+										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
+												<path d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4"></path>
+											</svg></span>
+									</button>
+									<button type="button" class="accessory-action" data-accessory-action="layout"
+										id="layoutResetBtn" aria-label="레이아웃 초기화" data-tooltip="레이아웃 초기화"
+										data-tooltip-auto="" data-tooltip-placement="bottom">
+										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
+												<rect x="3" y="3" width="18" height="18" rx="2"></rect>
+												<path d="M9 3v18M15 3v18"></path>
+											</svg></span>
+									</button>
+								</div>
+								<div class="accessory-font-panel hidden" role="dialog" aria-label="전체 글자크기">
+									<div class="accessory-font-head"><strong>전체 글자크기</strong><span>100~150%</span></div>
+									<div class="accessory-font-control">
+										<button type="button" data-accessory-font-decrease="" aria-label="글자 작게"
+											disabled="" data-tooltip="글자 작게" data-tooltip-auto=""
+											data-tooltip-placement="bottom">−</button>
+										<span data-accessory-font-value="" aria-live="polite">100%</span>
+										<button type="button" data-accessory-font-increase="" aria-label="글자 크게"
+											data-tooltip="글자 크게" data-tooltip-auto=""
+											data-tooltip-placement="bottom">＋</button>
+									</div>
+									<button type="button" class="accessory-font-default" data-tooltip="기본 크기로"
+										data-tooltip-auto="" data-tooltip-placement="bottom">기본 크기로</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -590,7 +598,7 @@
 						</header>
 						<div class="file-upload-area">
 							<div class="upload-zone upload-zone-type1 compact" role="button" tabindex="0"
-								id="policyUpload" aria-label="보고서 파일 업로드">
+								id="policyUpload" aria-label="보고서 파일 업로드" data-tooltip="소스추가">
 								<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt="">
 								<p class="upload-text">보고서 파일을 드롭하거나 클릭하여 업로드</p><span class="upload-hint">PDF · HWP ·
 									HWPX / 다중 파일 가능</span>
@@ -604,8 +612,9 @@
 								</div>
 								<!-- Start: 신규 - 보고서 업로드 목록 공통 정렬 -->
 								<select class="drawer-list-sort" id="policyFileSort" aria-label="보고서 업로드 목록 정렬">
-									<option value="latest">최신 순</option>
-									<option value="oldest">과거 순</option>
+									<option value="part" selected>부처순</option>
+									<option value="latest">최신순</option>
+									<option value="oldest">과거순</option>
 								</select>
 								<!-- End: 신규 - 보고서 업로드 목록 공통 정렬 -->
 								<span class="visually-hidden" id="policyFileCount">1건</span>
@@ -641,7 +650,8 @@
 							<div class="panel-actions">
 								<button type="button"
 									class="icon-button icon-button-ghost icon-button-sm panel-switch-btn"
-									aria-label="패널 전환" draggable="false" data-tooltip="패널 전환">
+									aria-label="위치 전환" draggable="false" data-tooltip="위치 전환"
+									data-tooltip-placement="bottom">
 									<img class="icon icon-small" data-icon="switch" src="../assets/icons/switch.svg"
 										alt="" aria-hidden="true">
 								</button>
@@ -654,7 +664,8 @@
 									<h3 class="sub-title">원본 미리보기</h3><span class="sub-badge blue">고용노동부 · 예시</span>
 								</div>
 								<div class="policy-document-scroll">
-									<article class="policy-paper" id="policyDocument">
+									<article class="policy-paper" id="policyDocument"
+										data-document-loading-name="#policyFiles .file-name">
 										<h2>회사가 도산하여도 근로자의 체불임금이<br>최대 6개월분까지 지원됩니다.</h2>
 										<p class="policy-paper-meta">도산 사업장의 체불근로자 보호 강화<br>고용노동부 퇴직연금복지과</p>
 										<p># 체불임금, # 도산, # 대지급금</p>
@@ -759,16 +770,22 @@
 										class="icon-button icon-button-sm document-statusbar-button"
 										data-document-statusbar-action="zoom-in" id="policyZoomIn" type="button"
 										data-tooltip="문서 확대">＋</button>
-									<button aria-label="문서 전체보기" aria-pressed="false"
+									<button aria-label="패널 전체보기" aria-pressed="false"
 										class="icon-button icon-button-sm document-statusbar-button document-statusbar-fullscreen-button"
 										data-document-statusbar-action="fullscreen" id="policyFullscreenBtn"
-										type="button" data-tooltip="문서 전체보기">
-										<img alt="" aria-hidden="true"
-											class="icon icon-small document-statusbar-expand-icon"
-											src="../assets/icons/fullscreen-expand.svg">
-										<img alt="" aria-hidden="true"
-											class="icon icon-small document-statusbar-shrink-icon"
-											src="../assets/icons/fullscreen-shrink.svg">
+										type="button" data-tooltip="패널 전체보기">
+										<svg class="document-statusbar-expand-icon" viewBox="0 0 24 24" width="14"
+											height="14" aria-hidden="true">
+											<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
+												stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+												stroke-linejoin="round"></path>
+										</svg>
+										<svg class="document-statusbar-shrink-icon" viewBox="0 0 24 24" width="14"
+											height="14" aria-hidden="true">
+											<path d="M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5" fill="none"
+												stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+												stroke-linejoin="round"></path>
+										</svg>
 									</button>
 								</div>
 								<!-- End: 신규 - 문서 확대 축소 및 전체보기 영역 -->

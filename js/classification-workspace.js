@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 질의분류 패널 배치·너비·보조도구와 의원수 설정을 관리합니다. 공통 제목 편집·레이아웃 초기화 및 영역별 로딩을 연결합니다.
+ *
  * AI-ONE 질의분류 - 워크스페이스 모듈
  *
  * 역할
@@ -9,7 +12,7 @@
  * 261026 변경 요약
  * - 수정 - 레이아웃 초기화를 common.js로 이관하고 기본 너비·저장소·원본 문서 복원 후처리만 연결
  * - 수정 - 원본·추출결과·질의목록별 공통 로딩 및 실행 목록 스켈레톤 연결
- * - 수정 - 제목 편집을 공통 탑바에 연결하고 기존 전체 제목 표시·빈 제목 기본값 유지
+ * - 수정 - 제목 편집을 공통 탑바에 연결하고 공통 30글자 말줄임·빈 제목 기본값 적용
  * - 수정 - 의원수 표시·입력 범위 제한·설정 저장은 질의 분류 전용 모듈에서 계속 관리
  *
  * 기본 구간 형식: Start: 기능명 / End: 기능명
@@ -23,7 +26,7 @@
         with (runtime) {
             // getDefaultWorkspaceTitle: 값 조회.
             function getDefaultWorkspaceTitle() {
-                return window.AIOneWorkspaceUi.createDefaultWorkspaceTitle("제목없는 국회질의");
+                return "제목없는 국회질의분류";
             }
 
             // Start: 261026 수정 - 원본·추출결과·질의목록 공통 로딩
@@ -88,8 +91,7 @@
                     text: $("#workspaceTitleText"),
                     input: $("#workspaceTitleInput"),
                     getTitle: () => workspaceTitle || getDefaultWorkspaceTitle(),
-                    maxDisplayLength: Infinity,
-                    emptyTitle: "제목없는 국회질의",
+                    emptyTitle: getDefaultWorkspaceTitle(),
                     saveTitle: async (title) => {
                         // 생성된 대화는 서버 저장 성공 후 로컬 상태에 반영합니다.
                         if (actualConversationId) {
@@ -142,9 +144,9 @@
                 if (!queries.length) {
                     docContent.innerHTML = `<div class="report-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>질의 추출 결과가 없습니다</strong>
-            <span>질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
-            <span>분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
+            <strong class="empty-title">질의 추출 결과가 없습니다</strong>
+            <span class="empty-desc">질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
+            <span class="empty-desc">분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
             </div>`;
                     return;
                 }
@@ -475,7 +477,7 @@
 
             // resetWorkspaceMetaToDefault: 초기 상태 복원.
             function resetWorkspaceMetaToDefault() {
-                workspaceTitle = "제목없는 국회질의";
+                workspaceTitle = getDefaultWorkspaceTitle();
                 workspaceMemberCount = 0;
                 saveWorkspaceMeta();
                 renderWorkspaceMeta();
@@ -502,7 +504,7 @@
                         workspaceCommon.setCookie(UI_FULLSCREEN_COOKIE, enabled ? "1" : "0", { maxAge: UI_COOKIE_MAX_AGE });
                     },
                     onFullscreenError: () => {
-                        showToast("브라우저에서 전체화면 전환을 허용하지 않았습니다.");
+                        showToast("브라우저에서 전체화면을 허용하지 않았습니다.");
                     },
                 });
             }
@@ -529,16 +531,16 @@
                 if (original)
                     original.innerHTML = `<div class="report-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>원본 문서가 없습니다</strong>
-            <span>질의 파일을 업로드하면 원본 문서가 표시됩니다.</span>
-            <span>업로드한 문서를 선택하면 상세 내용을 확인할 수 있습니다.</span>
+            <strong class="empty-title">원본 문서가 없습니다</strong>
+            <span class="empty-desc">질의 파일을 업로드하면 원본 문서가 표시됩니다.</span>
+            <span class="empty-desc">업로드한 문서를 선택하면 상세 내용을 확인할 수 있습니다.</span>
             </div>`;
                 if (docContent)
                     docContent.innerHTML = `<div class="report-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>질의 추출 결과가 없습니다</strong>
-            <span>질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
-            <span>분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
+            <strong class="empty-title">질의 추출 결과가 없습니다</strong>
+            <span class="empty-desc">질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
+            <span class="empty-desc">분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
             </div>`;
                 hideIntakeSkeleton();
             }

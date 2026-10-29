@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 실행 목록 조회·렌더링과 대화 생성/선택을 처리합니다. 선택한 실행의 문서·질의 복원 및 영역별 로딩을 연결합니다.
+ *
  * AI-ONE 질의분류 - 대화/실행목록 모듈
  *
  * 역할
@@ -485,7 +488,7 @@
                 return;
               }
               resetActualWorkspaceView(true);
-              workspaceTitle = '제목없는 국회질의';
+              workspaceTitle = '제목없는 국회질의분류';
               workspaceMemberCount = 0;
               renderWorkspaceMeta();
               renderDrawer();
@@ -536,7 +539,7 @@
               oldTitle
             ) {
               const modal = getCommonActionModal();
-              const currentTitle = String(oldTitle || '').trim() || '제목없는 국회질의';
+              const currentTitle = String(oldTitle || '').trim() || '제목없는 국회질의분류';
               modal.innerHTML = `
                 <div class="modal-bg" aria-hidden="true"></div>
                 <section class="modal-contents modal-medium" data-modal-variant="rename" role="dialog" aria-modal="true" aria-label="실행 건 제목 변경">
@@ -1149,7 +1152,7 @@
                             <div class="drawer-run-main">
                               <strong class="drawer-run-title">${escapeHtml(title)}</strong>
                               <div class="drawer-run-meta">
-                                <span>${escapeHtml(created)}</span>
+                                <span class="drawer-chat-time">${escapeHtml(created)}</span>
                                 <span class="drawer-run-status${status === 'completed' ? '' : status === 'failed' ? ' failed' : ' pending'}">
                                   ${escapeHtml(statusLabel)}
                                 </span>
@@ -1222,8 +1225,8 @@
                 workspaceTitle = String(
                   selectedConversation.display_title ||
                   selectedConversation.title ||
-                  '제목없는 국회질의'
-                ).trim() || '제목없는 국회질의';
+                  '제목없는 국회질의분류'
+                ).trim() || '제목없는 국회질의분류';
                 renderWorkspaceMeta();
               }
               resetActualWorkspaceView(false);
@@ -1424,9 +1427,9 @@
                   if (queryList) {
                     queryList.innerHTML = `<div class="report-empty-state query-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>등록된 질의가 없습니다</strong>
-            <span>이 대화방에 등록된 질의가 없습니다.</span>
-            <span>질의 파일을 추가하면 분류 결과를 확인할 수 있습니다.</span>
+            <strong class="empty-title">등록된 질의가 없습니다</strong>
+            <span class="empty-desc">이 대화방에 등록된 질의가 없습니다.</span>
+            <span class="empty-desc">질의 파일을 추가하면 분류 결과를 확인할 수 있습니다.</span>
             </div>`;
                   }
                   renderQueryDetailPanel([]);

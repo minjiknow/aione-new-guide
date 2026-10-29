@@ -166,6 +166,7 @@ body {
     flex-direction: column;
     gap: 0;
 }
+
 .form-input {
     padding: 11px 14px;
     background: rgba(255, 255, 255, 0.7);

@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 문서 업로드·삭제·제출·즐겨찾기와 질의/PDF 조회를 처리합니다. 원본 너비 저장·복원, 원본/추출 보기 및 PDF 질의 강조·선택을 연결합니다.
+ *
  * AI-ONE 질의분류 문서·질의 조회
  * 기본 구간 형식: Start: 기능명 / End: 기능명
  * 변경 구간 형식: Start: YYMMDD 추가/수정 - 기능명 / End: YYMMDD 추가/수정 - 기능명
@@ -275,14 +278,14 @@
               updateDocStatusBar(text);
             }
 
-            function updateDocStatusBar(text) {
+            function updateDocStatusBar(text, pageCount) {
               const charCount = text ? text.replace(/\s/g, '').length : 0;
               const charEl = $('#docCharCount');
               if (charEl) charEl.textContent = charCount.toLocaleString();
-              const pages = Math.max(1, Math.ceil(charCount / 2000));
+              const pages = pageCount ?? Math.ceil(charCount / 2000);
               const pageNum = $('#docPageNum');
               const pageTotal = $('#docPageTotal');
-              if (pageNum) pageNum.textContent = '1';
+              if (pageNum) pageNum.textContent = pages > 0 ? '1' : '0';
               if (pageTotal) pageTotal.textContent = pages;
               window.AIOneDocumentStatusBar?.init(document);
             }
@@ -388,9 +391,11 @@
             $('#uploadFileSort')?.addEventListener('change', () => renderFileList());
 
             function renderFileList() {
+              const hasFiles = uploadedFiles.length > 0;
+              if (!hasFiles) updateDocStatusBar('');
               const summaryFileMemberCount = $('#uploadFileMemberCount');
               const currentMemberCount =
-                Number.isFinite(Number(workspaceMemberCount))
+                hasFiles && Number.isFinite(Number(workspaceMemberCount))
                   ? Number(workspaceMemberCount)
                   : 0;
               const isMatched =
@@ -460,9 +465,10 @@
               if (!sortedFiles.length) {
                 fileList.innerHTML = `
                   <li class="file-list-empty">
-                    <div>
-                      <strong>질의 업로드 목록이 없습니다.</strong>
-                      <span>질의 파일을 업로드하면 이 영역에 목록이 표시됩니다.</span>
+                    <div class="empty-state answer-recommend-empty query-upload-empty">
+                      <div class="no-file-icon type1" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt="" aria-hidden="true"></div>
+                      <strong class="empty-title type1">질의 업로드 목록이 없습니다</strong>
+                      <span class="empty-desc type1">질의 파일을 업로드하면 이 영역에 목록이 표시됩니다</span>
                     </div>
                   </li>
                 `;
@@ -1872,9 +1878,7 @@
                   });
               }
 
-              const pageTotal = $('#docPageTotal');
-              if (pageTotal) pageTotal.textContent = String(pdf.numPages);
-              updateDocStatusBar(fallbackText || '');
+              updateDocStatusBar(fallbackText || '', pdf.numPages);
 
               const activeQuery = activeQueries[activeQueryIndex];
               const activeQuestionId = getQuestionIdValue(activeQuery);
@@ -1976,6 +1980,10 @@
             }
 
             async function renderActualDocument(fileObj, fallbackText) {
+              return window.AIOneLoadingOverlay.preview($('#docOriginal'), fileObj?.name, () => renderActualDocumentContent(fileObj, fallbackText));
+            }
+
+            async function renderActualDocumentContent(fileObj, fallbackText) {
               const original = $('#docOriginal');
               if (!original) return;
               updateOriginalViewToggleButton(fileObj);
@@ -2074,9 +2082,7 @@
                   });
                 });
               });
-              const pageTotal = $('#docPageTotal');
-              if (pageTotal) pageTotal.textContent = '1';
-              updateDocStatusBar(fallbackText || '');
+              updateDocStatusBar(fallbackText || '', 1);
             }
 
             Object.assign(runtime, {

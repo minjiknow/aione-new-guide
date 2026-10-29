@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 공통 대화 이력·메시지·입력·피드백과 API/SSE를 처리합니다. 목록 로딩·제목 편집을 공통 UI에 연결하고 작업 완료 시 해당 서비스 메뉴에 완료점을 표시합니다.
+ *
  * AI-ONE 공통 채팅·대화 이력
  * 적용 화면: ai-answer.html, work-support.html, sale-review.html
  * 역할: 메시지·입력창·피드백, 대화 이력과 API/SSE 전송
@@ -28,6 +31,8 @@
         const activeRequests = new Set();
         // 대화 생성 전 편집한 제목은 첫 요청에 사용하고 새 작업에서 초기화합니다.
         let pendingWorkspaceTitle = "";
+        // 새 제목 번호는 페이지별 메모리에서 관리하고, 렌더링 시에는 유지합니다.
+        let workspaceTitleNumber = -1;
         // End: 261015 수정 - 답변서 채팅 목록 실패 이력
         with (runtime) {
             function hideSearchSkeleton(...args) { return runtime.page.hideLoading?.(...args); }
@@ -994,7 +999,8 @@
 
             // Start: 261021 수정 - 화면별 새 작업 기본 제목
             function getDefaultAnswerWorkspaceTitle() {
-                return window.AIOneWorkspaceUi.createDefaultWorkspaceTitle(runtime.config.labels.workspace);
+                workspaceTitleNumber = Math.max(0, workspaceTitleNumber);
+                return `${runtime.config.labels.workspace} #${String(workspaceTitleNumber).padStart(2, "0")}`;
             }
             // End: 261021 수정 - 화면별 새 작업 기본 제목
 
@@ -1673,7 +1679,8 @@
             }
 
             // resetWorkspace: 상태 또는 화면을 기본값으로 초기화.
-            function resetWorkspace() {
+            function resetWorkspace({ advanceTitleNumber = false } = {}) {
+                if (advanceTitleNumber) workspaceTitleNumber += 1;
                 pendingWorkspaceTitle = "";
                 workspaceEpoch += 1;
                 if (runtime.config.chatOnly) {

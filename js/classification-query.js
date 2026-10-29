@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 질의 목록·상세·수동 룰 근거와 제외/복원을 처리합니다. 편집 검증·변경 여부 판단 및 저장/AI 재분류 확인을 연결합니다.
+ *
  * AI-ONE 질의분류 질의 편집
  * 최근 변경 내용
  * - 261023 추가 - 질의별 수동 룰 매칭 근거
@@ -20,6 +23,15 @@
     window.AIOneClassificationFeatureModules = window.AIOneClassificationFeatureModules || {};
     window.AIOneClassificationFeatureModules["classification-query.js"] = function install(runtime) {
         with (runtime) {
+            // 질의 목록의 빈 화면은 아이콘과 제목, 설명에 작은 크기 스타일을 적용한다.
+            function createQueryListEmpty(title, description) {
+                const empty = window.AIOneWorkspaceCommon.createFilterEmpty(title, description);
+                empty.querySelector(".no-file-icon").classList.add("type1");
+                empty.querySelector(".empty-title").classList.add("type1");
+                empty.querySelector(".empty-desc").classList.add("type1");
+                return empty;
+            }
+
             function setMappedQueryCard(targetCard) {
                 if (!targetCard || !queryList) return;
                 $$(".query-card", queryList).forEach((card) => {
@@ -74,9 +86,9 @@
                         <strong>수동 룰 ${matches.length}건 매칭</strong>
                         ${hasConflict ? '<span class="query-rule-review">추천 결과 확인 필요</span>' : ""}
                       </div>
-                      <p class="query-rule-description">${hasConflict
-                          ? `AI 추천 ${escapeHtml(aiDepartment)}과 다른 룰 결과 국·실이 함께 매칭되었습니다. 모든 근거를 확인해 주세요.`
-                          : `AI 추천 ${escapeHtml(aiDepartment)}과 수동 룰 결과가 동일합니다.`}</p>
+                      <p class="query-rule-description">${
+                          hasConflict ? `AI 추천 ${escapeHtml(aiDepartment)}과 다른 룰 결과 국·실이 함께 매칭되었습니다. 모든 근거를 확인해 주세요.` : `AI 추천 ${escapeHtml(aiDepartment)}과 수동 룰 결과가 동일합니다.`
+                      }</p>
                       ${representative ? `<p class="query-rule-meta">대표 근거: ${escapeHtml(representative.name)} · 매칭 키워드: ${escapeHtml((representative.matched_keywords || []).join(", "))}</p>` : ""}
                       <div class="query-rule-disclosure">
                         <button type="button" class="query-rule-toggle" aria-expanded="false" aria-controls="${panelId}">
@@ -86,9 +98,10 @@
                         <span class="query-rule-meta">대표 표시는 적용 우선순위가 아닙니다.</span>
                       </div>
                       <ol class="query-rule-matches" id="${panelId}" hidden>
-                        ${matches.map((rule, index) => {
-                            const sameDepartment = rule.department?.name === aiDepartment;
-                            return `<li class="query-rule-match${rule.is_representative ? " is-representative" : ""}">
+                        ${matches
+                            .map((rule, index) => {
+                                const sameDepartment = rule.department?.name === aiDepartment;
+                                return `<li class="query-rule-match${rule.is_representative ? " is-representative" : ""}">
                               <span class="query-rule-number">${index + 1}</span>
                               <div class="query-rule-content">
                                 <div class="query-rule-match-heading">
@@ -101,7 +114,8 @@
                                 <p class="query-rule-meta">매칭 키워드: ${escapeHtml((rule.matched_keywords || []).join(", "))}${rule.exclude_keywords?.length ? ` · 제외 키워드: ${escapeHtml(rule.exclude_keywords.join(", "))}` : ""}</p>
                               </div>
                             </li>`;
-                        }).join("")}
+                            })
+                            .join("")}
                       </ol>
                     </section>`;
             }
@@ -368,9 +382,7 @@
                     .join("");
                 if (!filtered.length) {
                     /* Start: 261023 수정 - 필터 빈 화면 공통 형식 */
-                    queryList.replaceChildren(window.AIOneWorkspaceCommon.createFilterEmpty(
-                        "검색된 질의가 없습니다", "현재 필터 조건에 맞는 질의가 없습니다. 필터 조건을 변경하여 다시 확인해 보세요.",
-                    ));
+                    queryList.replaceChildren(createQueryListEmpty("검색된 질의가 없습니다", "현재 필터 조건에 맞는 질의가 없습니다. \n 필터 조건을 변경하여 다시 확인해 보세요."));
                     /* End: 261023 수정 - 필터 빈 화면 공통 형식 */
                 }
                 /* Start: 261023 추가 - 수동 룰 매칭 근거 펼침·접힘 */
@@ -536,22 +548,20 @@
                 if (docOriginal) {
                     docOriginal.innerHTML = `<div class="report-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>원본 문서가 없습니다</strong>
-            <span>질의 파일을 업로드하면 원본 문서가 표시됩니다.</span>
-            <span>업로드한 문서를 선택하면 상세 내용을 확인할 수 있습니다.</span>
+            <strong class="empty-title">원본 문서가 없습니다</strong>
+            <span class="empty-desc">질의 파일을 업로드하면 원본 문서가 표시됩니다.</span>
+            <span class="empty-desc">업로드한 문서를 선택하면 상세 내용을 확인할 수 있습니다.</span>
             </div>`;
                 }
                 docContent.innerHTML = `<div class="report-empty-state">
             <div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-            <strong>질의 추출 결과가 없습니다</strong>
-            <span>질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
-            <span>분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
+            <strong class="empty-title">질의 추출 결과가 없습니다</strong>
+            <span class="empty-desc">질의 파일을 업로드하면 추출된 질의가 표시됩니다.</span>
+            <span class="empty-desc">분석이 완료되면 질의별 상세 내용을 확인할 수 있습니다.</span>
             </div>`;
                 /* Start: 261023 수정 - 필터 빈 화면 공통 형식 */
-                    queryList.replaceChildren(window.AIOneWorkspaceCommon.createFilterEmpty(
-                        "분류된 질의가 없습니다", "질의 파일을 업로드하면 분류 결과가 표시됩니다. AI 추천 실국과 분류 상태를 확인할 수 있습니다.",
-                    ));
-                    /* End: 261023 수정 - 필터 빈 화면 공통 형식 */
+                queryList.replaceChildren(createQueryListEmpty("분류된 질의가 없습니다", "질의 파일을 업로드하면 분류 결과가 표시됩니다. AI 추천 실국과 분류 상태를 확인할 수 있습니다."));
+                /* End: 261023 수정 - 필터 빈 화면 공통 형식 */
                 const statExtracted = $("#statExtracted");
                 if (statExtracted) statExtracted.textContent = "0";
                 ["filterCountAll", "filterCountSingle", "filterCountMulti", "filterCountNone"].forEach((id) => {
@@ -1018,156 +1028,159 @@
             }
 
             // HTML 템플릿을 사용하고 기존 select를 저장 값의 기준으로 유지합니다.
-            const editDepartmentKinds = ['primary', 'support'];
-            const editDepartmentSelects = (kind) => (kind === 'primary'
-                ? ['editMainDept', 'editMainDept2'] : ['editCoopDept', 'editCoopDept2']).map((id) => document.getElementById(id));
+            const editDepartmentKinds = ["primary", "support"];
+            const editDepartmentSelects = (kind) => (kind === "primary" ? ["editMainDept", "editMainDept2"] : ["editCoopDept", "editCoopDept2"]).map((id) => document.getElementById(id));
 
             function closeEditDepartmentResults(picker) {
-                picker.querySelector('.query-department-results').hidden = true;
-                picker.querySelector('.query-department-search input').setAttribute('aria-expanded', 'false');
+                picker.querySelector(".query-department-results").hidden = true;
+                picker.querySelector(".query-department-search input").setAttribute("aria-expanded", "false");
             }
 
             function showEditDepartmentResults(picker) {
                 const kind = picker.dataset.departmentPicker;
-                const input = picker.querySelector('.query-department-search input');
+                const input = picker.querySelector(".query-department-search input");
                 if (picker.hidden || input.disabled) return;
-                editModal.querySelectorAll('[data-department-picker]').forEach((other) => {
+                editModal.querySelectorAll("[data-department-picker]").forEach((other) => {
                     if (other !== picker) closeEditDepartmentResults(other);
                 });
-                const results = picker.querySelector('.query-department-results');
-                const list = results.querySelector('[data-department-options]');
+                const results = picker.querySelector(".query-department-results");
+                const list = results.querySelector("[data-department-options]");
                 const values = rawSelectedDepartmentCodes(kind);
-                const otherValues = rawSelectedDepartmentCodes(kind === 'primary' ? 'support' : 'primary');
-                const limit = $('#editType').value === 'single' ? 1 : 2;
+                const otherValues = rawSelectedDepartmentCodes(kind === "primary" ? "support" : "primary");
+                const limit = $("#editType").value === "single" ? 1 : 2;
                 const keyword = input.value.trim().toLocaleLowerCase();
-                const options = [...editDepartmentSelects(kind)[0].options].filter((option) =>
-                    option.value && option.textContent.toLocaleLowerCase().includes(keyword));
+                const options = [...editDepartmentSelects(kind)[0].options].filter((option) => option.value && option.textContent.toLocaleLowerCase().includes(keyword));
                 list.replaceChildren();
-                results.querySelector('[data-department-results-title]').textContent = keyword ? '검색 결과' : '전체 실국';
-                results.querySelector('[data-department-results-count]').textContent = options.length + '개';
+                results.querySelector("[data-department-results-title]").textContent = keyword ? "검색 결과" : "전체 실국";
+                results.querySelector("[data-department-results-count]").textContent = options.length + "개";
                 const groups = new Map();
                 options.forEach((option) => {
                     const department = actualDepartments.find((item) => actualDepartmentCode(item) === option.value);
                     const groupName = notificationOrganizationName(department);
                     if (!groups.has(groupName)) {
-                        const group = $('#editDepartmentGroupTemplate').content.firstElementChild.cloneNode(true);
-                        group.querySelector('h4').textContent = groupName;
+                        const group = $("#editDepartmentGroupTemplate").content.firstElementChild.cloneNode(true);
+                        group.querySelector("h4").textContent = groupName;
                         list.append(group);
-                        groups.set(groupName, group.querySelector('div'));
+                        groups.set(groupName, group.querySelector("div"));
                     }
-                    const row = $('#editDepartmentOptionTemplate').content.firstElementChild.cloneNode(true);
-                    const checkbox = row.querySelector('input');
+                    const row = $("#editDepartmentOptionTemplate").content.firstElementChild.cloneNode(true);
+                    const checkbox = row.querySelector("input");
                     checkbox.value = option.value;
                     checkbox.checked = values.includes(option.value);
                     checkbox.disabled = otherValues.includes(option.value) || (!checkbox.checked && values.length >= limit);
-                    row.querySelector('span').textContent = option.textContent;
-                    checkbox.addEventListener('change', () => {
+                    row.querySelector("span").textContent = option.textContent;
+                    checkbox.addEventListener("change", () => {
                         const current = rawSelectedDepartmentCodes(kind);
                         const next = checkbox.checked ? [...current, option.value] : current.filter((code) => code !== option.value);
-                        if (next.length > limit || rawSelectedDepartmentCodes(kind === 'primary' ? 'support' : 'primary').includes(option.value)) return;
+                        if (next.length > limit || rawSelectedDepartmentCodes(kind === "primary" ? "support" : "primary").includes(option.value)) return;
                         editDepartmentSelects(kind).forEach((select, index) => {
-                            select.value = next[index] || '';
+                            select.value = next[index] || "";
                             select.disabled = index > 0 && !next[index];
                         });
                         renderEditDepartmentPickers();
                         showEditDepartmentResults(picker);
-                        [...list.querySelectorAll('input')].find((item) => item.value === option.value)?.focus({ preventScroll: true });
+                        [...list.querySelectorAll("input")].find((item) => item.value === option.value)?.focus({ preventScroll: true });
                     });
                     groups.get(groupName).append(row);
                 });
                 if (!options.length) {
-                    const title = document.createElement('p');
-                    title.className = 'empty-title';
-                    title.textContent = '검색 결과가 없습니다.';
+                    const title = document.createElement("strong");
+                    title.className = "empty-title";
+                    title.textContent = "검색 결과가 없습니다.";
                     list.replaceChildren(title);
                 }
                 // 본문이 스크롤된 경우에도 선택창이 본문 위쪽 경계를 넘지 않게 합니다.
-                const searchTop = picker.querySelector('.query-department-search-wrap').getBoundingClientRect().top;
-                const bodyTop = editModal.querySelector('.modal-msg').getBoundingClientRect().top;
-                results.style.maxHeight = Math.max(0, Math.min(270, searchTop - bodyTop - 8)) + 'px';
+                const searchTop = picker.querySelector(".query-department-search-wrap").getBoundingClientRect().top;
+                const bodyTop = editModal.querySelector(".modal-msg").getBoundingClientRect().top;
+                results.style.maxHeight = Math.max(0, Math.min(270, searchTop - bodyTop - 8)) + "px";
                 results.hidden = false;
-                input.setAttribute('aria-expanded', 'true');
+                input.setAttribute("aria-expanded", "true");
             }
 
             function initEditDepartmentPickers() {
                 if (editModal.dataset.departmentPickersReady) return;
-                editModal.dataset.departmentPickersReady = 'true';
-                editModal.querySelectorAll('[data-department-picker]').forEach((picker) => {
-                    const input = picker.querySelector('.query-department-search input');
+                editModal.dataset.departmentPickersReady = "true";
+                editModal.querySelectorAll("[data-department-picker]").forEach((picker) => {
+                    const input = picker.querySelector(".query-department-search input");
                     const search = () => showEditDepartmentResults(picker);
-                    input.addEventListener('focus', search);
-                    input.addEventListener('click', search);
-                    input.addEventListener('input', search);
-                    picker.querySelector('.query-department-search').addEventListener('click', (event) => {
-                        if (event.target !== input) { input.focus(); search(); }
+                    input.addEventListener("focus", search);
+                    input.addEventListener("click", search);
+                    input.addEventListener("input", search);
+                    picker.querySelector(".query-department-search").addEventListener("click", (event) => {
+                        if (event.target !== input) {
+                            input.focus();
+                            search();
+                        }
                     });
-                    picker.addEventListener('keydown', (event) => {
-                        const results = picker.querySelector('.query-department-results');
-                        if (event.key === 'Escape' && !results.hidden) {
+                    picker.addEventListener("keydown", (event) => {
+                        const results = picker.querySelector(".query-department-results");
+                        if (event.key === "Escape" && !results.hidden) {
                             event.preventDefault();
                             event.stopPropagation();
                             input.focus();
                             closeEditDepartmentResults(picker);
-                        } else if (event.target === input && (event.key === 'Enter' || event.key === 'ArrowDown')) {
+                        } else if (event.target === input && (event.key === "Enter" || event.key === "ArrowDown")) {
                             event.preventDefault();
                             search();
-                            if (event.key === 'ArrowDown') results.querySelector('input:not(:disabled)')?.focus();
+                            if (event.key === "ArrowDown") results.querySelector("input:not(:disabled)")?.focus();
                         }
                     });
-                    picker.addEventListener('focusout', () => {
+                    picker.addEventListener("focusout", () => {
                         requestAnimationFrame(() => {
                             if (!picker.contains(document.activeElement)) closeEditDepartmentResults(picker);
                         });
                     });
                 });
-                editModal.addEventListener('click', (event) => {
-                    editModal.querySelectorAll('[data-department-picker]').forEach((picker) => {
+                editModal.addEventListener("click", (event) => {
+                    editModal.querySelectorAll("[data-department-picker]").forEach((picker) => {
                         if (!picker.contains(event.target)) closeEditDepartmentResults(picker);
                     });
                 });
-                editModal.addEventListener('modal:close', () => editModal.querySelectorAll('[data-department-picker]').forEach(closeEditDepartmentResults));
-                editModal.querySelector('.modal-msg').addEventListener('scroll', () => {
-                    editModal.querySelectorAll('[data-department-picker]').forEach(closeEditDepartmentResults);
+                editModal.addEventListener("modal:close", () => editModal.querySelectorAll("[data-department-picker]").forEach(closeEditDepartmentResults));
+                editModal.querySelector(".modal-msg").addEventListener("scroll", () => {
+                    editModal.querySelectorAll("[data-department-picker]").forEach(closeEditDepartmentResults);
                 });
             }
 
             function renderEditDepartmentPickers() {
                 initEditDepartmentPickers();
-                const type = $('#editType').value;
-                editModal.classList.toggle('is-multi-department', type === 'multi');
-                editModal.querySelector('.query-department-grid').hidden = type === 'none';
-                editModal.querySelector('.query-department-none').hidden = type !== 'none';
+                const type = $("#editType").value;
+                editModal.classList.toggle("is-multi-department", type === "multi");
+                editModal.querySelector(".query-department-grid").hidden = type === "none";
+                editModal.querySelector(".query-department-none").hidden = type !== "none";
                 editDepartmentKinds.forEach((kind) => {
                     const selects = editDepartmentSelects(kind);
-                    selects[0].closest('.form-group').hidden = true;
+                    selects[0].closest(".form-group").hidden = true;
                     const picker = editModal.querySelector('[data-department-picker="' + kind + '"]');
-                    picker.hidden = type === 'none' || (kind === 'support' && type !== 'multi');
+                    picker.hidden = type === "none" || (kind === "support" && type !== "multi");
                     const values = rawSelectedDepartmentCodes(kind);
-                    const limit = type === 'single' ? 1 : 2;
-                    const count = picker.querySelector('.query-department-count');
-                    const strong = document.createElement('strong');
-                    strong.textContent = values.length + '/' + limit;
-                    count.replaceChildren(strong, document.createTextNode('개 선택'));
-                    const tags = picker.querySelector('.query-department-tags');
+                    const limit = type === "single" ? 1 : 2;
+                    const count = picker.querySelector(".query-department-count");
+                    const strong = document.createElement("strong");
+                    strong.textContent = values.length + "/" + limit;
+                    count.replaceChildren(strong, document.createTextNode("개 선택"));
+                    const tags = picker.querySelector(".query-department-tags");
                     tags.replaceChildren();
                     values.forEach((code) => {
                         const name = [...selects[0].options].find((option) => option.value === code)?.textContent || code;
-                        const button = $('#editDepartmentTagTemplate').content.firstElementChild.cloneNode(true);
-                        button.textContent = name + ' ×';
-                        button.setAttribute('aria-label', name + ' 선택 해제');
-                        button.addEventListener('click', () => {
+                        const button = $("#editDepartmentTagTemplate").content.firstElementChild.cloneNode(true);
+                        button.textContent = name + " ×";
+                        button.setAttribute("aria-label", name + " 선택 해제");
+                        button.addEventListener("click", () => {
                             const remaining = rawSelectedDepartmentCodes(kind).filter((value) => value !== code);
-                            selects.forEach((select, index) => { select.value = remaining[index] || ''; });
+                            selects.forEach((select, index) => {
+                                select.value = remaining[index] || "";
+                            });
                             renderEditDepartmentPickers();
-                            picker.querySelector('.query-department-search input').focus();
+                            picker.querySelector(".query-department-search input").focus();
                         });
                         tags.append(button);
                     });
-                    if (!values.length) tags.textContent = '선택된 실국이 없습니다.';
-                    picker.querySelector('.query-department-search input').disabled = type === 'none';
+                    if (!values.length) tags.textContent = "선택된 실국이 없습니다.";
+                    picker.querySelector(".query-department-search input").disabled = type === "none";
                     closeEditDepartmentResults(picker);
                 });
-                $('#editOrg').closest('.form-group').hidden = true;
+                $("#editOrg").closest(".form-group").hidden = true;
             }
 
             function syncEditTypeControls() {
@@ -1245,14 +1258,12 @@
                         ? editingQuery.raw.primary_departments
                         : Array.isArray(editingQuery.primaryDepartments) && editingQuery.primaryDepartments.length
                           ? editingQuery.primaryDepartments
-                           : !editingQuery.primaryWasModified && editingQuery.predictedDepartment
+                          : !editingQuery.primaryWasModified && editingQuery.predictedDepartment
                             ? [editingQuery.predictedDepartment]
                             : [];
                 const supportList = Array.isArray(editingQuery.raw?.support_departments) ? editingQuery.raw.support_departments : Array.isArray(editingQuery.supportDepartments) ? editingQuery.supportDepartments : [];
                 const currentType = editingQuery.userSelectedType || editingQuery.type;
-                const savedType = ["single", "multi", "none"].includes(currentType)
-                    ? currentType
-                    : !primaryList.length ? "none" : primaryList.length > 1 || supportList.length > 0 ? "multi" : "single";
+                const savedType = ["single", "multi", "none"].includes(currentType) ? currentType : !primaryList.length ? "none" : primaryList.length > 1 || supportList.length > 0 ? "multi" : "single";
                 $("#editType").value = savedType;
                 const primaryCodes = primaryList
                     .map((item) => actualDepartmentCode(item))
@@ -1287,9 +1298,7 @@
                 const current = readEditValues();
                 return {
                     text: current.text !== editInitialValues?.text,
-                    departments: current.type !== editInitialValues?.type
-                        || JSON.stringify(current.primary) !== JSON.stringify(editInitialValues?.primary)
-                        || JSON.stringify(current.support) !== JSON.stringify(editInitialValues?.support),
+                    departments: current.type !== editInitialValues?.type || JSON.stringify(current.primary) !== JSON.stringify(editInitialValues?.primary) || JSON.stringify(current.support) !== JSON.stringify(editInitialValues?.support),
                 };
             }
             function confirmQueryEdit(previous, changes) {

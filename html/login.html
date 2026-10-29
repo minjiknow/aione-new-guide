@@ -120,8 +120,8 @@ UI 관리: 로그인 폼·배경·안내는 정적 HTML이며 별도 목록 temp
 					<div class="login-password-field">
 						<input type="password" name="picPswd" id="picPswd" class="form-input" placeholder="비밀번호를 입력하세요"
 							value="" autocomplete="current-password" required />
-						<button type="button" class="login-password-toggle" aria-label="비밀번호 표시"
-							aria-controls="picPswd" aria-pressed="false">
+						<button type="button" class="login-password-toggle" aria-label="비밀번호 표시" aria-controls="picPswd"
+							aria-pressed="false">
 							<img src="../assets/icons/pw-close.svg" width="16" height="16" alt="" />
 						</button>
 					</div>
@@ -130,7 +130,7 @@ UI 관리: 로그인 폼·배경·안내는 정적 HTML이며 별도 목록 temp
 
 				<div class="form-options">
 					<label class="checkbox-label">
-						<input class="checkbox-control checkbox-control-md" type="checkbox" id="rememberMe" />
+						<input type="checkbox" id="rememberMe" />
 						<span class="file-select-check-ui" aria-hidden="true"></span>
 						<span>아이디 저장</span>
 					</label>
@@ -231,6 +231,10 @@ UI 관리: 로그인 폼·배경·안내는 정적 HTML이며 별도 목록 temp
 	</div>
 	<!-- End: 서비스 이용 안내 팝업 -->
 
+	<div id="loginToast" class="ai-one-toast" data-toast role="status"
+		aria-live="polite" hidden>
+		<span class="ai-one-toast-message" data-toast-message></span>
+	</div>
 	<div class="ai-one-notification-toast" aria-live="polite">
 		<div class="ai-one-notification-icon">✓</div>
 		<div class="ai-one-notification-copy"><strong></strong><span></span></div><button type="button"

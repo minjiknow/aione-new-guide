@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 참조소스 검색·가져오기·업로드·선택과 미리보기·다운로드를 처리합니다. 소스 종류별 목록, 검색 확장/복원, 필터 빈 화면 및 자료 삭제 후 선택 상태를 동기화합니다.
+ *
  * AI-ONE 공통 참조소스·문서 미리보기
  * 적용 화면: ai-answer.html, work-support.html
  * 역할: 소스 검색·업로드·선택, 확장 취소, PDF/canvas 미리보기와 원본 다운로드
@@ -134,7 +137,7 @@
                             '<label class="file-select-check"' +
                             (sourceSearchExpanded ? "" : " hidden") +
                             ">" +
-                            '<input type="checkbox" class="checkbox-control checkbox-control-md" data-source-search-check="' +
+                            '<input type="checkbox" data-source-search-check="' +
                             escapeHtml(item.key) +
                             '" aria-label="' +
                             escapeHtml(item.title) +
@@ -173,7 +176,7 @@
                         const fileType = getUploadedFileType(extension ? "source." + extension : item.title);
                         row.innerHTML =
                             '<label class="checkbox-label source-search-all-row">' +
-                            '<input type="checkbox" class="checkbox-control checkbox-control-md" data-source-search-all-check="' +
+                            '<input type="checkbox"  data-source-search-all-check="' +
                             escapeHtml(item.key) +
                             '">' +
                             '<span class="file-select-check-ui" aria-hidden="true"></span>' +
@@ -205,7 +208,7 @@
             }
             // End: 검색결과 전체 팝업 모달 기능 관련
 
-/* Start: 261026 수정 - 참조소스 패널 확장·복원 및 리사이징 */
+            /* Start: 261026 수정 - 참조소스 패널 확장·복원 및 리사이징 */
             // 패널 순서를 유지하면서 기존 공통 폭 계산으로 확장/복원한다.
             const sourcePanel = sourceGroup?.closest('.panel[data-panel="folder"]');
             const sourceExpandButton = sourcePanel?.querySelector("[data-source-collapse]");
@@ -294,7 +297,7 @@
                 window.AIOneWorkspaceUi?.syncPanelCollapseButton(sourcePanel, sourcePanel.classList.contains("panel-collapsed"));
             }
 
-/* End: 261026 수정 - 참조소스 패널 확장·복원 및 리사이징 */
+            /* End: 261026 수정 - 참조소스 패널 확장·복원 및 리사이징 */
             function cancelSourceSearchExpansion() {
                 sourceSearchExpanded = false;
                 restoreSourcePanel();
@@ -508,9 +511,18 @@
                           '" aria-label="' +
                           escapeHtml(reference.title) +
                           ' 선택"><span class="file-select-check-ui" aria-hidden="true"></span></label>';
-                    row.innerHTML = status +
-                        '<span class="file-icon file-icon-collapsed ' + escapeHtml(fileType.type) + '" aria-hidden="true">' + escapeHtml(fileType.label) + '</span>' +
-                        '<span class="file-name-simple" title="' + escapeHtml(reference.title) + '">' + escapeHtml(reference.title) + "</span>";
+                    row.innerHTML =
+                        status +
+                        '<span class="file-icon file-icon-collapsed ' +
+                        escapeHtml(fileType.type) +
+                        '" aria-hidden="true">' +
+                        escapeHtml(fileType.label) +
+                        "</span>" +
+                        '<span class="file-name-simple" title="' +
+                        escapeHtml(reference.title) +
+                        '">' +
+                        escapeHtml(reference.title) +
+                        "</span>";
                     appendSourceFileDot(row, { name: fileName, dot: fileType.type });
                     el.fileList.appendChild(row);
                 });
@@ -671,7 +683,12 @@
             // getUploadedFileType: 필요한 값을 조회.
             function getUploadedFileType(name, extensionHint = "") {
                 const nameExtension = getUploadedFileExtension(name).toLowerCase();
-                const extension = nameExtension === "file" ? String(extensionHint || "file").replace(/^\./, "").toLowerCase() : nameExtension;
+                const extension =
+                    nameExtension === "file"
+                        ? String(extensionHint || "file")
+                              .replace(/^\./, "")
+                              .toLowerCase()
+                        : nameExtension;
                 if (extension === "pdf") return { type: "pdf", label: "PDF" };
                 if (extension === "doc" || extension === "docx") return { type: "docx", label: extension.toUpperCase() };
                 if (extension === "hwp" || extension === "hwpx") return { type: "hwp", label: "HWP" };
@@ -1345,7 +1362,7 @@
                     el.applyReferencesMessage.textContent = el.applyReferencesMessage.dataset.referenceMessage || `선택한 관련자료 ${selectedCount}건을 답변서에 반영할 수 있습니다.`;
                 }
                 // Start: 261014 추가 - 가져온 검색 문서의 선택자료 표시
-                // 기존 추천 자료는 점수를 유지하고, 직접 가져온 검색 자료만 검색 태그를 표시한다.
+                // 관련자료는 추천 태그, 직접 가져온 검색 자료는 검색 태그로 표시한다.
                 selected.forEach((item) => {
                     const row = document.createElement("li");
                     row.innerHTML =
@@ -1362,10 +1379,14 @@
                         tag.classList.add("search");
                         row.prepend(tag);
                     } else {
-                        const score = document.createElement("span");
-                        score.className = "ref-score";
-                        score.textContent = Math.round(item.score * 10) / 10 + "%";
-                        row.prepend(score);
+                        // 점수 표시 재연동 시 복원한다.
+                        // const score = document.createElement("span");
+                        // score.className = "ref-score";
+                        // score.textContent = Math.round(item.score * 10) / 10 + "%";
+                        // row.prepend(score);
+                        const tag = createRecommendationTagFromPublicPrototype("추천");
+                        tag.classList.add("blue");
+                        row.prepend(tag);
                     }
                     el.selectedReferenceList.appendChild(row);
                 });
@@ -1606,6 +1627,10 @@
             // 유사답변서는 유사도, 검색·업로드 자료는 출처 배지를 표시한다. 카드 활성화는 반영 선택과 별개다.
             // 문서 ID/PDF.js가 없거나 204·404·빈 응답이면 HTML의 빈 canvas 템플릿을 표시한다.
             async function renderPreview() {
+                return window.AIOneLoadingOverlay.preview(el.sourcePreview, getActiveReferenceItem()?.title, renderPreviewContent);
+            }
+
+            async function renderPreviewContent() {
                 // 261020: 관련자료 미리보기가 없는 페이지에서도 대화와 참조소스 갱신을 유지한다.
                 if (!el.sourcePreview) return;
                 const item = getActiveReferenceItem();
@@ -1614,6 +1639,11 @@
                 const previewHeaderActions = document.getElementById("recommendPreviewHeaderActions");
                 const previewFileName = previewHeaderActions?.querySelector(".file-name");
                 el.previewScore.hidden = false;
+                if (runtime.config.kind === "draft") {
+                    const isUploadBadge = item?.category === "upload";
+                    el.previewScore.classList.toggle("green", isUploadBadge);
+                    el.previewScore.classList.toggle("blue", !isUploadBadge);
+                }
                 if (previewHeaderActions) previewHeaderActions.hidden = false;
                 if (previewFileName) {
                     previewFileName.classList.toggle("hidden", !item);
@@ -1629,16 +1659,16 @@
                     el.sourcePreview.classList.remove("answer-pdfjs-preview");
                     el.sourcePreview.innerHTML =
                         '<div class="answer-recommend-empty preview-empty answer-recommend-empty-offset"><div class="no-file-icon" aria-hidden="true"><img src="' +
-                        '../assets/icons/no-file.svg" alt="" /></div><strong>미리 볼 관련자료가 없습니다</strong><span>AI 채팅에 국회 질의를 입력하면 추천 자료의 원문과 주요 내용을 여기에서 확인할 수 있습니다.</span></div>';
+                        '../assets/icons/no-file.svg" alt="" /></div><strong class="empty-title">미리 볼 관련자료가 없습니다</strong><span class="empty-desc">AI 채팅에 국회 질의를 입력하면 추천 자료의 원문과 주요 내용을 \n 여기에서 확인할 수 있습니다.</span></div>';
                     requestAnimationFrame(updateRecommendDocumentStats);
                     return;
                 }
                 const score = Math.round(Number(item.score || 0) * 10) / 10;
                 if (runtime.config.sourceRowPreview === true) {
-                    el.previewScore.textContent = item.category === "upload" ? "업로드자료" : "검색자료";
+                    el.previewScore.textContent = item.category === "upload" ? "업로드소스" : "검색자료";
                     el.previewScore.classList.add("blue");
                 } else {
-                    el.previewScore.textContent = item.category === "history" ? "유사도 " + score + "%" : item.category === "upload" ? "업로드자료" : "검색소스";
+                    el.previewScore.textContent = item.category === "history" ? "유사도 " + score + "%" : item.category === "upload" ? "업로드소스" : "검색소스";
                 }
                 previewDownloadWrap?.classList.remove("hidden");
                 const isUploadPreview = item.category === "upload";

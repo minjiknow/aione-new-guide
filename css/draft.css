@@ -1,6 +1,9 @@
 @charset "utf-8";
 
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 답변서 관련자료 필터·카드·초안·근거·비교 스타일을 관리합니다. 잘못 남은 문서 뷰어/로딩 종료 표시를 정리하고 반응형·자료 카드 구간의 짝을 보완합니다.
+ *
  * AI-ONE 답변서 초안 스타일
  * 적용 화면: ai-answer.html
  * 역할: 관련자료 필터·추천 점수, 초안 탭·본문·버전·근거·편집·비교
@@ -71,18 +74,16 @@ html[data-theme="dark"] :is(.answer-draft-toolbar, .answer-draft-versionbar) {
     color: var(--text);
 }
 
-
 /* 검색자료·업로드자료 탭에서는 전체선택을 숨긴다. */
 #answerPanelRecommend:has([data-reference-filter="search"][aria-pressed="true"]) .rec-checkbox-label,
 #answerPanelRecommend:has([data-reference-filter="upload"][aria-pressed="true"]) .rec-checkbox-label {
     display: none;
 }
 
-/* End: 문서 뷰어 */
+/* 관련자료 필터와 초안의 페이지 전용 보정 끝 */
 
 /* Start: Answer Page Base 반응형 */
 @media (max-width: 1024px) {
-
     .answer-tab-panel .answer-version-labels {
         width: 100%;
         max-width: 100%;
@@ -92,17 +93,20 @@ html[data-theme="dark"] :is(.answer-draft-toolbar, .answer-draft-versionbar) {
 
     .answer-tab-panel .answer-draft-versionbar {
         flex-wrap: wrap;
-    }}
+    }
+}
 
 @media (max-width: 720px) {
-
     .verify-detail-panel {
         width: 100%;
         min-height: 420px;
         border-top: 1px solid var(--border);
-    }}
+    }
+}
 
-@media (max-width: 480px) {}
+@media (max-width: 480px) {
+}
+/* End: Answer Page Base 반응형 */
 
 html[data-theme="dark"] .rec-score {
     color: var(--primary);
@@ -112,7 +116,7 @@ html[data-theme="dark"] .rec-score {
     display: block;
 }
 
-/* End: Answer loading skeleton */
+/* 목록 표시는 공통 로딩 스타일과 별도로 적용합니다. */
 
 .answer-center-spacer {
     display: none;
@@ -164,11 +168,11 @@ html[data-theme="dark"] .rec-score {
 .rec-checkbox {
     margin-top: 1.5px;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: fit-content;
+    height: 14px;
 }
 
-/* End: 추천자료 및 문서 미리보기 패널 */
+/* 관련자료 카드 배치 보정 끝 */
 
 /* Start: 261015 추가 - 관련자료 안내 배너 및 검색·업로드 카드 */
 /* ai-answer.html의 referenceSourceCardTemplate에 적용한다. 유사답변서는 기존 rec-card 구조를 사용한다. */
@@ -228,15 +232,17 @@ html[data-theme="dark"] .rec-score {
     overflow-wrap: anywhere;
 }
 
-.reference-source-card--upload .sub-badge {
-    --reference-upload-color: color-mix(in srgb, var(--cyan) 80%, var(--green));
-    background: color-mix(in srgb, var(--reference-upload-color) 9%, var(--surface));
-    color: var(--reference-upload-color);
+.sub-badge.green {
+    --sub-badge-green-color: color-mix(in srgb, var(--cyan) 80%, var(--green));
+    background: color-mix(in srgb, var(--sub-badge-green-color) 9%, var(--surface));
+    color: var(--sub-badge-green-color);
 }
 
 html[data-theme="dark"] .rec-card.reference-source-card:not(.active):not(.is-selected) {
     background: color-mix(in srgb, var(--primary) 2%, var(--surface));
 }
+
+/* End: 261015 추가 - 관련자료 안내 배너 및 검색·업로드 카드 */
 
 /* 답변서 초안 전용. panel.css 다음에 로드합니다. */
 
@@ -466,8 +472,6 @@ html[data-theme="dark"] .rec-card.reference-source-card:not(.active):not(.is-sel
 
 /* End: 답변서 표 */
 
-
-
 /* Start: 근거 상세 헤더 보정 */
 .vd-header {
     gap: 12px;
@@ -550,7 +554,6 @@ html[data-theme="dark"] .rec-card.reference-source-card:not(.active):not(.is-sel
 .answer-draft-empty[hidden] {
     display: none !important;
 }
-
 
 .answer-draft-versionbar {
     display: flex;
@@ -645,8 +648,6 @@ html[data-theme="dark"] .rec-card.reference-source-card:not(.active):not(.is-sel
     font-size: calc(10px * var(--ui-font-scale));
     font-weight: 600;
 }
-
-
 
 .report-download-anchor {
     position: relative;
@@ -908,7 +909,6 @@ html[data-theme="dark"] .rec-card.reference-source-card:not(.active):not(.is-sel
 }
 
 @media (max-width: 1024px) {
-
     .three-panel [data-panel="folder"] {
         display: flex;
     }
@@ -1843,21 +1843,21 @@ body:has(.draft-version-compare.is-fullscreen) {
 
 /* 261022 수정 - 기존 중앙 작업 탭 UI 및 반응형 유지 */
 @media (max-width: 1024px) {
-.center-tabs {
-width: 100%;
+    .center-tabs {
+        width: 100%;
         overflow-x: auto;
         flex-wrap: nowrap;
-}
+    }
 }
 
 @media (max-width: 480px) {
-.center-tabs {
-padding: 2px;
-}
+    .center-tabs {
+        padding: 2px;
+    }
 }
 
 .center-tabs {
-min-width: 0;
+    min-width: 0;
     max-width: 100%;
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -1866,25 +1866,35 @@ min-width: 0;
 }
 
 .center-tabs::-webkit-scrollbar {
-display: none;
+    display: none;
 }
 
 @media (max-width: 1280px) {
-.center-tabs {
-width: max-content;
+    .center-tabs {
+        width: max-content;
         min-width: max-content;
         max-width: none;
         justify-self: center;
         overflow-x: visible;
-}
+    }
 }
 
 @media (max-width: 1024px) {
-.center-tabs {
-min-width: 0;
-        
+    .center-tabs {
+        min-width: 0;
+
         justify-self: stretch;
         justify-content: flex-start;
         overflow-x: auto;
+    }
 }
+
+/* 패널 전체 보기에서는 좁은 화면에서도 헤더 아래 본문만 스크롤합니다. */
+.three-panel > .panel-center.document-statusbar-fullscreen > .answer-center-body,
+.three-panel > .panel-center.document-statusbar-fullscreen .recommend-view-wrapper,
+.three-panel > .panel-center.document-statusbar-fullscreen .recommend-view-wrapper > .center-split,
+.three-panel > .panel-center.document-statusbar-fullscreen :is(.recommend-list, .preview-body) {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
 }

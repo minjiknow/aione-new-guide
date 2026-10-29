@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!--
+[261028 누적 변경 요약 (현재 구현 기준)]
+공통 UI의 클래스 조합·상태·페이지별 예시를 모은 가이드입니다. common.css/common.js와 common-ui-guide.css/js를 연결해 컴포넌트와 팝업 동작을 확인합니다.
+-->
 
 <html lang="ko" data-theme="light">
 
@@ -13,6 +17,8 @@
 	<link rel="stylesheet" href="../css/common-ui-guide.css">
 	<script src="../js/common.js" defer></script>
 	<script src="../js/panel.js" defer></script>
+	<script src="../js/dummy/dummy-data.js" defer></script>
+	<script src="../js/ai-home.js" defer></script>
 	<script src="../js/common-ui-guide.js" defer></script>
 </head>
 
@@ -95,6 +101,9 @@
 				<p id="guide-search-empty" hidden>검색 결과가 없습니다. 다른 검색어를 입력해 주세요.</p>
 				<section id="components" class="guide-section" aria-labelledby="components-title">
 					<h2 id="components-title">공통 UI 요소</h2>
+					<p>대조 기준: 기존 8개 화면의 HTML·페이지 스크립트와 common.css/common.js입니다. 공통 파일에 정의만 있고 현재 화면에서 사용이 확인되지 않은
+						choice-group, toggle-switch, data-character-current 기반 글자 수 카운터는 사용 예시로 추가하지 않았습니다. 작업 알림은 요청에
+						따라 가이드에서 제외했습니다. 미리보기용 실행 버튼·예시 문구·생략 범위는 각 항목에 표시합니다.</p>
 					<p>8개 서비스 화면과 공통 CSS·동적 렌더러의 주요 UI 요소를 대조했습니다. 기본 클래스 열에는 각 요소의 핵심 구성 클래스만 표시했습니다. 예시는
 						기존 HTML 요소와 공통·화면별 CSS를 표 안에 직접 배치했습니다. 본문 생략과 예시 데이터는 각 항목에 표시했습니다. 문서 생성·저장 등 화면 데이터에 연결된 작업은
 						원본 화면에서 실행합니다.</p>
@@ -130,23 +139,28 @@
 																data-icon="plus" alt="" src="../assets/icons/plus.svg">
 															<span>새 채팅</span>
 														</button>
-                                                        <button class="apply-selected-btn" type="button">검증</button>
-                                                        <button class="apply-selected-btn" type="button" disabled>검증</button>
-                                                    </div>
+														<button class="apply-selected-btn" type="button">검증</button>
+														<button class="apply-selected-btn" type="button"
+															disabled>검증</button>
+													</div>
 												</div>
 											</div>
 											<p class="guide-preview-note">편집·새 채팅·검증 버튼 유형 · 실제 작업은 원본 화면에서 실행</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">button<br>apply-selected-btn</span>
 										</td>
-										<td>기본 최소 높이 32px<br>button-sm: padding 4px 10px, 높이 자동<br>apply-selected-btn: 높이 30px · 최소 너비 52px · padding 0 13px</td>
+										<td>기본 최소 높이 32px<br>button-sm: padding 4px 10px, 높이 자동<br>apply-selected-btn:
+											높이 30px · 최소 너비 52px · padding 0 13px</td>
 										<td>button에 용도별 색상·크기 클래스를 조합합니다. 주요 실행은 button-primary, 보조 실행은
-											button-soft-primary를 사용합니다.<br>검증 유형은 panel.css의 독립 클래스 apply-selected-btn을 사용합니다. 밝은 테마에서 흰 바탕·강조색 테두리와 글자로 표시하며, button 클래스와 조합하지 않습니다.<br>일반 실행은 type="button", 제출만 type="submit"을 사용하고
+											button-soft-primary를 사용합니다.<br>검증 유형은 panel.css의 독립 클래스 apply-selected-btn을
+											사용합니다. 밝은 테마에서 흰 바탕·강조색 테두리와 글자로 표시하며, button 클래스와 조합하지 않습니다.<br>일반 실행은
+											type="button", 제출만 type="submit"을 사용하고
 											실행 불가 상태는 disabled로 처리합니다.</td>
 									</tr>
-                                    <tr data-guide-row>
+									<tr data-guide-row>
 										<td role="rowheader">아이콘 버튼</td>
 										<td>
 											<div class="guide-preview-viewport">
@@ -169,7 +183,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">접기·전송 버튼 원본 · 전송 비활성 상태</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">icon-button</span>
@@ -211,7 +226,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">수동 룰 입력·실국 선택·질의 수정 원본</p>
-											<a class="guide-preview-source" href="classifcation.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="classifcation.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">form-input<br>form-select<br>form-textarea</span>
@@ -230,23 +246,22 @@
 														class="rec-checkbox-label"
 														for="guide-example-4-sourceSearchSelectAll">
 														<input id="guide-example-4-sourceSearchSelectAll"
-															data-preview-id="sourceSearchSelectAll" type="checkbox"
-															class="checkbox-control checkbox-control-sm">
+															data-preview-id="sourceSearchSelectAll" type="checkbox">
 														<span class="file-select-check-ui" aria-hidden="true"></span>
 														<span>전체선택</span>
 													</label></div>
 											</div>
 											<p class="guide-preview-note">검색 소스 전체선택 원본 · input은 상태·키보드 조작, span은 체크 표시
 											</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span
-												class="class-value">input.checkbox-control<br>span.file-select-check-ui</span>
+												class="class-value">input[type="checkbox"]<br>span.file-select-check-ui</span>
 										</td>
 										<td>
-											<span class="class-value">checkbox-control-md 16px<br>checkbox-control-sm
-												14px<br>checkbox-control-xs 13px</span>
+											<span class="class-value">14 × 14px 공통</span>
 										</td>
 										<td>input 바로 다음에 span.file-select-check-ui 배치<br>input은 시각적으로 숨기고 span과 ::after로
 											테두리·체크 표시<br>checked·indeterminate·focus-visible·disabled 상태와 크기는 공통 CSS에서
@@ -271,7 +286,8 @@
 											</div>
 											<p class="guide-preview-note">추천 문구·자료·부서 태그 · 자료와 부서 태그는 동적 생성 구조이며 문구·부서명은
 												예시</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">chat-tag / rec-tag<br>rec-tag dept-tag / rec-tag
@@ -279,7 +295,9 @@
 										</td>
 										<td>내용에 따라 너비 결정<br>chat-tag: padding 4px 10px<br>rec-tag: padding 3px 6px</td>
 										<td>chat-tag: 추천 문구 버튼<br>rec-tag: 자료 표시<br>rec-tag dept-tag: 협조실국·비소관
-											기관<br>rec-tag dept-tag main: 주관실국<br>부서 값은 데이터로 유지합니다.</td>
+											기관<br>rec-tag dept-tag main: 주관실국<br>부서 값은 데이터로 유지합니다.<br>추천 문구는 부모의
+											data-chip-target에 입력 선택자를 지정하고 data-chip-send로 전송 여부를 정합니다. 이 예시는 전송 대상을
+											연결하지 않은 외형입니다.</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">배지</td>
@@ -301,7 +319,8 @@
 											</div>
 											<p class="guide-preview-note">상태 배지·검증 아이콘·TOP 배지만 표시 · 추천 카드 전체는 추천 카드 항목
 												참고</p>
-											<a class="guide-preview-source" href="sale-review.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="sale-review.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">status-badge /
@@ -374,7 +393,8 @@
 											</div>
 											<p class="guide-preview-note">관련자료·초안 탭과 자료 필터 원본 · 선택 상태 전환, 결과 데이터는 원본
 												화면에서 연결<br>관련자료·답변서 초안의 문서 내용은 원본 화면에서 연결</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">tab-button / filter-btn</span>
@@ -385,24 +405,26 @@
 											클래스를 유지합니다. 건수는 tab-count 또는 badge filter-count에 표시합니다.</td>
 									</tr>
 									<tr data-guide-row>
-										<td role="rowheader">툴팁</td>
+										<td role="rowheader">data-tooltip</td>
 										<td>
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="ai-answer"
-													data-preview-layout="tooltip"><button type="button"
-														class="icon-button icon-button-ghost" data-tooltip="입력창 펼치기"
-														aria-label="입력창 펼치기"><img class="icon"
-															src="../assets/icons/fullscreen-expand.svg" alt=""></button>
+													data-preview-layout="tooltip"><div class="ai-one-tooltip is-visible" role="tooltip">채팅 목록</div>
 												</div>
 											</div>
-											<p class="guide-preview-note">마우스를 올리거나 키보드로 포커스하면 공통 툴팁 표시</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<p class="guide-preview-note">data-tooltip="채팅 목록"으로 생성되는 실제 공통 툴팁입니다. 가이드에서는 위치만 표 안으로 옮기고 표시 상태를 유지합니다.</p>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
-											<span class="class-value">ai-one-tooltip</span>
+											<span class="class-value">data-tooltip / aria-label<br>생성 레이어: ai-one-tooltip / is-visible</span>
 										</td>
-										<td>문구와 화면 경계에 맞춰 배치<br>data-tooltip-placement로 방향 지정</td>
-										<td>트리거에 data-tooltip 지정<br>AIOneTooltip이 레이어 자동 생성</td>
+										<td>기본 아래쪽 10px 간격<br>아래 공간 부족 시 위쪽 전환<br>화면 경계에서 최소 8px 확보</td>
+										<td><code>data-tooltip="채팅 목록"</code>의 값을 공통 레이어에 표시합니다. 호버·키보드 포커스 시 열리고
+											이탈·Escape 시 닫힙니다.<br>아이콘 버튼은 aria-label도 유지합니다. title은 공통 초기화에서
+											data-tooltip으로 옮깁니다.<br>파일명은 텍스트를 자동 연결하고 변경 시 갱신합니다. data-tooltip-auto는 자동
+											연결 표식이며, data-tooltip-placement는 현재 위치 계산에 사용하지 않습니다.<br>AIOneTooltip.show /
+											hide / bind, 공통 레이어 .ai-one-tooltip</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">드롭다운</td>
@@ -410,10 +432,9 @@
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="classifcation"
 													data-preview-layout="dropdown">
-													<div class="dropdown-menu-component" data-dropdown-menu><button
-															type="button" class="button button-outline"
-															data-dropdown-trigger aria-expanded="false"
-															aria-haspopup="menu">작업 메뉴</button>
+													<div class="dropdown-menu-component" data-dropdown-menu><button type="button" class="icon-button icon-button-ghost icon-button-sm" data-dropdown-trigger aria-expanded="false" aria-haspopup="menu" aria-label="더보기" data-tooltip="더보기"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-small" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="#656D76">
+<circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+</svg></button>
 														<div class="dropdown-menu drawer-list-action-menu" hidden
 															role="menu">
 															<button type="button" class="dropdown-menu-item"
@@ -442,8 +463,9 @@
 													</div>
 												</div>
 											</div>
-											<p class="guide-preview-note">작업 메뉴 원본 · 고정·이름 변경·삭제 아이콘 포함</p>
-											<a class="guide-preview-source" href="classifcation.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<p class="guide-preview-note">기존 더보기 SVG를 직접 삽입한 버튼 · 클릭하면 고정·이름 변경·삭제 메뉴 표시</p>
+											<a class="guide-preview-source" href="classifcation.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span
@@ -457,62 +479,108 @@
 										<td role="rowheader">모달</td>
 										<td>
 											<div class="guide-preview-viewport">
-												<div class="guide-preview" data-preview-page="sale-review"
-													data-preview-layout="modal"><button type="button"
-														class="button button-outline"
-														data-modal-open="guide-live-modal">모달 열기</button>
-													<div class="modal" id="guide-live-modal" data-modal hidden>
-														<div class="modal-bg" data-modal-close></div>
-														<section
-															class="modal-contents modal-medium modal-variant-content"
-															role="dialog" aria-modal="true" data-modal-variant="content"
-															aria-label="분석 내역 삭제 확인">
-															<div class="modal-variant-panel" data-modal-panel="content">
-																<div class="modal-icon danger" data-modal-icon="default"
-																	aria-hidden="true">⚠</div>
-																<div class="modal-title"
-																	id="guide-example-12-saleHistoryDeleteModal-title"
-																	data-preview-id="saleHistoryDeleteModal-title">분석 내역
-																	삭제</div>
-																<div class="modal-msg"
-																	id="guide-example-12-saleHistoryDeleteModal-description"
-																	data-preview-id="saleHistoryDeleteModal-description">
-																	<strong data-sidepop-delete-title="">선택한
-																		분석</strong>를 삭제하시겠습니까?
+												<div class="guide-preview" data-preview-page="home"
+													data-preview-layout="modal">
+													<a class="table-more" href="#guide-live-modal"
+														data-modal-open="guide-live-modal" aria-haspopup="dialog">전체 이력
+														보기 ›</a>
+													<div class="modal history-modal-layer" data-modal hidden
+														id="guide-live-modal" data-home-history-modal=""
+														aria-hidden="true">
+														<div class="modal-bg" data-modal-close aria-hidden="true"></div>
+														<section class="modal-contents history-modal" role="dialog"
+															aria-modal="true" aria-labelledby="guide-history-title">
+															<header class="history-modal-header">
+																<h3 id="guide-history-title">전체 사용 이력</h3>
+																<button type="button" class="history-modal-close"
+																	data-home-history-close="" data-modal-close
+																	aria-label="전체 사용 이력 닫기">×</button>
+															</header>
+															<div class="history-modal-search">
+																<div class="history-search-box">
+																	<label class="sr-only" for="guide-history-search">전체
+																		사용 이력 검색</label>
+																	<img src="../assets/icons/search.svg" alt=""
+																		aria-hidden="true">
+																	<input type="search" id="guide-history-search"
+																		data-preview-id="homeHistorySearch"
+																		data-home-history-search=""
+																		placeholder="서비스, 유형, 작업 내용, 상태, 일시 검색"
+																		autocomplete="off">
+																	<button type="button" class="history-search-clear"
+																		data-home-history-clear="" aria-label="검색어 지우기"
+																		hidden="">×</button>
 																</div>
-																<div class="modal-actions">
-																	<button type="button" class="btn-cancel"
-																		data-modal-close=""
-																		data-chat-delete-close="">취소</button>
-																	<button type="button" class="btn-confirm danger"
-																		data-modal-close="">삭제</button>
+																<span class="history-search-result"
+																	data-home-history-result="">총 0건</span>
+															</div>
+															<div class="history-modal-body">
+																<div class="history-table-scroll">
+																	<table class="table history-table full"
+																		data-datatable="">
+																		<caption class="sr-only">AI-ONE 전체 사용 이력
+																		</caption>
+																		<thead>
+																			<tr>
+																				<th class="table-col-service"
+																					scope="col">서비스</th>
+																				<th class="table-col-type" scope="col">
+																					유형</th>
+																				<th class="table-col-task" scope="col">
+																					작업 내용</th>
+																				<th class="table-col-updated"
+																					scope="col">작업일시</th>
+																				<th class="table-col-status"
+																					scope="col">상태</th>
+																				<th class="table-col-created"
+																					scope="col">등록일</th>
+																			</tr>
+																		</thead>
+																		<tbody data-home-history-rows="">
+																			<!-- 홈과 동일한 home.history를 AIOneHomeHistory.render로 표시합니다. -->
+																		</tbody>
+																	</table>
 																</div>
+																<!-- Start: 검색 결과 없을 시 표시되는 영역 -->
+																<div class="history-search-empty"
+																	data-home-history-empty="" hidden="">
+																	<div class="no-file-icon" aria-hidden="true"><img
+																			src="../assets/icons/no-file.svg" alt="">
+																	</div>
+																	<strong class="empty-title">검색 결과가 없습니다.</strong>
+																	<span class="empty-desc">다른 검색어를 입력해 보세요.</span>
+																</div>
+																<!-- End: 검색 결과 없을 시 표시되는 영역 -->
 															</div>
 														</section>
 													</div>
 												</div>
 											</div>
-											<p class="guide-preview-note">공통 모달 열기·취소·닫기 · 삭제 버튼은 예시 모달만 닫습니다.</p>
-											<a class="guide-preview-source" href="sale-review.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<p class="guide-preview-note">홈의 전체 이력 보기 · 홈과 동일한 더미 이력·렌더러 사용, 검색·검색어 지우기
+												가능. 행 이동은 원본 화면에서 실행합니다.</p>
+											<a class="guide-preview-source" href="home.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
-										<td>
-											<span class="class-value">modal / modal-contents</span>
-										</td>
-										<td>
-											<span class="class-value">modal-small 160px<br>modal-medium
-												380px<br>modal-quite-large 550px<br>modal-large 960px</span>
-										</td>
-										<td>크기는 modal-contents에 적용<br>외곽 data-modal, 닫기
-											data-modal-close<br>AIOneModal.open(el) / close(el)</td>
+										<td><span class="class-value">modal / modal-contents<br>history-modal-layer /
+												history-modal</span></td>
+										<td>전체 사용 이력: 최대 너비 900px<br>화면 높이에 맞춰 테이블 내부 스크롤</td>
+										<td>홈의 table-more로 전체 사용 이력 테이블을 엽니다.<br>가이드에서는
+											data-modal-open·data-modal-close로 공통 모달에 연결합니다. home.history의 예시 데이터를
+											ai-home.js의 공통 이력 렌더러로 표시합니다. 가이드에서는 서버 조회 없이 목록 검색을 체험합니다.</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">Drawer</td>
 										<td>
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="ai-answer"
-													data-preview-layout="drawer"><button type="button"
-														class="button button-outline"
-														data-sidepop-open="guide-live-drawer">드로어 열기</button>
+													data-preview-layout="drawer"><button
+														data-sidepop-open="guide-live-drawer" aria-haspopup="dialog"
+														type="button" class="icon-button icon-button-purple"
+														data-pages="answer" aria-label="채팅 목록" data-tooltip="채팅 목록"
+														data-tooltip-auto data-tooltip-placement="bottom">
+														<img class="icon icon-text" aria-hidden="true" data-icon="list"
+															alt="" src="../assets/icons/list.svg">
+													</button>
 													<div class="drawer" id="guide-live-drawer" data-sidepop hidden>
 														<button class="drawer-backdrop" type="button"
 															aria-label="드로어 닫기" data-sidepop-close></button>
@@ -600,8 +668,10 @@
 													</div>
 												</div>
 											</div>
-											<p class="guide-preview-note">공통 드로어 열기·닫기 · 목록 데이터는 원본 화면에서 연결합니다.</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<p class="guide-preview-note">채팅 목록 아이콘 버튼과 해당 드로어 · 목록 데이터와 검색·정렬·위치 이동은 원본
+												화면에서 연결합니다.</p>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">drawer / drawer-contents</span>
@@ -671,7 +741,8 @@
 											</div>
 											<p class="guide-preview-note">참조소스 업로드와 파일 목록 구조 · 파일명은 예시, 선택은 span 체크박스 사용
 											</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">upload-zone<br>file-item-simple</span>
@@ -689,24 +760,22 @@
 												<div class="guide-preview" data-preview-page="home"
 													data-preview-layout="table">
 													<div class="table-area">
-														<table class="table">
-															<caption>AI-ONE 최근 사용 이력</caption>
-															<thead>
-																<tr>
-																	<th class="table-col-service" scope="col">서비스명</th>
-																	<th class="table-col-type" scope="col">유형</th>
-																	<th class="table-col-task" scope="col">최근 작업명</th>
-																	<th class="table-col-updated" scope="col">최근 이용일
-																	</th>
-																	<th class="table-col-status" scope="col">상태</th>
-																	<th class="table-col-created" scope="col">등록일</th>
-																	<th class="table-col-actions" scope="col"><span
-																			class="sr-only">작업</span>
-																	</th>
-																</tr>
-															</thead>
-															<tbody></tbody>
-														</table>
+														<table class="table" data-datatable="" data-home-datatable="">
+								<caption>AI-ONE 최근 사용 이력</caption>
+								<thead>
+									<tr>
+										<th class="table-col-service" scope="col">서비스명</th>
+										<th class="table-col-type" scope="col">유형</th>
+										<th class="table-col-task" scope="col">최근 작업명</th>
+										<th class="table-col-updated" scope="col">최근 이용일</th>
+										<th class="table-col-status" scope="col">상태</th>
+										<th class="table-col-created" scope="col">등록일</th>
+									</tr>
+								</thead>
+								<!-- Start: 최근 사용 이력데이터 -->
+								<tbody></tbody>
+								<!-- End: 최근 사용 이력데이터 -->
+							</table>
 													</div>
 												</div>
 											</div>
@@ -722,9 +791,9 @@
 													</div>
 												</div>
 											</div>
-											<p class="guide-preview-note">표는 홈의 7열 헤더, 로딩은 답변서의 skeleton-card 원본입니다. 홈의
-												표 로딩 셀은 common.js와 CSS의 클래스가 달라 현재 원본에서도 표시되지 않습니다.</p>
-											<a class="guide-preview-source" href="home.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<p class="guide-preview-note">표는 홈과 같은 6열 구조·더미 이력·렌더러를 사용합니다. 행 이동은 원본 화면에서 실행합니다. 아래 로딩은 답변서의 skeleton-card 원본입니다.</p>
+											<a class="guide-preview-source" href="home.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">table-area / table<br>ai-skeleton</span>
@@ -740,13 +809,13 @@
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="ai-answer"
 													data-preview-layout="empty">
-													<div class="stack"><button type="button"
-															class="button button-outline" data-guide-toast>토스트
-															표시</button>
-														<div class="ai-one-toast" data-toast hidden>
-															<div class="ai-one-toast-message" data-toast-message>
-																저장되었습니다.</div>
+													<div class="stack">
+														<div aria-live="polite" class="ai-one-toast is-visible"
+															data-toast>
+															<span class="ai-one-toast-message" data-toast-message>대화 링크를
+																복사했습니다.</span>
 														</div>
+
 														<div class="empty-state filter-empty-state"
 															data-answer-recommend-empty=""
 															id="guide-example-17-recommendationEmpty"
@@ -760,14 +829,22 @@
 													</div>
 												</div>
 											</div>
-											<p class="guide-preview-note">공통 토스트 생성 구조와 관련자료 빈 결과 원본 · 토스트 문구는 예시</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<p class="guide-preview-note">답변서·질의분류의 실제 토스트 구조와 공통 스타일입니다. 가이드에서는 위치만 표
+												안으로 옮기고 표시 상태를 유지합니다. 실제 화면에서는 하단 중앙에 2.5초 표시됩니다. 아래는 관련자료 빈 결과 원본입니다.
+											</p>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
-											<span class="class-value">ai-one-toast<br>empty-state</span>
+											<span class="class-value">ai-one-toast /
+												is-visible<br>ai-one-toast-message<br>empty-state /
+												filter-empty-state</span>
 										</td>
 										<td>토스트 최소 높이 36px<br>최대 너비 min(400px, 화면 너비 − 32px)<br>빈 결과는 부모 영역에 배치</td>
-										<td>토스트 내부: ai-one-toast-message<br>빈 결과 변형: filter-empty-state</td>
+										<td>토스트: #toast[data-toast] 안에 span[data-toast-message]를 배치합니다.
+											AIOneWorkspaceCommon.showToast(message)로 표시하며 새 메시지는 기존 타이머를 갱신합니다.<br>빈 결과:
+											empty-state filter-empty-state와 no-file-icon·empty-title·empty-desc를 함께
+											사용합니다.</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">상단바</td>
@@ -776,120 +853,191 @@
 												<div class="guide-preview" data-preview-page="ai-answer"
 													data-preview-layout="topbar-mobile">
 													<header class="topbar app-topbar type1">
-					<div class="topbar-title">
-						<h1 class="topbar-maintit" data-topbar-title="">국회 답변서 초안 생성 AI 워크스페이스</h1>
-						<p class="topbar-subtit" data-topbar-subtitle="">자료 분석 · 유사답변서 추천 · 초안 생성 · AI 채팅</p>
-					</div>
-					<div class="topbar-bottom">
-						<!-- 답변서 현재 채팅 제목: 질의분류 workspace-topbar-context와 동일 구조 -->
-						<div class="topbar-workspace-slot" data-slot="workspace">
-							<div class="workspace-topbar-context" aria-label="현재 답변서 채팅 정보">
-								<div class="workspace-input-count">
-									<button type="button" class="workspace-edit-button" id="guide-example-18-answerWorkspaceTitleBtn" data-preview-id="answerWorkspaceTitleBtn"
-										aria-label="대화 제목 수정" data-tooltip="대화 제목 수정" data-tooltip-auto
-										data-tooltip-placement="bottom">
-										<span id="guide-example-18-answerWorkspaceTitleText" data-preview-id="answerWorkspaceTitleText"
-											data-tooltip="기재부 특화 데이터플랫폼-생성형 AI의 구체적인 내용은 무엇인가?">기재부 특화 데이터플랫폼-생성형 AI의
-											구체적인
-											내용은...</span>
-										<img class="icon icon-small workspace-topbar-edit"
-											src="../assets/icons/edit-compact.svg" data-icon="edit-compact" alt=""
-											aria-hidden="true">
-									</button>
-									<input type="text" class="workspace-topbar-input hidden"
-										id="guide-example-18-answerWorkspaceTitleInput" data-preview-id="answerWorkspaceTitleInput" maxlength="60" aria-label="대화 제목 입력">
-								</div>
-							</div>
-						</div>
-						<div class="topbar-right app-topbar-actions">
-							<button type="button" class="button button-soft-primary" id="guide-example-18-newChatBtn" data-preview-id="newChatBtn" data-pages="answer"
-								data-workspace-action="new-chat" aria-label="새 채팅" data-tooltip="새 채팅" data-tooltip-auto
-								data-tooltip-placement="bottom">
-								<img class="icon icon-small" aria-hidden="true" data-icon="plus" alt=""
-									src="../assets/icons/plus.svg">
-								<span>새 채팅</span>
-							</button>
-							<button type="button" class="icon-button icon-button-purple" id="guide-example-18-draftHistoryBtn" data-preview-id="draftHistoryBtn"
-								data-pages="answer" aria-label="채팅 목록" data-tooltip="채팅 목록" data-tooltip-auto
-								data-tooltip-placement="bottom">
-								<img class="icon icon-text" aria-hidden="true" data-icon="list" alt=""
-									src="../assets/icons/list.svg">
-							</button>
-							<div class="accessory-tool" data-accessory-tools="">
-								<button type="button" class="accessory-trigger" aria-label="보조도구 모음"
-									aria-haspopup="true" aria-expanded="false" data-tooltip="보조도구 모음" data-tooltip-auto
-									data-tooltip-placement="bottom">
-									<span class="accessory-icon-closed" aria-hidden="true"><svg viewBox="0 0 24 24">
-											<rect x="3.5" y="3.5" width="7" height="7" rx="2"></rect>
-											<rect x="13.5" y="3.5" width="7" height="7" rx="2"></rect>
-											<rect x="3.5" y="13.5" width="7" height="7" rx="2"></rect>
-											<path d="M17 14v6M14 17h6"></path>
-										</svg></span>
-									<span class="accessory-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24">
-											<path d="M6 6l12 12M18 6 6 18"></path>
-										</svg></span>
-								</button>
-								<div class="accessory-rail" role="toolbar" aria-label="보조도구 기능">
-									<button type="button" class="accessory-action" data-accessory-action="font"
-										aria-label="전체 글자크기" aria-haspopup="dialog" aria-expanded="false"
-										data-tooltip="전체 글자크기" data-tooltip-auto data-tooltip-placement="bottom">
-										<span class="accessory-action-icon"><span class="accessory-font-symbol"
-												aria-hidden="true"><small>A</small><strong>A</strong></span></span>
-									</button>
-									<button type="button" class="accessory-action" data-accessory-action="fullscreen"
-										id="guide-example-18-fullscreenBtn" data-preview-id="fullscreenBtn" aria-label="전체화면 전환" aria-pressed="false"
-										data-tooltip="전체화면 전환" data-tooltip-auto data-tooltip-placement="bottom">
-										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
-												width="14" height="14">
-												<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
-													stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
-													stroke-linejoin="round"></path>
-											</svg></span>
-									</button>
-									<button type="button" class="accessory-action" data-accessory-action="panel-size"
-										id="guide-example-18-panelSizeBtn" data-preview-id="panelSizeBtn" aria-label="패널 위치 순환" aria-pressed="false"
-										data-tooltip="패널 위치 순환" data-tooltip-auto data-tooltip-placement="bottom">
-										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
-												<path d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4"></path>
-											</svg></span>
-									</button>
-									<button type="button" class="accessory-action" data-accessory-action="layout"
-										id="guide-example-18-layoutResetBtn" data-preview-id="layoutResetBtn" aria-label="레이아웃 초기화" data-tooltip="레이아웃 초기화"
-										data-tooltip-auto data-tooltip-placement="bottom">
-										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
-												<rect x="3" y="3" width="18" height="18" rx="2"></rect>
-												<path d="M9 3v18M15 3v18"></path>
-											</svg></span>
-									</button>
-								</div>
-								<div class="accessory-font-panel hidden" role="dialog" aria-label="전체 글자크기">
-									<div class="accessory-font-head"><strong>전체 글자크기</strong><span>100~150%</span></div>
-									<div class="accessory-font-control">
-										<button type="button" data-accessory-font-decrease="" aria-label="글자 작게"
-											disabled="" data-tooltip="글자 작게" data-tooltip-auto
-											data-tooltip-placement="bottom">−</button>
-										<span data-accessory-font-value="" aria-live="polite">100%</span>
-										<button type="button" data-accessory-font-increase="" aria-label="글자 크게"
-											data-tooltip="글자 크게" data-tooltip-auto
-											data-tooltip-placement="bottom">＋</button>
-									</div>
-									<button type="button" class="accessory-font-default" data-tooltip="기본 크기로"
-										data-tooltip-auto data-tooltip-placement="bottom">기본 크기로</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</header>
+														<div class="topbar-title">
+															<h1 class="topbar-maintit" data-topbar-title="">국회 답변서 초안 생성
+																AI 워크스페이스</h1>
+															<p class="topbar-subtit" data-topbar-subtitle="">자료 분석 ·
+																유사답변서 추천 · 초안 생성 · AI 채팅</p>
+														</div>
+														<div class="topbar-bottom">
+															<!-- 답변서 현재 채팅 제목: 질의분류 workspace-topbar-context와 동일 구조 -->
+															<div class="topbar-workspace-slot" data-slot="workspace">
+																<div class="workspace-topbar-context"
+																	aria-label="현재 답변서 채팅 정보">
+																	<div class="workspace-input-count">
+																		<button type="button"
+																			class="workspace-edit-button"
+																			id="guide-example-18-answerWorkspaceTitleBtn"
+																			data-preview-id="answerWorkspaceTitleBtn"
+																			aria-label="대화 제목 수정"
+																			data-tooltip="클릭하여 제목 수정" data-tooltip-auto
+																			data-tooltip-placement="bottom">
+																			<span
+																				id="guide-example-18-answerWorkspaceTitleText"
+																				data-preview-id="answerWorkspaceTitleText">기재부
+																				특화 데이터플랫폼-생성형 AI의
+																				구체적인
+																				내용은...</span>
+																			<img class="icon icon-small workspace-topbar-edit"
+																				src="../assets/icons/edit-compact.svg"
+																				data-icon="edit-compact" alt=""
+																				aria-hidden="true">
+																		</button>
+																		<input type="text"
+																			class="workspace-topbar-input hidden"
+																			id="guide-example-18-answerWorkspaceTitleInput"
+																			data-preview-id="answerWorkspaceTitleInput"
+																			maxlength="60" aria-label="대화 제목 입력">
+																	</div>
+																</div>
+															</div>
+															<div class="topbar-right app-topbar-actions">
+																<button type="button" class="button button-soft-primary"
+																	id="guide-example-18-newChatBtn"
+																	data-preview-id="newChatBtn" data-pages="answer"
+																	data-workspace-action="new-chat" aria-label="새 채팅"
+																	data-tooltip="새 채팅" data-tooltip-auto
+																	data-tooltip-placement="bottom">
+																	<img class="icon icon-small" aria-hidden="true"
+																		data-icon="plus" alt=""
+																		src="../assets/icons/plus.svg">
+																	<span>새 채팅</span>
+																</button>
+																<button type="button"
+																	class="icon-button icon-button-purple"
+																	id="guide-example-18-draftHistoryBtn"
+																	data-preview-id="draftHistoryBtn"
+																	data-pages="answer" aria-label="채팅 목록"
+																	data-tooltip="채팅 목록" data-tooltip-auto
+																	data-tooltip-placement="bottom">
+																	<img class="icon icon-text" aria-hidden="true"
+																		data-icon="list" alt=""
+																		src="../assets/icons/list.svg">
+																</button>
+																<div class="accessory-tool" data-accessory-tools="">
+																	<button type="button" class="accessory-trigger"
+																		aria-label="보조도구 모음" aria-haspopup="true"
+																		aria-expanded="false" data-tooltip="보조도구 모음"
+																		data-tooltip-auto
+																		data-tooltip-placement="bottom">
+																		<span class="accessory-icon-closed"
+																			aria-hidden="true"><svg viewBox="0 0 24 24">
+																				<rect x="3.5" y="3.5" width="7"
+																					height="7" rx="2"></rect>
+																				<rect x="13.5" y="3.5" width="7"
+																					height="7" rx="2"></rect>
+																				<rect x="3.5" y="13.5" width="7"
+																					height="7" rx="2"></rect>
+																				<path d="M17 14v6M14 17h6"></path>
+																			</svg></span>
+																		<span class="accessory-icon-open"
+																			aria-hidden="true"><svg viewBox="0 0 24 24">
+																				<path d="M6 6l12 12M18 6 6 18"></path>
+																			</svg></span>
+																	</button>
+																	<div class="accessory-rail" role="toolbar"
+																		aria-label="보조도구 기능">
+																		<button type="button" class="accessory-action"
+																			data-accessory-action="font"
+																			aria-label="전체 글자크기" aria-haspopup="dialog"
+																			aria-expanded="false" data-tooltip="전체 글자크기"
+																			data-tooltip-auto
+																			data-tooltip-placement="bottom">
+																			<span class="accessory-action-icon"><span
+																					class="accessory-font-symbol"
+																					aria-hidden="true"><small>A</small><strong>A</strong></span></span>
+																		</button>
+																		<button type="button" class="accessory-action"
+																			data-accessory-action="fullscreen"
+																			id="guide-example-18-fullscreenBtn"
+																			data-preview-id="fullscreenBtn"
+																			aria-label="전체화면" aria-pressed="false"
+																			data-tooltip="전체화면" data-tooltip-auto
+																			data-tooltip-placement="bottom">
+																			<span class="accessory-action-icon"
+																				aria-hidden="true"><svg
+																					viewBox="0 0 24 24" width="14"
+																					height="14">
+																					<path
+																						d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"
+																						fill="none"
+																						stroke="currentColor"
+																						stroke-width="1.8"
+																						stroke-linecap="round"
+																						stroke-linejoin="round"></path>
+																				</svg></span>
+																		</button>
+																		<button type="button" class="accessory-action"
+																			data-accessory-action="panel-size"
+																			id="guide-example-18-panelSizeBtn"
+																			data-preview-id="panelSizeBtn"
+																			aria-label="패널 위치 변경" aria-pressed="false"
+																			data-tooltip="패널 위치 변경" data-tooltip-auto
+																			data-tooltip-placement="bottom">
+																			<span class="accessory-action-icon"
+																				aria-hidden="true"><svg
+																					viewBox="0 0 24 24">
+																					<path
+																						d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4">
+																					</path>
+																				</svg></span>
+																		</button>
+																		<button type="button" class="accessory-action"
+																			data-accessory-action="layout"
+																			id="guide-example-18-layoutResetBtn"
+																			data-preview-id="layoutResetBtn"
+																			aria-label="레이아웃 초기화"
+																			data-tooltip="레이아웃 초기화" data-tooltip-auto
+																			data-tooltip-placement="bottom">
+																			<span class="accessory-action-icon"
+																				aria-hidden="true"><svg
+																					viewBox="0 0 24 24">
+																					<rect x="3" y="3" width="18"
+																						height="18" rx="2"></rect>
+																					<path d="M9 3v18M15 3v18"></path>
+																				</svg></span>
+																		</button>
+																	</div>
+																	<div class="accessory-font-panel hidden"
+																		role="dialog" aria-label="전체 글자크기">
+																		<div class="accessory-font-head"><strong>전체
+																				글자크기</strong><span>100~150%</span></div>
+																		<div class="accessory-font-control">
+																			<button type="button"
+																				data-accessory-font-decrease=""
+																				aria-label="글자 작게" disabled=""
+																				data-tooltip="글자 작게" data-tooltip-auto
+																				data-tooltip-placement="bottom">−</button>
+																			<span data-accessory-font-value=""
+																				aria-live="polite">100%</span>
+																			<button type="button"
+																				data-accessory-font-increase=""
+																				aria-label="글자 크게" data-tooltip="글자 크게"
+																				data-tooltip-auto
+																				data-tooltip-placement="bottom">＋</button>
+																		</div>
+																		<button type="button"
+																			class="accessory-font-default"
+																			data-tooltip="기본 크기로" data-tooltip-auto
+																			data-tooltip-placement="bottom">기본
+																			크기로</button>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</header>
 												</div>
 											</div>
 											<p class="guide-preview-note">답변서 초안 상단바 원본 · 모바일 형태로 표시</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">topbar</span>
 										</td>
 										<td>부모 화면 너비에 맞춰 배치<br>채팅 목록 버튼 32 × 32px<br>내부 아이콘 18 × 18px</td>
-										<td>모바일 예시: 제목 → 오른쪽 실행 버튼 → 작업 제목 순서로 배치 · 보조도구는 공통 컨트롤러 사용, 새 채팅·채팅 목록·제목 수정은 원본 화면에서
+										<td>모바일 예시: 제목 → 오른쪽 실행 버튼 → 작업 제목 순서로 배치 · 보조도구는 공통 컨트롤러 사용, 새 채팅·채팅 목록·제목 수정은
+											원본 화면에서
 											실행<br>사이드바는 뒤쪽 사용 요약 참고
 										</td>
 									</tr>
@@ -899,7 +1047,8 @@
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="ai-answer"
 													data-preview-layout="panels">
-													<main class="three-panel guide-panel-layout guide-panel-resizable" data-split-min="120">
+													<main class="three-panel guide-panel-layout guide-panel-resizable"
+														data-split-min="120">
 														<section
 															class="panel panel-left upload-panel-area split-handler type2"
 															data-slot="left" data-panel-min="120" data-split-min="80"
@@ -915,15 +1064,6 @@
 																		src="../assets/icons/ai-answer-source.svg"><span>AI
 																		참조소스</span></h2>
 																<div class="panel-actions">
-																	<button type="button"
-																		class="icon-button icon-button-ghost icon-button-sm"
-																		id="guide-example-19-sourceResetBtn"
-																		data-preview-id="sourceResetBtn"
-																		data-source-reset="" aria-label="참조소스 초기화"
-																		draggable="false" data-tooltip="참조소스 초기화"><img
-																			class="icon icon-small" data-icon="reset"
-																			alt="" aria-hidden="true"
-																			src="../assets/icons/reset.svg"></button>
 																	<button type="button"
 																		class="icon-button icon-button-ghost icon-button-sm panel-collapse-btn"
 																		id="guide-example-19-sourceCollapseBtn"
@@ -987,8 +1127,9 @@
 																		hidden></section>
 																	<button type="button"
 																		class="icon-button icon-button-ghost icon-button-sm panel-switch-btn"
-																		aria-label="패널 전환" draggable="false"
-																		data-tooltip="패널 전환"><img
+																		aria-label="위치 전환" draggable="false"
+																		data-tooltip="위치 전환"
+																		data-tooltip-placement="bottom"><img
 																			class="icon icon-small" data-icon="switch"
 																			alt="" aria-hidden="true"
 																			src="../assets/icons/switch.svg"></button>
@@ -996,7 +1137,8 @@
 															</header>
 														</section>
 														<div aria-label="오른쪽 패널 크기 조절" aria-orientation="vertical"
-															class="panel-resize-handle" role="separator" tabindex="0"></div>
+															class="panel-resize-handle" role="separator" tabindex="0">
+														</div>
 														<section aria-labelledby="guide-example-19-answerChatTitle"
 															class="panel panel-right" data-panel="chat"
 															data-slot="right">
@@ -1014,18 +1156,166 @@
 													</main>
 												</div>
 											</div>
-											<p class="guide-preview-note">가로 3등분 패널 · 경계선 드래그·좌우 방향키로 크기 조절 · 헤더 드래그로 위치 교환, 본문 생략<br>관련자료·답변서
+											<p class="guide-preview-note">가로 3등분 패널 · 경계선 드래그·좌우 방향키로 크기 조절 · 헤더 드래그로 위치
+												교환, 본문 생략<br>관련자료·답변서
 												초안의 문서 내용은 원본 화면에서 연결</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">three-panel</span>
 										</td>
-										<td>부모 작업 영역에 맞춰 분할<br>예시는 640px 너비, 초기 좌·중·우 각 1fr · 최소 너비 120px<br>각 패널 최소 너비와 분할 설정을 함께 적용
+										<td>부모 작업 영역에 맞춰 분할<br>예시는 640px 너비, 초기 좌·중·우 각 1fr · 최소 너비 120px<br>각 패널 최소 너비와
+											분할 설정을 함께 적용
 										</td>
 										<td>패널과 크기 조절 핸들을 감싸는 영역. 패널과 핸들을 바로 아래 자식으로 배치합니다.</td>
 									</tr>
-									<tr data-guide-row>
+									<tr id="guide-panel-switch-example" data-guide-row=""><td role="rowheader">패널 내부 전환·필터·미리보기</td><td><div class="guide-preview-viewport"><div class="guide-preview" data-preview-page="ai-answer" data-preview-layout="inner-panel"><section data-guide-reference-panel="" id="guide-inner-panel" class="panel panel-center"><header class="panel-head">
+							<h2 class="panel-title">관련자료 · 문서 미리보기</h2>
+							<!--
+							[작업 탭 안내]
+							answerTabRecommend: 관련자료 
+							answerTabDraft: 답변서 초안
+							answerTabCompare: 현재 주석 처리된 답변서 비교 탭
+							-->
+							<div class="panel-actions">
+								
+								<button type="button" class="icon-button icon-button-ghost icon-button-sm panel-switch-btn" aria-label="위치 전환" draggable="false" data-tooltip="위치 전환" data-tooltip-placement="bottom"><img class="icon icon-small" data-icon="switch" alt="" aria-hidden="true" src="../assets/icons/switch.svg"></button>
+							</div>
+
+
+
+						</header><div class="panel-content center-body answer-center-body"><section data-preview-id="answerPanelRecommend" class="recommend-view-wrapper doc-viewer-panel" id="guide-inner-answerPanelRecommend">
+								<div class="center-split split-handler" data-component="split-handler" data-answer-recommend-results="" data-split-min="240">
+									<div aria-labelledby="guide-inner-list-title" class="center-left split-handler-left">
+										<div class="center-sub-head">
+											<strong id="guide-inner-list-title" class="sub-title">관련자료 목록</strong>
+											<div class="center-sub-actions">
+												<label class="rec-checkbox-label">
+													<input data-preview-id="selectAllReferences" type="checkbox" id="guide-inner-selectAllReferences" data-select-all-references="">
+													<span class="file-select-check-ui" aria-hidden="true"></span>
+													전체선택
+												</label>
+												<span class="sub-badge">유사도순</span>
+
+											</div>
+										</div>
+
+										<!-- Start: 261015 수정 - 관련자료 필터 -->
+										<!-- history/search/upload 값과 기존 개수 표시 ID는 draft-source.js에서 사용합니다. 필터 전환은 draft-workspace.js에서 처리합니다. -->
+										<div class="filter-bar answer-reference-filters" role="toolbar" aria-label="관련자료 필터">
+											<button type="button" class="filter-btn reference-filter active" data-reference-filter="history" aria-pressed="true">
+												유사답변서 추천<span data-preview-id="filterAllCount" id="guide-inner-filterAllCount">1</span>
+											</button>
+											<button type="button" class="filter-btn reference-filter" data-reference-filter="search" aria-pressed="false">
+												검색자료 <span data-preview-id="filterHistoryCount" id="guide-inner-filterHistoryCount">1</span>
+											</button>
+											<button type="button" class="filter-btn reference-filter" data-reference-filter="upload" aria-pressed="false">
+												업로드자료<span data-preview-id="filterEvidenceCount" id="guide-inner-filterEvidenceCount">1</span>
+											</button>
+										</div>
+										<!-- End: 261015 수정 - 관련자료 필터 -->
+
+										<!-- Start: 261015 추가 - 관련자료 안내 배너 -->
+										<!-- 선택한 필터의 안내 문구는 draft-source.js의 renderReferenceFilterBanner()에서 갱신합니다. -->
+										<div class="filter-bar-banner" aria-live="polite"></div>
+										<!-- End: 261015 추가 - 관련자료 안내 배너 -->
+
+										<!-- Start: 261015 수정 - 관련자료 목록 카드 -->
+										<!--
+										[적용 화면] 답변서 작성 > 관련자료 추천 > 관련자료 목록 (#recommendationList).
+										[API 연결 위치] ../js/draft-report.js의 loadReportDetail() 및 버전 상세 조회, ../js/panel-conversation.js의 답변 스트림.
+										[화면 갱신] ../js/draft-source.js의 renderRecommendations(): 필터별 카드, 건수, 빈 화면, 전체선택 상태.
+									유사답변서는 기존 추천 카드, 검색자료·업로드자료는 아래 referenceSourceCardTemplate을 사용합니다.
+									검색자료는 유사답변서와 중복되지 않는 근거 및 검색으로 가져온 자료, 업로드자료는 대화 파일과 이번 질문의 첨부 파일을 표시합니다.
+									검색·업로드 카드 클릭은 미리보기이며, 답변 반영 선택은 참조소스 목록 및 현재 필터의 전체선택과 연동합니다.
+										-->
+										<div data-preview-id="recommendationList" class="recommend-list" data-recommend-list="" id="guide-inner-recommendationList"><article aria-label="국회 질의 답변서 예시 미리보기" tabindex="0" data-reference-key="guide-history" data-guide-reference-category="history" class="rec-card">
+														<div class="rec-card-head"><span class="rec-top-badge">TOP
+																1</span><label class="rec-checkbox"><input type="checkbox" aria-label="관련자료 선택"><span class="file-select-check-ui" aria-hidden="true"></span></label><strong class="rec-title">국회 질의 답변서 예시</strong><span class="rec-score rec-score--top">95%</span></div>
+														<p class="rec-meta">가이드용 예시 자료</p>
+														<p class="rec-desc">질의의 배경과 관련 법령을 정리한 예시 답변서입니다.</p>
+														<div class="rec-tags"><span class="rec-tag">유사답변서</span></div>
+													</article><article aria-label="국유재산 관리 자료 예시 미리보기" tabindex="0" data-reference-key="guide-search" data-guide-reference-category="search" class="rec-card">
+														<div class="rec-card-head"><label class="rec-checkbox"><input type="checkbox" aria-label="관련자료 선택"><span class="file-select-check-ui" aria-hidden="true"></span></label><strong class="rec-title">국유재산 관리 자료 예시</strong></div>
+														<p class="rec-meta">가이드용 예시 자료</p>
+														<p class="rec-desc">내부 자료 검색으로 가져온 근거 문서 예시입니다.</p>
+														<div class="rec-tags"><span class="rec-tag">검색자료</span></div>
+													</article><article aria-label="업로드 검토 자료 예시 미리보기" tabindex="0" data-reference-key="guide-upload" data-guide-reference-category="upload" class="rec-card">
+														<div class="rec-card-head"><label class="rec-checkbox"><input type="checkbox" aria-label="관련자료 선택"><span class="file-select-check-ui" aria-hidden="true"></span></label><strong class="rec-title">업로드 검토 자료 예시</strong></div>
+														<p class="rec-meta">가이드용 예시 자료</p>
+														<p class="rec-desc">업로드한 자료의 검토 내용을 표시하는 예시입니다.</p>
+														<div class="rec-tags"><span class="rec-tag">업로드자료</span></div>
+													</article></div>
+										<!-- End: 261015 수정 - 관련자료 목록 카드 -->
+									</div>
+									<div aria-label="관련자료 목록과 문서 미리보기 너비 조절" aria-orientation="vertical" class="center-split-handle split-handler-handle" role="separator" tabindex="0" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
+									</div>
+									<div aria-labelledby="guide-inner-preview-title" class="center-right split-handler-right">
+										<!--
+										[PDF 미리보기 구조]
+										.preview-body.doc-viewer-body: 문서 스크롤 영역
+										.doc-pages-track: 문서 전체 컨테이너
+										.answer-pdf-pages: 페이지 세로 배치, 페이지 사이 간격과 바깥 여백
+										.answer-pdf-page: PDF 한 페이지의 배경과 외형
+										canvas: PDF 내용 표시. 실제 PDF 크기는 panel-source.js에서 계산하고, 빈 미리보기 폭은 CSS로 맞춥니다.
+										-->
+										<div class="center-sub-head">
+											<span id="guide-inner-preview-title" class="sub-title">문서 미리보기</span>
+											<div class="center-sub-actions">
+												<span data-preview-id="previewScore" class="sub-badge blue" data-preview-score="" id="guide-inner-previewScore">미리보기 대기</span>
+												<div data-preview-id="recommendPreviewHeaderActions" id="guide-inner-recommendPreviewHeaderActions" class="recommend-preview-header-actions">
+													<span class="sub-badge file-name blue">선택된 문서 없음</span>
+													
+												</div>
+
+											</div>
+										</div>
+										<article class="preview-body doc-viewer-body">
+											<div data-preview-id="sourcePreview" class="doc-pages-track answer-pdfjs-preview" id="guide-inner-sourcePreview" data-document-loading-name="#guide-inner-recommendPreviewHeaderActions .file-name" data-document-zoom="100" style="zoom: 1;"><div class="answer-pdf-pages"><article class="answer-pdf-page"><h3 data-guide-document-title=""></h3><p data-guide-document-body=""></p></article></div></div>
+											<!--
+											[문서 미리보기 개발 안내]
+											- PDF가 없을 때는 아래 템플릿의 빈 canvas를 표시하며, 예시 본문을 그리지 않습니다.
+											- 빈 미리보기는 panel-source.js가 이 HTML 템플릿을 표시하며, 별도 PDF 생성이나 JS 너비 계산을 사용하지 않습니다.
+											- .answer-pdf-page의 테두리, border-radius, 패딩은 panel.css에서 조절합니다.
+											- canvas는 문서 내용 영역입니다. 페이지 크기는 테두리와 패딩을 포함해 계산합니다.
+											- 페이지에는 별도 예시 클래스나 data-pdf-page를 붙이지 않고 DOM 순서로 구분합니다.
+											- 실제 PDF는 PDF.js 사전 로드와 ND_reportSourcePreview.do?documentId=…의 PDF 응답이 필요합니다.
+											- sourcePreview ID와 data-document-* 속성은 기존 JS 연동용으로 유지합니다.
+											-->
+											
+										</article>
+									</div>
+								</div>
+								<div class="document-statusbar-area" data-answer-recommend-status="">
+									<footer class="document-statusbar" data-component="document-statusbar" data-document-fullscreen-target="#guide-inner-panel" data-document-max-zoom="200" data-document-min-zoom="50" data-document-page-selector=".answer-pdf-page" data-document-scroll-target="#guide-inner-panel .doc-viewer-body" data-document-statusbar="" data-document-target="#guide-inner-sourcePreview" data-document-zoom="100" data-document-zoom-step="10">
+										<div class="document-statusbar-stats" data-slot="stats">
+											<span class="document-statusbar-stat">관련자료 <strong data-preview-id="recommendFooterCount" id="guide-inner-recommendFooterCount">0건</strong></span>
+											<span aria-hidden="true" class="document-statusbar-separator">|</span>
+											<span class="document-statusbar-stat">글자 수 <strong data-preview-id="recommendCharCount" id="guide-inner-recommendCharCount" data-document-character-count="">0</strong>자</span>
+											<span aria-hidden="true" class="document-statusbar-separator">|</span>
+											<span class="document-statusbar-stat">페이지 <strong data-preview-id="recommendPageCurrent" id="guide-inner-recommendPageCurrent" data-document-page-current="">1</strong>/<strong data-preview-id="recommendPageTotal" id="guide-inner-recommendPageTotal" data-document-page-total="">1</strong></span>
+										</div>
+
+										<!-- Start: 문서 확대 축소 및 전체보기 영역 -->
+										<div aria-label="문서 확대 축소 및 전체보기" class="document-statusbar-controls">
+											<button data-preview-id="recommendZoomOut" aria-label="문서 축소" class="icon-button icon-button-sm document-statusbar-button" data-document-statusbar-action="zoom-out" id="guide-inner-recommendZoomOut" type="button" data-tooltip="문서 축소">−</button>
+											<strong data-preview-id="recommendZoomPercent" class="document-statusbar-zoom" data-document-statusbar-zoom-value="" id="guide-inner-recommendZoomPercent">100%</strong>
+											<button data-preview-id="recommendZoomIn" aria-label="문서 확대" class="icon-button icon-button-sm document-statusbar-button" data-document-statusbar-action="zoom-in" id="guide-inner-recommendZoomIn" type="button" data-tooltip="문서 확대">＋</button>
+											<button data-preview-id="recommendFullscreenBtn" aria-label="패널 전체보기" aria-pressed="false" class="icon-button icon-button-sm document-statusbar-button document-statusbar-fullscreen-button" data-document-statusbar-action="fullscreen" id="guide-inner-recommendFullscreenBtn" type="button" data-tooltip="패널 전체보기">
+												<svg class="document-statusbar-expand-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+													<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+												</svg>
+												<svg class="document-statusbar-shrink-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+													<path d="M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+												</svg>
+											</button>
+										</div>
+										<!-- End: 문서 확대 축소 및 전체보기 영역 -->
+									</footer>
+								</div>
+							</section></div></section></div></div><p class="guide-preview-note">기존 화면처럼 center-sub-head로 관련자료 목록·문서 미리보기의 헤더를 각각 표시합니다. 필터·선택·미리보기 상태를 유지한 채 좌우 위치와 너비를 바꿀 수 있습니다. 문서 본문은 가이드용 예시입니다.</p><a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a></td><td><span class="class-value">panel-switch-btn<br>center-body / center-sub-head<br>center-sub-actions / sub-title<br>center-split / split-handler<br>split-handler-left / split-handler-right<br>reference-filter / rec-card<br>doc-viewer-body / document-statusbar</span></td><td>원본의 가로 분할과 최소 너비 240px 사용<br>가이드 본문 높이 420px</td><td>위치 전환은 common.js의 공통 이벤트가 기존 노드를 이동합니다. 필터·선택·미리보기 상태는 전환 후에도 유지됩니다. 가이드는 데스크톱 가로 배치를 유지합니다. 실제 화면이 모바일 세로 배치일 때는 위치를 바꾸지 않습니다.</td></tr>
+<tr data-guide-row>
 										<td role="rowheader">패널 영역</td>
 										<td>
 											<div class="guide-preview-viewport">
@@ -1047,15 +1337,6 @@
 																	참조소스</span></h2>
 															<div class="panel-actions">
 																<button type="button"
-																	class="icon-button icon-button-ghost icon-button-sm"
-																	id="guide-example-20-sourceResetBtn"
-																	data-preview-id="sourceResetBtn"
-																	data-source-reset="" aria-label="참조소스 초기화"
-																	draggable="false" data-tooltip="참조소스 초기화"><img
-																		class="icon icon-small" data-icon="reset" alt=""
-																		aria-hidden="true"
-																		src="../assets/icons/reset.svg"></button>
-																<button type="button"
 																	class="icon-button icon-button-ghost icon-button-sm panel-collapse-btn"
 																	id="guide-example-20-sourceCollapseBtn"
 																	data-preview-id="sourceCollapseBtn"
@@ -1071,7 +1352,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">참조소스 패널 헤더 원본 · 본문 생략</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">panel panel-left<br>panel panel-center<br>panel
@@ -1089,7 +1371,8 @@
 											<div class="guide-preview-viewport">
 												<div class="guide-preview" data-preview-page="ai-answer"
 													data-preview-layout="panels">
-													<main class="three-panel guide-panel-layout guide-panel-resizable" data-split-min="120">
+													<main class="three-panel guide-panel-layout guide-panel-resizable"
+														data-split-min="120">
 														<section
 															class="panel panel-left upload-panel-area split-handler type2"
 															data-slot="left" data-panel-min="120" data-split-min="80"
@@ -1177,8 +1460,9 @@
 																		hidden></section>
 																	<button type="button"
 																		class="icon-button icon-button-ghost icon-button-sm panel-switch-btn"
-																		aria-label="패널 전환" draggable="false"
-																		data-tooltip="패널 전환"><img
+																		aria-label="위치 전환" draggable="false"
+																		data-tooltip="위치 전환"
+																		data-tooltip-placement="bottom"><img
 																			class="icon icon-small" data-icon="switch"
 																			alt="" aria-hidden="true"
 																			src="../assets/icons/switch.svg"></button>
@@ -1186,7 +1470,8 @@
 															</header>
 														</section>
 														<div aria-label="오른쪽 패널 크기 조절" aria-orientation="vertical"
-															class="panel-resize-handle" role="separator" tabindex="0"></div>
+															class="panel-resize-handle" role="separator" tabindex="0">
+														</div>
 														<section aria-labelledby="guide-example-21-answerChatTitle"
 															class="panel panel-right" data-panel="chat"
 															data-slot="right">
@@ -1204,9 +1489,11 @@
 													</main>
 												</div>
 											</div>
-											<p class="guide-preview-note">경계선을 드래그하거나 Tab으로 선택 후 좌우 방향키로 크기 조절 · Shift+방향키는 32px 이동 · 헤더 드래그로 위치 교환<br>관련자료·답변서
+											<p class="guide-preview-note">경계선을 드래그하거나 Tab으로 선택 후 좌우 방향키로 크기 조절 ·
+												Shift+방향키는 32px 이동 · 헤더 드래그로 위치 교환<br>관련자료·답변서
 												초안의 문서 내용은 원본 화면에서 연결</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span class="class-value">panel-resize-handle</span>
@@ -1249,7 +1536,8 @@
 											</div>
 											<p class="guide-preview-note">질의 입력·자동 높이·펼침/접힘은 기존 panel.js 사용 · 전송은 원본 화면의
 												문서 데이터와 연결</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td>
 											<span
@@ -1260,6 +1548,252 @@
 										</td>
 										<td>부모 data-input-size로 펼침·접힘<br>버튼 aria-controls·aria-expanded 유지<br>값 변경 후
 											AIOneChatInput.resize(el)</td>
+									</tr>
+									<tr data-guide-row>
+										<td role="rowheader">홈·챗봇 입력창</td>
+										<td>
+											<div class="guide-preview-viewport">
+												<div class="guide-preview" data-preview-page="home"
+													data-preview-layout="composer">
+													<div class="home-prompt-composer">
+														<div class="prompt-composer-shell chat-drop-zone"
+															id="guide-home-chatComposer" data-preview-id="chatComposer"
+															data-chat-task-current="chat" data-chat-model="">
+															<form class="prompt-composer"
+																id="guide-home-chatComposerForm"
+																data-preview-id="chatComposerForm" novalidate="">
+
+																<label for="guide-home-chatInput"
+																	class="sr-only">AI-ONE에게 요청할 내용</label>
+																<textarea class="prompt-composer-input"
+																	id="guide-home-chatInput"
+																	data-preview-id="chatInput" name="prompt" rows="1"
+																	maxlength="20000"
+																	placeholder="AI-ONE에게 요청해 보세요: 관련 법령과 근거 자료를 찾아줘"></textarea>
+																<ul class="chat-attach-list"
+																	id="guide-home-chatAttachList"
+																	data-preview-id="chatAttachList" aria-label="첨부 파일"
+																	hidden=""></ul>
+
+																<div class="prompt-composer-tools">
+																	<input class="prompt-composer-file-input"
+																		id="guide-home-chatFileInput"
+																		data-preview-id="chatFileInput" type="file"
+																		multiple="" hidden=""
+																		accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.png,.jpg,.jpeg,.gif,.bmp">
+																	<button type="button"
+																		class="icon-button icon-button-ghost prompt-composer-attach"
+																		id="guide-home-chatAttachBtn"
+																		data-preview-id="chatAttachBtn"
+																		aria-label="파일 첨부" data-tooltip="파일 첨부">
+																		<img class="icon icon-small" data-icon="plus"
+																			alt="" aria-hidden="true"
+																			src="../assets/icons/plus.svg">
+																	</button>
+																</div>
+																<div class="prompt-composer-bar">
+																	<div class="prompt-composer-actions">
+
+																		<div class="dropdown-menu-component"
+																			data-dropdown-menu=""
+																			data-chat-menu="model">
+																			<button type="button"
+																				class="button dropdown-menu-model-trigger"
+																				data-dropdown-trigger=""
+																				aria-haspopup="menu"
+																				aria-expanded="false"
+																				aria-controls="guide-home-chatModelMenu">
+																				<span data-chat-model-label=""
+																					class="chat-tit">AI-ONE AI</span>
+																				<span class="chat-middot"
+																					aria-hidden="true"></span>
+																				<span data-chat-task-label=""
+																					class="chat-desc">일반 대화</span>
+																				<img class="icon icon-xsmall"
+																					data-icon="chevron-down" alt=""
+																					aria-hidden="true"
+																					src="../assets/icons/chevron-down.svg">
+																			</button>
+																			<div class="chat-menu-panels">
+
+																				<div class="dropdown-menu dropdown-menu-model"
+																					id="guide-home-chatModelMenu"
+																					data-preview-id="chatModelMenu"
+																					role="menu"
+																					data-placement="bottom-end"
+																					hidden="">
+																					<span class="dropdown-menu-label">모델
+																						선택</span>
+																					<button type="button"
+																						class="dropdown-menu-item"
+																						role="menuitemradio"
+																						aria-checked="true"
+																						data-menu-value="default"
+																						data-menu-label="AI-ONE AI"
+																						data-menu-keep-open=""
+																						aria-haspopup="menu"
+																						aria-expanded="false"
+																						aria-controls="guide-home-chatTaskMenu">
+																						<span
+																							class="dropdown-model-name">AI-ONE
+																							AI</span>
+																						<span
+																							class="dropdown-model-check"
+																							aria-hidden="true">✓</span>
+																					</button>
+																					<button type="button"
+																						class="dropdown-menu-item"
+																						role="menuitemradio"
+																						aria-checked="false"
+																						data-menu-value="government"
+																						data-menu-label="범정부 AI"
+																						data-menu-keep-open=""
+																						aria-haspopup="menu"
+																						aria-expanded="false"
+																						aria-controls="guide-home-chatGovernmentTaskMenu">
+																						<span
+																							class="dropdown-model-name">범정부
+																							AI</span>
+																						<span
+																							class="dropdown-model-check"
+																							aria-hidden="true">✓</span>
+																					</button>
+																				</div>
+																				<div class="dropdown-menu dropdown-menu-model chat-task-submenu"
+																					id="guide-home-chatTaskMenu"
+																					data-preview-id="chatTaskMenu"
+																					role="menu" data-chat-menu="task"
+																					hidden="">
+																					<button type="button"
+																						class="dropdown-menu-item"
+																						role="menuitemradio"
+																						aria-checked="false"
+																						data-menu-value="chat"
+																						data-menu-label="일반 대화">
+																						<span
+																							class="dropdown-model-name">일반
+																							대화</span>
+																						<span
+																							class="dropdown-model-check"
+																							aria-hidden="true">✓</span>
+																					</button>
+																					<button type="button"
+																						class="dropdown-menu-item"
+																						role="menuitemradio"
+																						aria-checked="false"
+																						data-menu-value="search"
+																						data-menu-label="내부자료 검색">
+																						<span
+																							class="dropdown-model-name">내부자료
+																							검색</span>
+																						<span
+																							class="dropdown-model-check"
+																							aria-hidden="true">✓</span>
+																					</button>
+																				</div>
+																				<div class="dropdown-menu dropdown-menu-model chat-task-submenu"
+																					id="guide-home-chatGovernmentTaskMenu"
+																					data-preview-id="chatGovernmentTaskMenu"
+																					role="menu" data-chat-menu="task"
+																					hidden="">
+																					<button type="button"
+																						class="dropdown-menu-item"
+																						role="menuitemradio"
+																						aria-checked="false"
+																						data-menu-value="document-summary"
+																						data-menu-label="문서생성요약">
+																						<span
+																							class="dropdown-model-name">문서생성요약</span>
+																						<span
+																							class="dropdown-model-check"
+																							aria-hidden="true">✓</span>
+																					</button>
+																					<button type="button"
+																						class="dropdown-menu-item"
+																						role="menuitemradio"
+																						aria-checked="false"
+																						data-menu-value="public-search"
+																						data-menu-label="공개자료 검색">
+																						<span
+																							class="dropdown-model-name">공개자료
+																							검색</span>
+																						<span
+																							class="dropdown-model-check"
+																							aria-hidden="true">✓</span>
+																					</button>
+																					<button type="button"
+																						class="dropdown-menu-item"
+																						role="menuitemradio"
+																						aria-checked="false"
+																						data-menu-value="law-search"
+																						data-menu-label="법령 검색">
+																						<span
+																							class="dropdown-model-name">법령
+																							검색</span>
+																						<span
+																							class="dropdown-model-check"
+																							aria-hidden="true">✓</span>
+																					</button>
+																				</div>
+																			</div>
+																			<button type="submit"
+																				class="icon-button icon-button-primary prompt-composer-submit"
+																				id="guide-home-chatSendBtn"
+																				data-preview-id="chatSendBtn"
+																				aria-label="보내기" disabled=""
+																				data-tooltip="보내기">
+																				<img class="icon icon-text"
+																					data-icon="send" alt=""
+																					aria-hidden="true"
+																					src="../assets/icons/send.svg">
+																			</button>
+																		</div>
+																	</div>
+																</div>
+															</form>
+														</div>
+													</div>
+												</div>
+											</div>
+											<p class="guide-preview-note">홈과 같은 모델·작업 선택 동작을 사용합니다. 모델에 마우스를 올리거나 선택하면
+												작업 메뉴가 열리고, 작업 선택 시 입력창의 모델·작업명이 반영됩니다. 파일 첨부와 전송은 원본 화면에서 실행합니다.</p>
+											<a class="guide-preview-source" href="home.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
+										</td>
+										<td><span
+												class="class-value">home-prompt-composer<br>prompt-composer-shell<br>prompt-composer-input<br>prompt-composer-bar<br>dropdown-menu-model</span>
+										</td>
+										<td>부모 너비에 맞춤<br>textarea rows·maxlength는 원본 화면 기준</td>
+										<td>home.html·chatbot.html의 입력 구조와 chat.css를 함께 사용합니다. 모델·작업 선택은 common.js의
+											AIOneModelTaskMenu.init을 홈·챗봇·가이드에서 함께 사용합니다. 파일 첨부와 전송은 chat.js가 담당합니다.
+										</td>
+									</tr>
+									<tr data-guide-row>
+										<td role="rowheader">문서·목록 로딩</td>
+										<td>
+											<div class="guide-preview-viewport">
+												<div class="guide-preview" data-preview-page="common">
+													<div class="stack">
+														<div class="guide-loading-host" data-guide-loading="document">
+														</div>
+														<div class="guide-loading-host" data-guide-loading="drawer">
+														</div>
+														<div data-guide-loading="more"></div>
+													</div>
+												</div>
+											</div>
+											<p class="guide-preview-note">공통 생성 함수의 문서 로딩·드로어 첫 조회·이전 목록 추가 로딩 상태 ·
+												가이드에서는 표시 상태 유지</p>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
+										</td>
+										<td><span
+												class="class-value">api-skeleton-overlay<br>document-loading-preview<br>drawer-list-loading<br>drawer-list-loading-more<br>ai-search-banner
+												is-loading</span></td>
+										<td>문서 로딩은 부모 영역을 덮음<br>드로어 첫 조회 최소 높이 320px<br>추가 조회는 목록 끝에 배치</td>
+										<td>AIOneLoadingOverlay.create / mount / preview를 재사용합니다. 드로어는
+											AIOneDrawerLoading.show / hide / run으로 제어합니다. show(list, name, { append:
+											true })는 이전 목록 로딩을 표시합니다. 조회 중 aria-busy와 완료 후 해제를 함께 관리합니다.</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">아이콘</td>
@@ -1363,7 +1897,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">실제 화면의 기존 SVG 사용 · 패널 전환·접기, 실행·편집·파일·채팅 아이콘
-											</p><a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											</p><a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td><span class="class-value">icon-button icon-button-ghost<br>icon / icon-small
 												/ icon-text</span>
@@ -1436,18 +1971,28 @@
 																	id="guide-example-24-recommendZoomIn"
 																	data-preview-id="recommendZoomIn" type="button"
 																	data-tooltip="문서 확대">＋</button>
-																<button aria-label="문서 전체보기" aria-pressed="false"
+																<button aria-label="패널 전체보기" aria-pressed="false"
 																	class="icon-button icon-button-sm document-statusbar-button document-statusbar-fullscreen-button"
 																	data-document-statusbar-action="fullscreen"
 																	id="guide-example-24-recommendFullscreenBtn"
 																	data-preview-id="recommendFullscreenBtn"
-																	type="button" data-tooltip="문서 전체보기">
-																	<img alt="" aria-hidden="true"
-																		class="icon icon-small document-statusbar-expand-icon"
-																		src="../assets/icons/fullscreen-expand.svg">
-																	<img alt="" aria-hidden="true"
-																		class="icon icon-small document-statusbar-shrink-icon"
-																		src="../assets/icons/fullscreen-shrink.svg">
+																	type="button" data-tooltip="패널 전체보기">
+																	<svg class="document-statusbar-expand-icon"
+																		viewBox="0 0 24 24" width="14" height="14"
+																		aria-hidden="true">
+																		<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"
+																			fill="none" stroke="currentColor"
+																			stroke-width="1.8" stroke-linecap="round"
+																			stroke-linejoin="round"></path>
+																	</svg>
+																	<svg class="document-statusbar-shrink-icon"
+																		viewBox="0 0 24 24" width="14" height="14"
+																		aria-hidden="true">
+																		<path d="M8 3v5H3M21 8h-5V3M16 21v-5h5M3 16h5v5"
+																			fill="none" stroke="currentColor"
+																			stroke-width="1.8" stroke-linecap="round"
+																			stroke-linejoin="round"></path>
+																	</svg>
 																</button>
 															</div>
 
@@ -1456,7 +2001,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">답변서 원본 · 가이드 예시 크기로 표시</p><a
-												class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+												class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td><span
 												class="class-value">document-statusbar<br>document-statusbar-stats<br>document-statusbar-stat<br>document-statusbar-controls</span>
@@ -1483,7 +2029,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">classification-workspace.js 동적 구조 · 95%는 예시
-											</p><a class="guide-preview-source" href="classifcation.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											</p><a class="guide-preview-source" href="classifcation.html"
+												target="_blank" rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td><span
 												class="class-value">progressbar-row<br>progressbar<br>progressbar-fill<br>progressbar-label<br>progressbar-value</span>
@@ -1500,7 +2047,6 @@
 													<article class="rec-card">
 														<div class="rec-card-head"><span class="rec-top-badge">TOP
 																1</span><label class="rec-checkbox"><input
-																	class="checkbox-control checkbox-control-md"
 																	type="checkbox" aria-label="관련자료 선택"><span
 																	class="file-select-check-ui"
 																	aria-hidden="true"></span></label><strong
@@ -1513,7 +2059,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">draft-source.js 동적 생성 구조 · 제목·점수·설명은 예시</p><a
-												class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+												class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td><span
 												class="class-value">rec-card<br>rec-card-head<br>rec-checkbox<br>rec-title<br>rec-score<br>rec-meta<br>rec-desc<br>rec-tags</span>
@@ -1560,7 +2107,8 @@
 													</a></div>
 											</div>
 											<p class="guide-preview-note">홈 첫 번째 서비스 카드 구조 · 질의 분류 화면으로 연결</p><a
-												class="guide-preview-source" href="home.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+												class="guide-preview-source" href="home.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td><span
 												class="class-value">service-cards<br>service-card<br>service-card-top</span>
@@ -1619,7 +2167,8 @@
 												</div>
 											</div>
 											<p class="guide-preview-note">답변서 선택 자료 원본 · 빈 목록 펼침·접힘, 반영 작업은 원본 화면에서 실행
-											</p><a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											</p><a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td><span
 												class="class-value">selected-refs<br>selected-refs-head<br>selected-refs-title<br>selected-refs-count<br>selected-refs-list</span>
@@ -1656,7 +2205,8 @@
 											</div>
 											<p class="guide-preview-note">사용자·AI 메시지와 공통 메시지 액션 · 문구·시각은 예시, 평가 선택과 복사는
 												가이드에서 체험하며 재검색·신고는 원본 화면에서 실행</p><a class="guide-preview-source"
-												href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+												href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본
+												보러가기</a>
 										</td>
 										<td><span class="class-value">chat-msg user / ai<br>chat-ai-avatar<br>msg-text /
 												msg-time<br>msg-actions chat-copy-actions<br>msg-action-btn</span>
@@ -1670,67 +2220,69 @@
 											생성합니다. 평가는 aria-pressed로 표시하며 실제 저장·신고에는 원본 메시지 ID와 API 연결이 필요합니다. 가이드는
 											복사·평가 선택만 동작합니다.</td>
 									</tr>
+
 									<tr data-guide-row>
-										<td role="rowheader">작업 알림</td>
+										<td role="rowheader">실행 상태 · drawer-run-status</td>
 										<td>
 											<div class="guide-preview-viewport">
-												<div class="guide-preview" data-preview-page="common"><button
-														type="button" class="button button-outline"
-														data-guide-notification>작업 알림 표시</button>
-													<div class="ai-one-notification-toast" hidden
-														style="position:relative;inset:auto;transform:none">
-														<div class="ai-one-notification-icon">✓</div>
-														<div class="ai-one-notification-copy"><strong>작업
-																완료</strong><span>요청한 작업이 완료되었습니다.</span></div><button
-															type="button" aria-label="알림 닫기">×</button>
+												<div class="guide-preview" data-preview-page="common">
+													<div class="samples"><span
+															class="drawer-run-status pending">진행중</span><span
+															class="drawer-run-status">완료</span><span
+															class="drawer-run-status failed">실패</span></div>
+												</div>
+											</div>
+											<a class="guide-preview-source" href="classifcation.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
+										</td>
+										<td><span class="class-value">drawer-run-status</span></td>
+										<td>padding 3px 8px<br>글자 9px × UI 배율 · 굵기 700<br>완료·실패 점 6px · 진행 중 회전 표시 8px
+										</td>
+										<td>진행중·완료·실패를 표시하는 기본 상태 배지입니다. 기본은 완료, pending은 진행 중, failed는 실패입니다.<br>현재는
+											상태점·색상·회전 표시까지 이 클래스가 담당합니다. 20261019_인터웹에서는 기본 완료가 초록색이었고, 채팅용 색상과 상태점은
+											drawer-chat-status에서 추가했습니다.</td>
+									</tr>
+									<tr data-guide-row>
+										<td role="rowheader">부가정보 배지 · drawer-run-badge</td>
+										<td>
+											<div class="guide-preview-viewport">
+												<div class="guide-preview" data-preview-page="common">
+													<div class="drawer-run-badges"><span class="drawer-run-badge">파일
+															3건</span><span class="drawer-run-badge member">의원
+															2명</span><span class="drawer-run-badge query">질의
+															5건</span><span class="drawer-run-badge review">확인 필요</span>
 													</div>
 												</div>
 											</div>
-											<p class="guide-preview-note">기존 알림 구조 · 표시·닫기, 문구는 예시이며 위치만 표 내부로 이동</p><a
-												class="guide-preview-source" href="../css/common.css" target="_blank" rel="noopener noreferrer" hidden>원본 보러가기</a>
+											<a class="guide-preview-source" href="classifcation.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
-										<td><span
-												class="class-value">ai-one-notification-toast<br>ai-one-notification-icon<br>ai-one-notification-copy</span>
-										</td>
-										<td>너비 min(360px, 화면 너비 − 36px)<br>padding 13px 14px<br>실제 화면 오른쪽·아래 18px</td>
-										<td>일반 ai-one-toast와 구분되는 작업 완료 알림입니다. show로 표시하며 제목·상세 문구·닫기 버튼을 유지합니다.</td>
+										<td><span class="class-value">drawer-run-badge</span></td>
+										<td>padding 3px 8px · 테두리 1px<br>글자 9px × UI 배율 · 굵기 700<br>묶음:
+											drawer-run-badges · 간격 4px</td>
+										<td>파일·의원·질의 건수와 확인 필요 같은 부가정보를 표시합니다. 기본은 강조색, member는 청록색, query는 보라색, review는
+											주황색입니다. 상태점·회전 표시는 없습니다.<br>20261019_인터웹 대비 여백 2px 6px → 3px 8px, 글자 8px →
+											9px, 굵기 600 → 700, 묶음 위 여백 3px → 0으로 변경됐고 review가 추가됐습니다.</td>
 									</tr>
 									<tr data-guide-row>
-                                        <td role="rowheader">실행 상태 · drawer-run-status</td>
-                                        <td>
-                                            <div class="guide-preview-viewport">
-                                                <div class="guide-preview" data-preview-page="common"><div class="samples"><span class="drawer-run-status pending">진행중</span><span class="drawer-run-status">완료</span><span class="drawer-run-status failed">실패</span></div></div>
-                                            </div>
-                                            <a class="guide-preview-source" href="classifcation.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
-                                        </td>
-                                        <td><span class="class-value">drawer-run-status</span></td>
-                                        <td>padding 3px 8px<br>글자 9px × UI 배율 · 굵기 700<br>완료·실패 점 6px · 진행 중 회전 표시 8px</td>
-                                        <td>진행중·완료·실패를 표시하는 기본 상태 배지입니다. 기본은 완료, pending은 진행 중, failed는 실패입니다.<br>현재는 상태점·색상·회전 표시까지 이 클래스가 담당합니다. 20261019_인터웹에서는 기본 완료가 초록색이었고, 채팅용 색상과 상태점은 drawer-chat-status에서 추가했습니다.</td>
-                                    </tr>
-									<tr data-guide-row>
-                                        <td role="rowheader">부가정보 배지 · drawer-run-badge</td>
-                                        <td>
-                                            <div class="guide-preview-viewport">
-                                                <div class="guide-preview" data-preview-page="common"><div class="drawer-run-badges"><span class="drawer-run-badge">파일 3건</span><span class="drawer-run-badge member">의원 2명</span><span class="drawer-run-badge query">질의 5건</span><span class="drawer-run-badge review">확인 필요</span></div></div>
-                                            </div>
-                                            <a class="guide-preview-source" href="classifcation.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
-                                        </td>
-                                        <td><span class="class-value">drawer-run-badge</span></td>
-                                        <td>padding 3px 8px · 테두리 1px<br>글자 9px × UI 배율 · 굵기 700<br>묶음: drawer-run-badges · 간격 4px</td>
-                                        <td>파일·의원·질의 건수와 확인 필요 같은 부가정보를 표시합니다. 기본은 강조색, member는 청록색, query는 보라색, review는 주황색입니다. 상태점·회전 표시는 없습니다.<br>20261019_인터웹 대비 여백 2px 6px → 3px 8px, 글자 8px → 9px, 굵기 600 → 700, 묶음 위 여백 3px → 0으로 변경됐고 review가 추가됐습니다.</td>
-                                    </tr>
-									<tr data-guide-row>
-                                        <td role="rowheader">완료 알림 점 · nav-complete-dot</td>
-                                        <td>
-                                            <div class="guide-preview-viewport">
-                                                <div class="guide-preview" data-preview-page="common"><div class="guide-completion-example">답변서 초안<span class="nav-complete-dot" role="img" aria-label="완료 알림 있음"></span></div></div>
-                                            </div>
-                                            <a class="guide-preview-source" href="policy.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
-                                        </td>
-                                        <td><span class="class-value">nav-complete-dot</span></td>
-                                        <td>7 × 7px 원형<br>위·오른쪽 7px에 절대 배치<br>예시의 부모만 위치 기준으로 지정</td>
-                                        <td>완료 알림이 있는 메뉴·목록 항목에 붙는 점입니다. 상태 문구나 건수 배지와 별개로 사용하며 hidden으로 숨깁니다. 일반 위치는 파란색, 사이드바 안에서는 강조색과 반복 애니메이션이 적용됩니다.<br>20261019_인터웹과 현재의 스타일·메뉴 표시 및 해제 로직은 같습니다. 다른 세 배지와 역할이 달라 기본 클래스로 유지합니다.</td>
-                                    </tr>
+										<td role="rowheader">완료 알림 점 · nav-complete-dot</td>
+										<td>
+											<div class="guide-preview-viewport">
+												<div class="guide-preview" data-preview-page="common">
+													<div class="guide-completion-example">답변서 초안<span
+															class="nav-complete-dot" role="img"
+															aria-label="완료 알림 있음"></span></div>
+												</div>
+											</div>
+											<a class="guide-preview-source" href="../css/common.css" target="_blank"
+												rel="noopener noreferrer" hidden>원본 보러가기</a>
+										</td>
+										<td><span class="class-value">nav-complete-dot</span></td>
+										<td>7 × 7px 원형<br>위·오른쪽 7px에 절대 배치<br>예시의 부모만 위치 기준으로 지정</td>
+										<td>완료 알림이 있는 메뉴·목록 항목에 붙는 점입니다. 상태 문구나 건수 배지와 별개로 사용하며 hidden으로 숨깁니다. 일반 위치는
+											파란색, 사이드바 안에서는 강조색과 반복 애니메이션이 적용됩니다.<br>20261019_인터웹과 현재의 스타일·메뉴 표시 및 해제 로직은
+											같습니다. 다른 세 배지와 역할이 달라 기본 클래스로 유지합니다.</td>
+									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">라디오 · 오류 신고</td>
 										<td>
@@ -1766,7 +2318,8 @@
 											</div>
 											<p class="guide-preview-note">답변서·업무지원·챗봇 오류 신고의 문제 유형 선택 UI · 가이드에서는 선택만 체험
 											</p>
-											<a class="guide-preview-source" href="ai-answer.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+											<a class="guide-preview-source" href="ai-answer.html" target="_blank"
+												rel="noopener noreferrer">원본 보러가기</a>
 										</td>
 										<td><span
 												class="class-value">chat-issue-types<br>chat-issue-type<br>input[type="radio"]</span>
@@ -1807,7 +2360,8 @@
 										<td>
 											<span class="class-value">sidebar app-sidebar</span>
 										</td>
-										<td>기본 너비 220px · 펼친 상태에서 최소 180px~최대 360px 조절<br>접힘 상태 collapsed는 56px<br>실제 조합: class="sidebar app-sidebar
+										<td>기본 너비 220px · 펼친 상태에서 최소 180px~최대 360px 조절<br>접힘 상태 collapsed는 56px<br>실제
+											조합: class="sidebar app-sidebar
 											collapsed"</td>
 									</tr>
 									<tr data-guide-row>
@@ -1883,7 +2437,8 @@
 AIOneSidebar.setCollapsed("#sidebar", false);  // 펼치기</code></pre>
 					<h3>너비 조절과 확인 사항</h3>
 					<ul class="guide-list">
-						<li>일반 사이드바와 챗봇 사이드바 모두 기본 너비는 220px이며, 펼친 데스크톱 상태에서 경계를 드래그해 최소 180px~최대 360px로 조절합니다. 더블클릭하면 기본 220px로 되돌립니다.</li>
+						<li>일반 사이드바와 챗봇 사이드바 모두 기본 너비는 220px이며, 펼친 데스크톱 상태에서 경계를 드래그해 최소 180px~최대 360px로 조절합니다. 더블클릭하면
+							기본 220px로 되돌립니다.</li>
 						<li>키보드는 좌우 화살표로 10px씩 조절하며 Home·End는 최소·최대, Enter는 기본값입니다.</li>
 						<li>접힌 상태와 768px 이하에서는 너비 조절을 사용하지 않습니다.</li>
 					</ul>
@@ -1894,7 +2449,8 @@ AIOneSidebar.setCollapsed("#sidebar", false);  // 펼치기</code></pre>
 
 					<h3>챗봇 사이드바</h3>
 					<p>원본: html/chatbot.html · 스타일: css/common.css / css/chat.css · 동작: js/chat.js</p>
-					<a class="guide-preview-source" href="chatbot.html" target="_blank" rel="noopener noreferrer">원본 보러가기</a>
+					<a class="guide-preview-source" href="chatbot.html" target="_blank" rel="noopener noreferrer">원본
+						보러가기</a>
 					<div class="table-area guide-table-area">
 						<div class="table-scroll guide-table-scroll" role="region" aria-label="챗봇 사이드바 표" tabindex="0">
 							<table class="table guide-table table-sidebar" data-datatable="">
@@ -1911,7 +2467,8 @@ AIOneSidebar.setCollapsed("#sidebar", false);  // 펼치기</code></pre>
 										<td role="rowheader">전체 영역·접힘</td>
 										<td><span class="class-value">chatbot-app /
 												chatbot-sidebar<br>is-sidebar-collapsed</span></td>
-										<td>기본 너비 220px · 펼친 상태에서 최소 180px~최대 360px 조절<br>일반 접힘 56px<br>부모 chatbot-app에 is-sidebar-collapsed 적용</td>
+										<td>기본 너비 220px · 펼친 상태에서 최소 180px~최대 360px 조절<br>일반 접힘 56px<br>부모 chatbot-app에
+											is-sidebar-collapsed 적용</td>
 									</tr>
 									<tr data-guide-row>
 										<td role="rowheader">로고·접기 버튼</td>
@@ -2068,6 +2625,8 @@ AIOneTheme.setAccent("purple");  // default · blue · green · yellow · pink �
 			</footer>
 		</div>
 	</div>
+	<div aria-live="polite" class="ai-one-toast" data-toast id="toast" hidden><span class="ai-one-toast-message"
+			data-toast-message></span></div>
 </body>
 
 </html>

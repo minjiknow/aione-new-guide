@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 서비스 카드 순환과 질의분류·답변서 사용 이력의 조회·통합·이동을 처리합니다. 이력 표는 더보기 버튼 없이 서비스·유형·제목·날짜·상태를 표시합니다.
+ *
  * AI-ONE 홈 - 서비스 카드 및 사용 이력 모듈
  * 적용 페이지: html/home.html / 전용 스타일: css/ai-home.css
  *
@@ -337,7 +340,7 @@
             updatedAt: item?.updated_at || item?.created_at || "",
             createdAt: item?.created_at || "",
             serviceName: isClassification ? "국회 질의 분류" : isReport ? "국회 답변서 초안 작성" : "AI 서비스",
-            typeText: isClassification ? "질의분류" : isReport ? "AI초안" : "AI",
+            typeText: isClassification ? "질의분류" : isReport ? "답변서" : "AI",
             badgeClass: isClassification ? "search" : "ai",
             // 사이드바 메뉴의 기본 아이콘을 재사용합니다(호버 아이콘 제외).
             icon: isClassification ? "nav-classification" : "nav-answer",
@@ -358,9 +361,9 @@
         });
         const [classificationResult, answerResult] = await Promise.allSettled([
             // [API 연동] GET CLASSIFICATION_BASE + ND_conversationList.do: 질의분류 이력 조회.
-            (window.AIOneHomeAuth?.clsf ? fetchJson(`${CLASSIFICATION_BASE}ND_conversationList.do?${params.toString()}`) : Promise.resolve([])),
+            window.AIOneHomeAuth?.clsf ? fetchJson(`${CLASSIFICATION_BASE}ND_conversationList.do?${params.toString()}`) : Promise.resolve([]),
             // [API 연동] GET ANSWER_BASE + ND_conversationList.do: 답변서 이력 조회. 두 결과를 합쳐 renderHomeHistory()에 전달.
-            (window.AIOneHomeAuth?.answer ? fetchJson(`${ANSWER_BASE}ND_conversationList.do?${params.toString()}`) : Promise.resolve([])),
+            window.AIOneHomeAuth?.answer ? fetchJson(`${ANSWER_BASE}ND_conversationList.do?${params.toString()}`) : Promise.resolve([]),
         ]);
         const classificationItems = classificationResult.status === "fulfilled" ? getConversationItems(classificationResult.value) : [];
         const answerItems = answerResult.status === "fulfilled" ? getConversationItems(answerResult.value) : [];
@@ -400,14 +403,15 @@
     function historyRowHtml(item, full) {
         const title = escapeHtml(item.title);
         const rowAttrs = full ? ' class="history-row-link" data-full-history-row' : ' class="history-row-link" data-home-history-row';
-        const actionCell = full ? "" : `<td class="table-actions"><button type="button" class="table-action-trigger" aria-label="${escapeHtml(item.serviceName)} 더보기">⋮</button></td>`;
+        // 1028 더보기 버튼 삭제
+        // const actionCell = full ? "" : `<td class="table-actions"><button type="button" class="table-action-trigger" aria-label="${escapeHtml(item.serviceName)} 더보기">⋮</button></td>`;
         return `<tr${rowAttrs} data-history-target="${item.target}" data-history-title="${title}" data-conversation-id="${escapeHtml(item.id)}" data-agent-id="${item.agentId}">
             <td><span class="table-service"><img class="icon" data-icon="${item.icon}" alt="" aria-hidden="true" /><span class="table-service-name">${escapeHtml(item.serviceName)}</span></span></td>
             <td><span class="status-badge ${item.badgeClass}">${item.typeText}</span></td>
             <td>${title}</td>
             <td>${formatDateTime(item.updatedAt)}</td>
             <td><span class="status-dot ${item.status.css}">${item.status.text}</span></td>
-            <td>${formatDate(item.createdAt)}</td>${actionCell}
+            <td>${formatDate(item.createdAt)}</td>
         </tr>`;
     }
 
@@ -502,7 +506,6 @@
             slide.dataset.serviceIndex = String(index);
         });
 
-
         function syncVisibleCards(swiper) {
             swiper.slides.forEach((slide) => {
                 let visible = slide.classList.contains("swiper-slide-visible");
@@ -569,7 +572,12 @@
     // End: 261020 수정 - 서비스 카드 개수와 무관한 반응형 너비 및 순환 조건
     // End: 261014 추가 - 서비스 카드 스와이퍼
 
+    // 홈과 공통 가이드가 같은 이력 렌더러·검색 로직을 사용합니다.
+    window.AIOneHomeHistory = Object.freeze({ render: renderHomeHistory, filter: filterFullHistory });
+
     document.addEventListener("DOMContentLoaded", () => {
+        // 가이드는 전달된 더미 데이터만 렌더링하며 홈 초기화/API 조회를 실행하지 않습니다.
+        if (document.body.dataset.page === "common-ui-guide") return;
         window.AIOneIcons?.hydrate();
         clearStaticHistoryRows();
         enhanceSidebar(document);

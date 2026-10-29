@@ -1,6 +1,47 @@
+
+/*
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 가이드 검색·목차 선택·표 헤더 고정과 예시 탭을 처리합니다. 공통 답변 액션 버튼 및 팝업을 실제 공통 컴포넌트로 연결합니다.
+ */
 /** 공통 UI 가이드: 내용 검색, 목차 선택 상태, 표 헤더 고정을 처리합니다. */
 (() => {
   'use strict';
+  document.querySelectorAll('[data-guide-loading]').forEach(host => {
+    const type = host.dataset.guideLoading;
+    if (type === 'document') {
+      window.AIOneLoadingOverlay.mount({
+        container: host,
+        overlay: window.AIOneLoadingOverlay.create({ preview: true, title: '문서 미리보기를 불러오는 중입니다', message: '예산 검토 자료.pdf' }),
+      });
+    } else {
+      window.AIOneDrawerLoading.show(host, '채팅 목록', { append: type === 'more' });
+    }
+  });
+  document.querySelector('[data-preview-layout="composer"] form')?.addEventListener('submit', event => event.preventDefault());
+  const composerPreview = document.querySelector('[data-preview-layout="composer"]');
+  window.AIOneModelTaskMenu.init({
+    composer: composerPreview?.querySelector('.prompt-composer-shell'),
+    input: composerPreview?.querySelector('.prompt-composer-input'),
+    floating: true,
+    placement: 'top',
+  });
+  window.AIOneHomeComposerLayout.init(composerPreview?.querySelector('.prompt-composer-input'));
+  const historyModal = document.querySelector('[data-home-history-modal]');
+  window.AIOneHomeHistory.render(window.AIOneDummyData.home.history);
+  // 행 클릭은 서비스 이동을 수반하므로 가이드에서는 조회·검색만 제공합니다.
+  document.querySelectorAll('[data-full-history-row], [data-home-history-row]').forEach(row => {
+    row.removeAttribute('role');
+    row.removeAttribute('tabindex');
+    row.removeAttribute('aria-label');
+    row.classList.remove('history-row-link');
+  });
+  const historySearch = historyModal.querySelector('[data-home-history-search]');
+  historySearch.addEventListener('input', window.AIOneHomeHistory.filter);
+  historyModal.querySelector('[data-home-history-clear]').addEventListener('click', () => {
+    historySearch.value = '';
+    window.AIOneHomeHistory.filter();
+    historySearch.focus();
+  });
   document.querySelectorAll('[data-guide-message-actions]').forEach(actions => {
     const types = actions.dataset.guideMessageActions === 'ai'
       ? ['copy', 'like', 'dislike', 'research', 'issue'] : ['copy'];
@@ -26,11 +67,75 @@
       actions.append(button);
     });
   });
+  // 데이터는 가이드용 예시이며 필터·분할·문서 컨트롤은 원본 공통 기능을 사용합니다.
+  document.querySelectorAll('.guide-preview .answer-reference-filters').forEach(filters => {
+    const panel = filters.closest('[data-guide-reference-panel]');
+    if (!panel) {
+      window.AIOneReferenceFilters.init(filters);
+      return;
+    }
+    const cards = [...panel.querySelectorAll('[data-guide-reference-category]')];
+    const selectAll = panel.querySelector('[data-select-all-references]');
+    const visibleCards = () => cards.filter(card => !card.hidden);
+    const syncSelection = () => {
+      cards.forEach(card => card.classList.toggle('is-selected', card.querySelector('input').checked));
+      const visible = visibleCards();
+      const selected = visible.filter(card => card.querySelector('input').checked).length;
+      selectAll.checked = visible.length > 0 && selected === visible.length;
+      selectAll.indeterminate = selected > 0 && selected < visible.length;
+    };
+    const previewCard = card => {
+      cards.forEach(item => item.classList.toggle('active', item === card));
+      const title = card.querySelector('.rec-title').textContent;
+      panel.querySelector('[data-guide-document-title]').textContent = title;
+      panel.querySelector('[data-guide-document-body]').textContent = card.querySelector('.rec-desc').textContent;
+      panel.querySelector('.file-name').textContent = title;
+      panel.querySelector('[data-preview-score]').textContent = card.querySelector('.rec-score')?.textContent || '자료 미리보기';
+    };
+    const filterCards = value => {
+      cards.forEach(card => { card.hidden = card.dataset.guideReferenceCategory !== value; });
+      const descriptions = {
+        history: '과거 답변서와 마스터답변 중 현재 질의와 유사도가 높은 자료를 추천합니다.',
+        search: 'AI 참조소스에서 검색 후 가져온 자료를 표시합니다.',
+        upload: 'AI 참조소스에 직접 업로드한 자료를 표시합니다.',
+      };
+      const banner = document.createElement('p');
+      banner.className = 'filter-banner-desc';
+      banner.textContent = descriptions[value];
+      panel.querySelector('.filter-bar-banner').replaceChildren(banner);
+      panel.querySelector('[data-preview-id="recommendFooterCount"]').textContent = `${visibleCards().length}건`;
+      previewCard(visibleCards()[0]);
+      syncSelection();
+    };
+    window.AIOneReferenceFilters.init(filters, filterCards);
+    panel.addEventListener('change', event => {
+      if (event.target === selectAll) visibleCards().forEach(card => { card.querySelector('input').checked = selectAll.checked; });
+      syncSelection();
+    });
+    panel.addEventListener('click', event => {
+      const card = event.target.closest('[data-guide-reference-category]');
+      if (card && !event.target.closest('label, input')) previewCard(card);
+    });
+    panel.addEventListener('keydown', event => {
+      const card = event.target.closest('[data-guide-reference-category]');
+      if (card && event.target === card && ['Enter', ' '].includes(event.key)) {
+        event.preventDefault();
+        previewCard(card);
+      }
+    });
+    filterCards('history');
+    window.AIOneSplitHandler.init(panel);
+  });
+  document.querySelectorAll('.guide-preview .rec-card:not([data-guide-reference-category])').forEach(card => {
+    const checkbox = card.querySelector('input[type="checkbox"]');
+    checkbox?.addEventListener('change', () => card.classList.toggle('is-selected', checkbox.checked));
+  });
   // 예시도 실제 공통 컨트롤러를 사용합니다. 화면별 API 초기화는 호출하지 않습니다.
   document.querySelectorAll('.guide-preview .three-panel:not(.guide-panel-layout)').forEach(container => {
     window.AIOnePanel.initShell({ container, accessory: false });
   });
   document.querySelectorAll('.guide-panel-layout').forEach(container => {
+    window.AIOneWorkspaceUi.initPanelCollapse({ container });
     window.AIOneWorkspaceUi.initPanelDragDrop({
       container,
       applyState(state) {
@@ -48,16 +153,6 @@
     container: () => document.querySelector('.guide-preview .three-panel'),
     font: { cookieKey: '' },
   });
-  document.querySelector('[data-guide-notification]')?.addEventListener('click', event => {
-    const toast = event.currentTarget.parentElement.querySelector('.ai-one-notification-toast');
-    toast.hidden = false;
-    toast.classList.add('show');
-  });
-  document.querySelector('.guide-preview .ai-one-notification-toast button')?.addEventListener('click', event => {
-    const toast = event.currentTarget.closest('.ai-one-notification-toast');
-    toast.classList.remove('show');
-    toast.hidden = true;
-  });
   document.querySelector('.guide-preview .selected-refs-toggle')?.addEventListener('click', event => {
     const button = event.currentTarget;
     const expanded = button.closest('.selected-refs').classList.toggle('is-expanded');
@@ -66,11 +161,6 @@
     window.AIOneTooltip.hide(button);
     button.setAttribute('aria-label', label);
     button.dataset.tooltip = label;
-  });
-  document.querySelector('[data-guide-toast]')?.addEventListener('click', event => {
-    window.AIOneToast.show('저장되었습니다.', {
-      target: event.currentTarget.parentElement.querySelector('[data-toast]'),
-    });
   });
   // 페이지 전용 탭은 예시의 탭 목록 안에서만 선택 상태를 전환합니다.
   document.querySelectorAll('.guide-preview [role="tablist"]').forEach(list => {
@@ -84,6 +174,7 @@
       const panel = document.getElementById(tab.getAttribute('aria-controls'));
       if (panel) panel.hidden = !active;
     });
+    select(tabs.find(tab => tab.getAttribute('aria-selected') === 'true') || tabs[0]);
     list.addEventListener('click', event => {
       const tab = event.target.closest('[role="tab"]');
       if (tabs.includes(tab) && !tab.disabled) select(tab);

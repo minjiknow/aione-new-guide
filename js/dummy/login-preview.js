@@ -44,13 +44,17 @@
         const picId = document.getElementById("picId");
         const picPswd = document.getElementById("picPswd");
         const rememberMe = document.getElementById("rememberMe");
-        if (!form || !picId || !picPswd || !rememberMe || form.dataset.loginReady === "true") return;
+        const toast = document.getElementById("loginToast");
+        if (!form || !picId || !picPswd || !rememberMe || !toast || form.dataset.loginReady === "true") return;
 
         form.dataset.loginReady = "true";
         restoreRememberedId(picId, rememberMe);
 
         [picId, picPswd].forEach((input) => {
-            input.addEventListener("input", () => input.setCustomValidity(""));
+            input.addEventListener("input", () => {
+                if (input.getAttribute("aria-invalid") === "true") window.AIOneToast.hide(toast);
+                input.removeAttribute("aria-invalid");
+            });
         });
 
         // 기본 submit 이벤트를 사용하므로 버튼 클릭과 Enter 입력이 같은 흐름을 따릅니다.
@@ -63,9 +67,19 @@
             }
 
             const id = picId.value.trim();
-            picId.setCustomValidity(id ? "" : "로그인 아이디를 입력해주세요.");
-            picPswd.setCustomValidity(picPswd.value ? "" : "로그인 비밀번호를 입력해주세요.");
-            if (!form.reportValidity()) return;
+            const invalidInput = !id ? picId : !picPswd.value ? picPswd : null;
+            [picId, picPswd].forEach((input) => input.removeAttribute("aria-invalid"));
+            if (invalidInput) {
+                invalidInput.setAttribute("aria-invalid", "true");
+                invalidInput.focus();
+                window.AIOneToast.show(
+                    invalidInput === picId ? "로그인 아이디를 입력해주세요." : "로그인 비밀번호를 입력해주세요.",
+                    { target: toast, duration: 2500 }
+                );
+                return;
+            }
+
+            window.AIOneToast.hide(toast);
 
             saveRememberedId(id, rememberMe.checked);
             picPswd.value = "";

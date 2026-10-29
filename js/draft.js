@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 답변서 모듈을 조립하고 버전·근거·편집·다운로드 이벤트를 연결합니다. 공통 패널·채팅 초기화는 panel.js에 위임합니다.
+ *
  * AI-ONE 답변서 초안 진입점
  * 적용 화면: ai-answer.html
  * 역할: 답변서 모듈 조립과 버전·근거·편집·다운로드 이벤트
@@ -12,7 +15,7 @@
  */
 
 window.AIOnePanel.init({
-  config: { labels: { renameSuccess: "대화 이름을 변경했습니다.", renameFailure: "대화 이름 변경에 실패했습니다.", workspace: "국회 답변서", untitled: "제목 없는 대화", history: "채팅 목록" },
+  config: { labels: { renameSuccess: "대화 이름을 변경했습니다.", renameFailure: "대화 이름 변경에 실패했습니다.", workspace: "새 대화", untitled: "제목 없는 대화", history: "채팅 목록" },
         previewDataKey: "answer", showHistoryIcon: true, kind: "draft", layoutCookie: "ai_one_answer_panel_layout_v5", promptType: "report_generator" },
   configure: window.AIOneDraftWorkspace.configure,
   installPage(runtime) {

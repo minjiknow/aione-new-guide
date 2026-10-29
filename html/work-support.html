@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <!--
+[261028 누적 변경 요약 (현재 구현 기준)]
+참조소스 검색·선택과 업무지원 대화·생성결과를 구성합니다. 공통 패널·제목 편집·작업 목록 및 파일 카드·오류신고 템플릿을 연결합니다.
+
 [파일 요약]
 내부자료 검색·업무지원 화면: html/work-support.html.
 연결 파일: js/panel.js와 panel-*.js, js/work-support.js. 참조소스·다운로드는 js/panel-source.js, 대화는 js/panel-conversation.js,
@@ -10,6 +13,12 @@ UI 관리: 기존 HTML template과 공통 렌더러를 재사용합니다. 공�
 [변경 내용]
 - 261026 수정 - 공통 탑바 제목 편집·작업 목록 로딩 및 참조소스 확장·복원 모듈 연결
 - 261026 수정 - 접힌 참조소스 미리보기 차단과 미리보기 폭·최소 너비 확장 및 닫기 시 복원은 work-support.js에서 처리
+- 261026 수정 - 목록 드로어 로딩 시 스피너 및 스켈레톤 추가 (10개 이상 될때마다 이전 목록 스피너 추가)
+- 261028 수정 -  workspace-topbar-context 데이터 툴팁 이름 통일
+- 261028 수정 - ai참조소스 초기화 버튼 삭제, ai참조소스 패널 접혔을 때 데이터 툴팁 및 아이콘 색 primary 통일
+- 261028 수정 - 값이 없을 시 이미지/아이콘 나오도록 통일
+						(유형1: 가운데 패널쪽 - 아이콘에 배경 있음, 제목 12px / 유형2: 사이드에 있는 패널쪽 - 아이콘에 배경 없음, 크기 작음, 제목 11px )
+- 261028 수정 - status-bar 전체화면 아이콘 변경, 브라우저 안에서 화면 확대로 기능 조정
 - 제작: 내부자료 검색·첨부·선택 및 업무지원 대화
 - 제작: 보고서·표·퀴즈·차트 생성 도구와 결과 목록·미리보기
 - 제작: 작업 목록·이름 관리·다운로드 및 공통 툴팁
@@ -205,14 +214,14 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link" href="ai-answer.html?newChat=Y" data-route="answer" data-page="answer"
-						data-tooltip="국회 답변서 초안" aria-label="국회 답변서 초안">
+						data-tooltip="국회 답변서 초안 생성" aria-label="국회 답변서 초안 생성">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-answer.svg" width="18"
 								height="18" alt="">
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-answer-hover.svg" width="18"
 								height="18" alt="">
 						</span>
-						<span class="nav-text">국회 답변서 초안</span>
+						<span class="nav-text">국회 답변서 초안 생성</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
@@ -243,7 +252,7 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
 					<a class="nav-link active" href="work-support.html" data-route="searchwrite" data-page="searchwrite"
-						data-tooltip="내부 자료 검색 · 업무 지원" aria-label="내부 자료 검색 · 업무 지원" aria-expanded="false"
+						data-tooltip="내부자료 검색 · 업무지원​" aria-label="내부자료 검색 · 업무지원​" aria-expanded="false"
 						aria-current="page">
 						<span class="nav-service-icon" aria-hidden="true">
 							<img class="nav-service-icon-default" src="../assets/icons/nav-search.svg" width="17"
@@ -251,7 +260,7 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 							<img class="nav-service-icon-hover" src="../assets/icons/nav-search-hover.svg" width="17"
 								height="17" alt="">
 						</span>
-						<span class="nav-text">내부 자료 검색 · 업무 지원</span>
+						<span class="nav-text">내부자료 검색 · 업무지원​</span>
 						<span class="nav-complete-dot hidden" aria-label="완료된 작업 있음"
 							data-tooltip="완료된 작업이 있습니다."></span>
 					</a>
@@ -545,9 +554,9 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 							<div class="workspace-topbar-context" aria-label="현재 작업 정보">
 								<div class="workspace-input-count">
 									<button type="button" class="workspace-edit-button" id="answerWorkspaceTitleBtn"
-										aria-label="대화 제목 수정" data-tooltip="대화 제목 수정" data-tooltip-auto
+										aria-label="대화 제목 수정" data-tooltip="클릭하여 제목 수정" data-tooltip-auto
 										data-tooltip-placement="bottom">
-										<span id="answerWorkspaceTitleText" data-tooltip="2026년 세제개편 검토 보고서 작성">2026년
+										<span id="answerWorkspaceTitleText">2026년
 											세제개편 검토
 											보고서 작성</span>
 										<img class="icon icon-small workspace-topbar-edit"
@@ -595,8 +604,8 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 												aria-hidden="true"><small>A</small><strong>A</strong></span></span>
 									</button>
 									<button type="button" class="accessory-action" data-accessory-action="fullscreen"
-										id="fullscreenBtn" aria-label="전체화면 전환" aria-pressed="false"
-										data-tooltip="전체화면 전환" data-tooltip-auto data-tooltip-placement="bottom">
+										id="fullscreenBtn" aria-label="전체화면" aria-pressed="false" data-tooltip="전체화면"
+										data-tooltip-auto data-tooltip-placement="bottom">
 										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"
 												width="14" height="14">
 												<path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5" fill="none"
@@ -605,8 +614,8 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 											</svg></span>
 									</button>
 									<button type="button" class="accessory-action" data-accessory-action="panel-size"
-										id="panelSizeBtn" aria-label="패널 위치 순환" aria-pressed="false"
-										data-tooltip="패널 위치 순환" data-tooltip-auto data-tooltip-placement="bottom">
+										id="panelSizeBtn" aria-label="패널 위치 변경" aria-pressed="false"
+										data-tooltip="패널 위치 변경" data-tooltip-auto data-tooltip-placement="bottom">
 										<span class="accessory-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
 												<path d="M8 7H4m0 0 4 4M4 7l4-4M16 17h4m0 0-4-4m4 4-4 4"></path>
 											</svg></span>
@@ -654,10 +663,6 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 								AI 참조소스
 							</h2>
 							<div class="panel-actions">
-								<button type="button" class="icon-button icon-button-ghost icon-button-sm"
-									id="sourceResetBtn" data-source-reset="" aria-label="참조소스 초기화" draggable="false"
-									data-tooltip="참조소스 초기화"><img class="icon icon-small" data-icon="reset" alt=""
-										aria-hidden="true" src="../assets/icons/reset.svg"></button>
 								<button type="button"
 									class="icon-button icon-button-ghost icon-button-sm panel-collapse-btn"
 									id="sourceCollapseBtn" data-source-collapse="" aria-label="참조소스 패널 접기"
@@ -711,7 +716,8 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 							<!-- 파일 업로드 박스 -->
 							<div class="answer-upload-component file-upload-area" data-component-type="type3">
 								<div class="upload-zone upload-zone-type3" id="referenceFileButton"
-									data-file-upload-zone="" role="button" tabindex="0" aria-label="업무지원 참조 파일 업로드">
+									data-file-upload-zone="" role="button" tabindex="0" aria-label="업무지원 참조 파일 업로드"
+									data-tooltip="소스추가">
 									<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt=""
 										aria-hidden="true">
 									<span class="upload-zone-icon" data-slot="icon" aria-hidden="true"><img
@@ -766,8 +772,7 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 								</div>
 								<div id="sourceSearchSelection" class="source-search-selection" hidden>
 									<label class="rec-checkbox-label" for="sourceSearchSelectAll">
-										<input id="sourceSearchSelectAll" type="checkbox"
-											class="checkbox-control checkbox-control-sm">
+										<input id="sourceSearchSelectAll" type="checkbox">
 										<span class="file-select-check-ui" aria-hidden="true"></span>
 										<span>전체선택</span>
 									</label>
@@ -807,8 +812,7 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 											<span aria-live="polite">소스 <span id="sourceSearchAllCount">0</span>개
 												선택됨</span>
 											<label class="rec-checkbox-label" for="sourceSearchAllSelectAll">
-												<input id="sourceSearchAllSelectAll" type="checkbox"
-													class="checkbox-control checkbox-control-sm">
+												<input id="sourceSearchAllSelectAll" type="checkbox">
 												<span class="file-select-check-ui" aria-hidden="true"></span>
 												<span>전체선택</span>
 											</label>
@@ -888,8 +892,7 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 
 									</div>
 									<label class="rec-checkbox-label">
-										<input type="checkbox" class="checkbox-control checkbox-control-sm"
-											data-source-select-all disabled>
+										<input type="checkbox" data-source-select-all disabled>
 										<span class="file-select-check-ui" aria-hidden="true"></span>
 										전체선택
 									</label>
@@ -920,7 +923,8 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 								</div>
 							</div>
 							<article class="preview-body doc-viewer-body">
-								<div class="doc-pages-track answer-pdfjs-preview" id="sourcePreview"></div>
+								<div class="doc-pages-track answer-pdfjs-preview" id="sourcePreview"
+									data-document-loading-name="[data-work-preview-title]"></div>
 							</article>
 							<template id="answerDocumentPreviewTemplate">
 								<div class="answer-pdf-pages">
@@ -952,7 +956,7 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 							<!-- Start: 선택된 소스 목록이 없을 경우 -->
 							<div class="selected-refs-guide" id="selectedReferenceEmpty"
 								data-selected-references-empty="">
-								<p class="selected-refs-guide-title">관련자료 추천 목록에서 추가할 자료를 선택해 보세요</p>
+								<p class="selected-refs-guide-title">관련자료 추천 목록에서 추가할 자료를 선택해 보세요.</p>
 								<p class="selected-refs-guide-desc">선택된 자료를 작업에 반영할 수 있습니다.</p>
 							</div>
 							<!-- End: 선택된 소스 목록이 없을 경우 -->
@@ -990,7 +994,6 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 								AI 채팅
 							</h2>
 						</header>
-						<p class="panel-desc">참조소스 없이도 데이터화된 내부자료에서 답변하며, 대화 중 찾은 자료를 AI 참조소스에 추가해 이어서 활용할 수 있습니다.</p>
 						<!--
 						[데이터 표시 영역] 업무지원 작업의 메시지. 예시는 workSupport.messages와 responses에서 공급합니다.
 						[API 연결 위치] ../js/panel-conversation.js: loadConversationMessages() / ND_conversationMessageList.do.
@@ -1170,8 +1173,11 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 							<!-- End: 생성 결과 목록 -->
 							<div class="empty-state answer-recommend-empty  generated-result-empty"
 								data-generated-result-empty role="status" aria-live="polite">
-								<div class="no-file-icon" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div>
-								<strong class="small gray" data-generated-result-empty-title>생성된 결과가 없습니다.</strong>
+								<div class="no-file-icon type1" aria-hidden="true"><img
+										src="../assets/icons/no-file.svg" alt=""></div>
+								<strong class="empty-title type1" data-generated-result-empty-title>생성된 결과가
+									없습니다.</strong>
+								<span class="empty-desc type1">자료를 생성하면 이 영역에 목록이 표시됩니다.</span>
 							</div>
 						</div>
 					</section>
@@ -1445,14 +1451,12 @@ answerDocumentPreviewTemplate은 참조소스와 생성결과의 빈 canvas에 �
 								placeholder="문제 상황을 자세히 설명해 주세요"></textarea>
 						</div>
 						<div class="chat-issue-field">
-							<label>파일 첨부 (선택)</label>
-							<label class="chat-issue-upload" for="chatIssueFiles">
-								<svg viewBox="0 0 24 24" aria-hidden="true">
-									<path d="M12 16V4m0 0-4 4m4-4 4 4"></path>
-									<path d="M5 15v4h14v-4"></path>
-								</svg>
-								<span>클릭하거나 파일을 드래그하세요</span>
-								<small>스크린샷 등 최대 5개, 각 10MB 이내</small>
+							<label class="chat-issue-upload-title" for="chatIssueFiles">파일 첨부 (선택)</label>
+							<label class="chat-issue-upload upload-zone upload-zone-type1 compact" for="chatIssueFiles">
+								<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt=""
+									aria-hidden="true">
+								<span class="upload-text">파일을 드롭하거나 클릭하여 업로드</span>
+								<span class="upload-hint">스크린샷 등 최대 5개, 각 10MB 이내</span>
 							</label>
 							<input type="file" id="chatIssueFiles" multiple="" accept="image/*,.pdf,.txt" hidden="">
 							<div class="chat-issue-file-list" data-issue-file-list=""></div>

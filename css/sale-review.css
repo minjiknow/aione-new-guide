@@ -1,5 +1,8 @@
 @charset "utf-8";
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 매각 검증의 업로드·결과 카드·기본정보 상세·빈 화면과 패널 접힘 배치를 관리합니다. 공통 패널 스타일 위에 페이지 전용 보정만 적용합니다.
+ *
  * AI-ONE 매각 검증 전용 기능
  * 적용 화면: sale-review.html
  * 역할: 매각 검증 업로드 배치와 검증결과 카드
@@ -128,7 +131,9 @@ html[data-theme="dark"] [data-panel="folder"] > .selected-refs-footer.panel-fixe
 .rec-card {
     cursor: default;
 }
-
+.sub-desc {
+    margin-top: 6px;
+}
 .sale-result-summary {
     margin-top: 9px;
     padding: 9px;
@@ -180,6 +185,13 @@ html[data-theme="dark"] [data-panel="folder"] > .selected-refs-footer.panel-fixe
     border-radius: var(--radius-sm);
     background: var(--bg);
     color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: calc(11px * var(--ui-font-scale));
+}
+.sale-detail-opinion {
+    margin-top: 6px;
 }
 .sale-detail-opinion strong {
     color: var(--primary);
@@ -188,11 +200,17 @@ html[data-theme="dark"] [data-panel="folder"] > .selected-refs-footer.panel-fixe
     background: rgba(217, 119, 6, 0.055);
     border: 1px solid rgba(217, 119, 6, 0.16);
 }
+
 .sale-detail-advice strong {
     color: var(--orange);
 }
 .sale-detail-advice + .sale-result-foot {
     margin-top: 8px;
+}
+.sale-detail-advice .sub-desc {
+    margin-top: 0;
+    line-height: unset;
+    font-size: calc(11px * var(--ui-font-scale));
 }
 .sale-detail-pass .sale-detail-verdict {
     color: var(--green, #00875a);
@@ -201,6 +219,7 @@ html[data-theme="dark"] [data-panel="folder"] > .selected-refs-footer.panel-fixe
 .sale-result-summary p {
     margin: 2px 0 0;
     font-size: calc(12px * var(--ui-font-scale));
+    font-weight: 600;
     line-height: 1.6;
 }
 .sale-result-foot {

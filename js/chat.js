@@ -1,4 +1,7 @@
 /**
+ * 261028 누적 변경 요약 (현재 구현 기준)
+ * - 홈 질문·첨부 전달과 일반 채팅의 API/SSE·대화 목록·메뉴를 처리합니다. 복사·평가·재검색·오류신고는 공통 답변 액션 UI에 연결합니다.
+ *
  * AI-ONE 일반 채팅 (홈 입력창 · 작업 선택 "일반 대화")
  *
  * 역할
@@ -1266,12 +1269,21 @@
         if (preview.panel) return preview.panel;
         const host = document.querySelector(".chatbot-app") || document.body;
         const panel = document.createElement("aside");
-        panel.className = "chat-preview";
+        panel.className = "chat-preview split-handler-right";
         panel.setAttribute("aria-label", "과거 답변서 미리보기");
         panel.hidden = true;
         panel.innerHTML = getChatTemplateHtml("chatPreviewPanelTemplate");
         panel.querySelector(".chat-preview-zoom").replaceChildren(...ZOOM_OPTIONS.map(([value, label]) => new Option(label, value)));
-        host.appendChild(panel);
+        host.dataset.component = "split-handler";
+        host.dataset.splitMin = "280";
+        host.querySelector(":scope > .chatbot-main")?.classList.add("split-handler-left");
+        const handle = document.createElement("div");
+        handle.className = "chat-preview-resize split-handler-handle";
+        handle.tabIndex = 0;
+        handle.setAttribute("role", "separator");
+        handle.setAttribute("aria-label", "대화와 문서 너비 조절");
+        handle.setAttribute("aria-orientation", "vertical");
+        host.append(handle, panel);
 
         Object.assign(preview, {
             panel,
@@ -1295,10 +1307,16 @@
             if (event.key === "Escape" && !panel.hidden && !document.fullscreenElement && !document.querySelector(".chat-action-modal:not([hidden])")) closePreview();
         });
         window.addEventListener("resize", () => {
+            window.AIOneSplitHandler?.reset(host);
             if (panel.hidden || preview.zoom !== "fit") return;
             window.clearTimeout(preview.resizeTimer);
             preview.resizeTimer = window.setTimeout(renderPdfPages, 150);
         });
+        new ResizeObserver(() => {
+            if (panel.hidden || preview.zoom !== "fit") return;
+            window.clearTimeout(preview.resizeTimer);
+            preview.resizeTimer = window.setTimeout(renderPdfPages, 150);
+        }).observe(panel);
         return panel;
     }
 
@@ -1320,11 +1338,17 @@
     async function openPreview({ docId, title, score }) {
         if (!docId) return;
         buildPreviewPanel();
+        return window.AIOneLoadingOverlay.preview(preview.body, title || docId, () => loadPreview({ docId, title, score }));
+    }
+
+    async function loadPreview({ docId, title, score }) {
+        if (!docId) return;
+        buildPreviewPanel();
         const seq = ++preview.seq;
         preview.docId = docId;
         preview.title = title || docId;
         preview.pdf = null;
-        preview.titleEl.textContent = preview.title;
+        window.AIOneWorkspaceCommon.renderDisplayTitle(preview.titleEl, preview.title);
         preview.titleEl.title = preview.title;
         preview.subEl.textContent = ["AI-ONE / 과거 답변서", score ? `유사도 ${score}` : ""].filter(Boolean).join(" · ");
         preview.openEl.href = sourcePreviewUrl(docId);
@@ -1332,6 +1356,7 @@
         preview.zoomEl.value = preview.zoom;
         preview.panel.hidden = false;
         el.root?.classList.add("has-preview");
+        window.AIOneSplitHandler?.init(el.root);
         markPreviewing(docId);
         setPreviewMessage("미리보기를 불러오는 중입니다… 처음 여는 문서는 변환에 몇 초 걸릴 수 있습니다.");
         log("과거 답변서 미리보기", docId, title);
@@ -1412,6 +1437,7 @@
         preview.panel.classList.remove("is-maximized");
         if (document.fullscreenElement === preview.panel) document.exitFullscreen?.();
         el.root?.classList.remove("has-preview");
+        window.AIOneSplitHandler?.reset(el.root);
         preview.pdf = null;
         preview.body.innerHTML = "";
         markPreviewing(null);
@@ -1710,7 +1736,7 @@
     const MSG_ACTION_FALLBACK = {
         like: ["좋아요", '<path d="M7 10v11H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3z"/><path d="M7 10l4-7a2.5 2.5 0 0 1 2.5 2.5V9h5.2a2 2 0 0 1 2 2.3l-1.2 8A2 2 0 0 1 17.5 21H7"/>', true],
         dislike: ["싫어요", '<path d="M17 14V3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-3z"/><path d="M17 14l-4 7a2.5 2.5 0 0 1-2.5-2.5V15H5.3a2 2 0 0 1-2-2.3l1.2-8A2 2 0 0 1 6.5 3H17"/>', true],
-        research: ["관련자료 재검색", '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'],
+        research: ["다시 생성", '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'],
         copy: ["복사", '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/>'],
         issue: ["오류신고", '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>'],
     };
@@ -2239,7 +2265,9 @@
         const words = searchWords();
         const items = historyItems.filter((item) => matchesSearch(item, words));
         closeMoreMenu(false); // 다시 그리면 열려 있던 더보기 메뉴의 대상이 사라진다
-        el.historyList.innerHTML = items.length ? items.map((item) => historyItemHtml(item, words)).join("") : `<li class="chatbot-history-empty"><p class="empty-title">${words.length ? "검색 결과가 없습니다." : "아직 대화가 없습니다."}</p></li>`;
+        el.historyList.innerHTML = items.length
+            ? items.map((item) => historyItemHtml(item, words)).join("")
+            : `<li class="chatbot-history-empty"><p class="empty-title type1">${words.length ? "검색 결과가 없습니다." : "아직 대화가 없습니다."}</p></li>`;
         markActiveHistory();
     }
 
@@ -2953,13 +2981,13 @@
 
     function openActionModal(modal, focusTarget) {
         more.lastFocus = more.current?.button || null;
-        if (modal.matches('[data-modal]')) window.AIOneModal.open(modal, more.lastFocus);
+        if (modal.matches("[data-modal]")) window.AIOneModal.open(modal, more.lastFocus);
         else modal.hidden = false;
         window.setTimeout(() => focusTarget?.focus(), 0);
     }
 
     function closeActionModal(modal) {
-        if (modal.matches('[data-modal]')) {
+        if (modal.matches("[data-modal]")) {
             window.AIOneModal.close(modal);
             return;
         }
@@ -3443,7 +3471,7 @@
         </li>`;
                   })
                   .join("")
-            : `<li class="chatbot-history-empty"><p class="empty-title">${words.length ? "검색 결과가 없습니다." : "프로젝트를 만들어 대화 · 파일 · 지침을 모아 보세요."}</p></li>`;
+            : `<li class="chatbot-history-empty"><p class="empty-title type1">${words.length ? "검색 결과가 없습니다." : "프로젝트를 만들어 대화 · 파일 · 지침을 모아 보세요."}</p></li>`;
         markActiveProject();
     }
 
@@ -3735,14 +3763,14 @@
     // ── 모달 (만들기 · 수정 / 확인 / 프로젝트로 이동)
     function openProjectModal(modal, focusTarget) {
         proj.lastFocus = document.activeElement;
-        if (modal.matches('[data-modal]')) window.AIOneModal.open(modal, proj.lastFocus);
+        if (modal.matches("[data-modal]")) window.AIOneModal.open(modal, proj.lastFocus);
         else modal.hidden = false;
         window.setTimeout(() => focusTarget?.focus(), 0);
     }
 
     function closeProjectModal(modal) {
         if (!modal || modal.hidden) return;
-        if (modal.matches('[data-modal]')) {
+        if (modal.matches("[data-modal]")) {
             window.AIOneModal.close(modal);
             return;
         }
@@ -3894,7 +3922,7 @@
 
     /** 확인 모달 하나를 프로젝트 삭제 · 파일 삭제 · 대화 빼기에 같이 쓴다 */
     function confirmProject({ title, message, confirmText, danger, action }) {
-        const icon = el.projectConfirmModal.querySelector('[data-modal-icon]');
+        const icon = el.projectConfirmModal.querySelector("[data-modal-icon]");
         icon.className = danger ? "modal-icon danger" : "modal-icon confirm";
         icon.textContent = danger ? "⚠" : "?";
         el.projectConfirmTitle.textContent = title;
@@ -5114,11 +5142,15 @@
         const main = app.querySelector(".chatbot-main");
         // Start: 261022 주석 보완 - 모바일 헤더 스크롤 상태 연결
         // 대화 스크롤에만 반응하며 배경 투명도는 모바일 CSS에서 처리한다.
-        document.addEventListener("scroll", (event) => {
-            const scroller = event.target === document ? document.scrollingElement : event.target;
-            if (scroller !== document.scrollingElement && scroller !== main && !main?.contains(scroller)) return;
-            mobileHeader?.classList.toggle("is-scrolled", scroller.scrollTop > 0);
-        }, { capture: true, passive: true });
+        document.addEventListener(
+            "scroll",
+            (event) => {
+                const scroller = event.target === document ? document.scrollingElement : event.target;
+                if (scroller !== document.scrollingElement && scroller !== main && !main?.contains(scroller)) return;
+                mobileHeader?.classList.toggle("is-scrolled", scroller.scrollTop > 0);
+            },
+            { capture: true, passive: true },
+        );
         // End: 261022 주석 보완 - 모바일 헤더 스크롤 상태 연결
         // chat.css와 같은 경계. 모바일 메뉴 상태는 데스크톱 저장값을 바꾸지 않는다.
         const mobileQuery = window.matchMedia("(max-width: 768px)");
@@ -5250,16 +5282,21 @@
             searchControl.removeAttribute("data-tooltip-auto");
             window.AIOneTooltip?.hide?.();
         });
-        sidebar?.addEventListener("click", (event) => {
-            if (!event.target.closest(".chatbot-nav-item") || isMobile() || railMode) return;
-            const wasCollapsed = app.classList.contains("is-sidebar-collapsed");
-            closeSidebarSearch();
-            // 메뉴 자체의 동작이 끝난 뒤에도 클릭 전 접힘 상태를 유지합니다.
-            if (wasCollapsed) queueMicrotask(() => {
-                if (!app.classList.contains("is-sidebar-collapsed")) apply(true, false);
-                save(true);
-            });
-        }, true);
+        sidebar?.addEventListener(
+            "click",
+            (event) => {
+                if (!event.target.closest(".chatbot-nav-item") || isMobile() || railMode) return;
+                const wasCollapsed = app.classList.contains("is-sidebar-collapsed");
+                closeSidebarSearch();
+                // 메뉴 자체의 동작이 끝난 뒤에도 클릭 전 접힘 상태를 유지합니다.
+                if (wasCollapsed)
+                    queueMicrotask(() => {
+                        if (!app.classList.contains("is-sidebar-collapsed")) apply(true, false);
+                        save(true);
+                    });
+            },
+            true,
+        );
         document.addEventListener("pointerdown", (event) => {
             if (!event.target.closest(".chatbot-search, .chatbot-history")) closeSidebarSearch();
         });
@@ -5274,14 +5311,18 @@
         // End: 261021 수정 - 검색·일반 메뉴 클릭 시 접힘 유지
         // Start: 261021 수정 - Work·Chat 모드 클릭 시 사이드바 펼치기
         // 공통 모드 전환·페이지 이동보다 먼저 펼침 상태를 반영합니다.
-        sidebar?.addEventListener("click", (event) => {
-            const modeLink = event.target.closest(".nav-mode > .nav-link");
-            if (!modeLink || !sidebar.contains(modeLink) || isMobile() || railMode || !app.classList.contains("is-sidebar-collapsed")) return;
-            closeSidebarSearch();
-            apply(false);
-            save(false);
-            window.AIOneTooltip?.hide?.();
-        }, true);
+        sidebar?.addEventListener(
+            "click",
+            (event) => {
+                const modeLink = event.target.closest(".nav-mode > .nav-link");
+                if (!modeLink || !sidebar.contains(modeLink) || isMobile() || railMode || !app.classList.contains("is-sidebar-collapsed")) return;
+                closeSidebarSearch();
+                apply(false);
+                save(false);
+                window.AIOneTooltip?.hide?.();
+            },
+            true,
+        );
         // End: 261021 수정 - Work·Chat 모드 클릭 시 사이드바 펼치기
         // Start: 261021 수정 - 일반 홈 메뉴 이동 시 접힘 상태 유지
         sidebar?.querySelector('.chatbot-nav-item[href="home.html"]')?.addEventListener("click", (event) => {
@@ -5634,82 +5675,9 @@
     // Start: 261016 수정 - 모델·작업 선택 및 입력창 이벤트
     let syncHomeComposerLayout = () => {};
 
-    /** 한 줄 배치의 너비로 판단하여 펼친 뒤에도 배치가 반복 전환되지 않게 한다. */
     function initHomeComposerLayout() {
-        const input = el.input;
-        const form = input?.closest(".prompt-composer");
-        if (!form?.matches(".page > .home-prompt-composer #chatComposerForm") || input.tagName !== "TEXTAREA") return () => {};
-        // 실제 입력창을 접었다 펼치지 않아 커서·스크롤과 주변 레이아웃을 유지한다.
-        const mirror = document.createElement("textarea");
-        mirror.className = "home-composer-measure";
-        mirror.tabIndex = -1;
-        mirror.setAttribute("aria-hidden", "true");
-        mirror.setAttribute("inert", "");
-        mirror.rows = 1;
-        document.body.append(mirror);
-        const controls = [...form.querySelectorAll(":scope > .prompt-composer-tools, :scope > .prompt-composer-bar")];
-        const textProperties = ["font-family", "font-size", "font-weight", "font-style", "font-stretch", "font-variant",
-            "font-feature-settings", "font-variation-settings", "font-optical-sizing", "font-size-adjust", "font-kerning",
-            "line-height", "letter-spacing", "word-spacing", "text-indent", "text-transform", "tab-size",
-            "white-space", "word-break", "overflow-wrap", "direction"];
-        let metrics = null;
-        let frame = 0;
-        const measure = () => {
-            frame = 0;
-            if (!metrics) {
-                if (!form.getClientRects().length) return;
-                const style = getComputedStyle(input);
-                const formStyle = getComputedStyle(form);
-                const lineHeight = parseFloat(style.lineHeight);
-                if (!Number.isFinite(lineHeight)) return;
-                const inlinePadding = parseFloat(formStyle.getPropertyValue("--composer-inline-padding-left")) + parseFloat(formStyle.getPropertyValue("--composer-inline-padding-right"));
-                const fullWidth = form.clientWidth - 2 * parseFloat(formStyle.getPropertyValue("--composer-multiline-padding"));
-                const controlsWidth = controls.reduce((width, node) => width + node.getBoundingClientRect().width, 0);
-                metrics = {
-                    lineHeight,
-                    maximum: parseFloat(style.maxHeight) || 200,
-                    fullWidth,
-                    inlineWidth: Math.max(1, form.clientWidth - inlinePadding - controlsWidth - (parseFloat(formStyle.columnGap) || 0) * controls.length),
-                };
-                textProperties.forEach(property => mirror.style.setProperty(property, style.getPropertyValue(property)));
-                mirror.wrap = input.wrap;
-            }
-            const { lineHeight, maximum, inlineWidth, fullWidth } = metrics;
-            mirror.value = input.value;
-            mirror.style.width = `${inlineWidth}px`;
-            const multiline = input.value.length > 0 && mirror.scrollHeight > lineHeight + 1;
-            const minimum = lineHeight * (multiline ? 2 : 1);
-            if (multiline) mirror.style.width = `${fullWidth}px`;
-            const contentHeight = input.value ? mirror.scrollHeight : minimum;
-            const height = Math.min(maximum, Math.max(minimum, contentHeight)) + "px";
-            if (form.classList.contains("is-multiline") !== multiline) form.classList.toggle("is-multiline", multiline);
-            if (input.style.getPropertyValue("--composer-input-height") !== height) input.style.setProperty("--composer-input-height", height);
-        };
-        const schedule = () => {
-            if (!frame) frame = requestAnimationFrame(measure);
-        };
-        const invalidate = () => {
-            metrics = null;
-            schedule();
-        };
-        // 높이 변경에는 반응하지 않고 화면 및 버튼 너비 변경에만 다시 측정한다.
-        const widths = new WeakMap();
-        const observer = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const width = entry.borderBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
-                if (widths.get(entry.target) === width) continue;
-                widths.set(entry.target, width);
-                invalidate();
-            }
-        });
-        observer.observe(form);
-        controls.forEach(node => observer.observe(node));
-        window.addEventListener("resize", invalidate, { passive: true });
-        document.fonts?.ready.then(invalidate);
-        document.fonts?.addEventListener("loadingdone", invalidate);
-        form.addEventListener("reset", schedule);
-        measure();
-        return schedule;
+        if (!el.input?.closest(".page > .home-prompt-composer")) return () => {};
+        return window.AIOneHomeComposerLayout.init(el.input);
     }
 
     function initComposerControls() {
@@ -5733,201 +5701,12 @@
         });
     }
 
-    /** 열린 메뉴 전체를 기준으로 화면 안에 배치한다. 기존 입력창의 이동 효과도 유지한다. */
-    function initChatMenuPosition(component, trigger, panels) {
-        const gap = 8;
-        const viewportPadding = 12;
-        const modelMenu = panels.querySelector('[role="menu"]');
-        const syncTaskHeight = () => panels.style.setProperty("--chat-model-menu-height", `${modelMenu.getBoundingClientRect().height}px`);
-        let frame = 0;
-
-        const position = () => {
-            if (!component.classList.contains("is-open")) return;
-            const viewport = window.visualViewport;
-            const viewportTop = (viewport?.offsetTop || 0) + viewportPadding;
-            const viewportLeft = (viewport?.offsetLeft || 0) + viewportPadding;
-            const viewportBottom = (viewport?.offsetTop || 0) + (viewport?.height || window.innerHeight) - viewportPadding;
-            const viewportRight = (viewport?.offsetLeft || 0) + (viewport?.width || document.documentElement.clientWidth) - viewportPadding;
-            const triggerRect = trigger.getBoundingClientRect();
-            const spaceAbove = Math.max(0, triggerRect.top - viewportTop - gap);
-            const spaceBelow = Math.max(0, viewportBottom - triggerRect.bottom - gap);
-
-            // 이전 방향의 높이 제한을 풀고 현재 메뉴에 필요한 높이를 다시 잰다.
-            panels.style.removeProperty("--chat-menu-available-height");
-            syncTaskHeight();
-            const openAbove = panels.getBoundingClientRect().height > spaceBelow && spaceAbove > spaceBelow;
-            panels.style.setProperty("--chat-menu-available-height", `${openAbove ? spaceAbove : spaceBelow}px`);
-            syncTaskHeight();
-            panels.dataset.placement = openAbove ? "top" : "bottom";
-
-            const panelRect = panels.getBoundingClientRect();
-            const modelWidth = panels.querySelector('[role="menu"]').getBoundingClientRect().width;
-            const left = Math.max(viewportLeft, Math.min(triggerRect.right - modelWidth, viewportRight - panelRect.width));
-            const top = openAbove ? triggerRect.top - gap - panelRect.height : triggerRect.bottom + gap;
-            const parent = panels.offsetParent;
-            const parentRect = parent.getBoundingClientRect();
-            panels.style.left = `${left - parentRect.left + parent.scrollLeft - parent.clientLeft}px`;
-            panels.style.top = `${top - parentRect.top + parent.scrollTop - parent.clientTop}px`;
-        };
-        const schedule = () => {
-            if (frame || !component.classList.contains("is-open")) return;
-            frame = window.requestAnimationFrame(() => {
-                frame = 0;
-                position();
-            });
-        };
-        window.addEventListener("resize", schedule, { passive: true });
-        document.addEventListener(
-            "scroll",
-            (event) => {
-                if (!panels.contains(event.target)) schedule();
-            },
-            { capture: true, passive: true },
-        );
-        window.visualViewport?.addEventListener("resize", schedule, { passive: true });
-        window.visualViewport?.addEventListener("scroll", schedule, { passive: true });
-        const observer = new ResizeObserver(schedule);
-        observer.observe(el.composer);
-        observer.observe(trigger);
-        observer.observe(panels);
-        return position;
-    }
-
-    /** 모델·작업 목록은 HTML을 그대로 사용한다. aria-controls로 각 작업 메뉴를 연결한다.
-     * 모델은 임시 선택하고 작업 선택 시 두 값을 확정한다.
-     */
     function initTaskSubmenu() {
-        const component = el.composer?.querySelector('[data-dropdown-menu][data-chat-menu="model"]');
-        const modelMenu = component?.querySelector("#chatModelMenu");
-        const panels = component?.querySelector(".chat-menu-panels");
-        if (!modelMenu || !panels || component.dataset.taskSubmenuReady === "true") return;
-        const trigger = component.querySelector("[data-dropdown-trigger]");
-        const modelLabel = trigger.querySelector("[data-chat-model-label]");
-        const taskLabel = trigger.querySelector("[data-chat-task-label]");
-        const itemLabel = (item) => item.dataset.menuLabel || item.querySelector(".dropdown-model-name")?.textContent.trim() || "";
-        const models = Array.from(modelMenu.querySelectorAll("[data-menu-value]"))
-            .map((item) => {
-                const menu = document.getElementById(item.getAttribute("aria-controls"));
-                if (!menu || !panels.contains(menu)) return null;
-                const tasks = Array.from(menu.querySelectorAll("[data-menu-value]"));
-                return tasks.length ? { item, menu, tasks, value: item.dataset.menuValue, label: itemLabel(item) } : null;
-            })
-            .filter(Boolean);
-        if (!models.length) return;
-        component.dataset.taskSubmenuReady = "true";
-        const positionPanels = initChatMenuPosition(component, trigger, panels);
-        const modelItems = models.map((model) => model.item);
-        let selectedModel = models.find((model) => model.value === el.composer.dataset.chatModelCurrent) || models[0];
-        let selectedTask = selectedModel.tasks.find((task) => task.dataset.menuValue === currentTask()) || selectedModel.tasks[0];
-        let pendingModel = selectedModel;
-        let hoverCloseTimer = 0;
-        const cancelHoverClose = () => window.clearTimeout(hoverCloseTimer);
-        const closeAfterLeave = (event) => {
-            if (event.pointerType === "touch") return;
-            cancelHoverClose();
-            // 버튼과 메뉴 사이의 간격을 지나갈 시간을 둔다.
-            hoverCloseTimer = window.setTimeout(() => {
-                window.AIOneDropdownMenu.setOpen(component, false);
-            }, 160);
-        };
-        trigger.addEventListener("pointerenter", (event) => {
-            if (event.pointerType === "touch") return;
-            cancelHoverClose();
-            if (!component.classList.contains("is-open")) {
-                window.AIOneDropdownMenu.setOpen(component, true, "none");
-            }
+        window.AIOneModelTaskMenu.init({
+            composer: el.composer,
+            input: el.input,
+            placeholders: cfg.composerControls?.placeholders,
         });
-        trigger.addEventListener("pointerleave", closeAfterLeave);
-        panels.addEventListener("pointerenter", cancelHoverClose);
-        panels.addEventListener("pointerleave", closeAfterLeave);
-        trigger.addEventListener("click", (event) => {
-            // 마우스는 hover로 열고, 터치·키보드는 기존 클릭 동작을 사용한다.
-            if (event.detail > 0 && event.pointerType !== "touch" && window.matchMedia("(hover: hover)").matches) {
-                event.stopPropagation();
-            }
-        });
-        const updateLabel = () => {
-            modelLabel.textContent = selectedModel.label;
-            taskLabel.textContent = itemLabel(selectedTask);
-            trigger.setAttribute("aria-label", `${selectedModel.label} · ${itemLabel(selectedTask)}`);
-            trigger.title = trigger.getAttribute("aria-label");
-            el.composer.dataset.chatModelCurrent = selectedModel.value;
-            el.composer.dataset.chatTaskCurrent = selectedTask.dataset.menuValue;
-            models.forEach((model) =>
-                model.tasks.forEach((task) => {
-                    task.setAttribute("aria-checked", String(model === selectedModel && task === selectedTask));
-                }),
-            );
-        };
-        const close = () => {
-            models.forEach((model) => {
-                model.menu.hidden = true;
-            });
-            pendingModel = selectedModel;
-            modelItems.forEach((item) => {
-                item.setAttribute("aria-expanded", "false");
-                item.setAttribute("aria-checked", String(item.dataset.menuValue === selectedModel.value));
-            });
-        };
-        // Hover previews tasks without committing a model or moving keyboard focus.
-        const openTasks = (item, focusTask = false) => {
-            const model = models.find((option) => option.item === item);
-            if (!model || !component.classList.contains("is-open")) return;
-            pendingModel = model;
-            modelMenu.hidden = false;
-            models.forEach((option) => {
-                option.menu.hidden = option !== model;
-            });
-            component.dataset.taskModel = model.value;
-            modelItems.forEach((option) => option.setAttribute("aria-expanded", String(option === item)));
-            positionPanels();
-            if (focusTask) (model.menu.querySelector('[aria-checked="true"]') || model.tasks[0])?.focus({ preventScroll: true });
-        };
-        modelItems.forEach((item) => {
-            item.addEventListener("pointerenter", (event) => {
-                if (event.pointerType !== "touch") openTasks(item);
-            });
-        });
-        component.addEventListener("dropdownmenu:select", (event) => {
-            const { item } = event.detail;
-            if (modelMenu.contains(item)) {
-                openTasks(item, true);
-            } else {
-                const model = models.find((option) => option.tasks.includes(item));
-                if (!model) return;
-                selectedModel = model;
-                selectedTask = item;
-                updateLabel();
-                const value = item.dataset.menuValue;
-                if (el.input)
-                    el.input.placeholder =
-                        selectedModel.value === "government"
-                            ? `${itemLabel(item)} 요청을 입력하세요 (API 연결 준비 중)`
-                            : cfg.composerControls?.placeholders?.[value] || (value === "search" ? "찾을 내부 업무자료를 입력해 보세요" : "AI-ONE에게 요청해 보세요");
-            }
-        });
-        component.addEventListener("dropdownmenu:toggle", (event) => {
-            if (!event.detail.open) {
-                cancelHoverClose();
-                close();
-            } else positionPanels();
-        });
-        component.addEventListener("keydown", (event) => {
-            const item = event.target.closest("[data-menu-value]");
-            if (event.key === "ArrowRight" && item && modelMenu.contains(item)) {
-                event.preventDefault();
-                item.click();
-            } else if (pendingModel.menu.contains(event.target) && ["ArrowLeft", "Escape"].includes(event.key)) {
-                event.preventDefault();
-                event.stopPropagation();
-                const parent = modelItems.find((option) => option.dataset.menuValue === pendingModel.value);
-                close();
-                positionPanels();
-                parent?.focus({ preventScroll: true });
-            }
-        });
-        updateLabel();
-        close();
     }
 
     function bindEvents() {
@@ -6006,14 +5785,25 @@
             loadConversation(button.dataset.conversationId).catch((error) => toast(error.message || "대화를 불러오지 못했습니다."));
         });
         // 채팅 검색: 받아 둔 목록을 화면에서 바로 거른다 (한글 조합 중에도 글자가 바뀔 때마다 반영)
+        const searchClear = document.querySelector(".chat-search-clear");
+        const syncSearchClear = () => {
+            if (searchClear) searchClear.hidden = !el.historySearch?.value;
+        };
+        searchClear?.addEventListener("click", (event) => {
+            event.preventDefault();
+            el.historySearch.value = "";
+            el.historySearch.dispatchEvent(new Event("input", { bubbles: true }));
+            el.historySearch.focus();
+        });
+        el.historySearch?.addEventListener("input", syncSearchClear);
+        syncSearchClear();
         el.historySearch?.addEventListener("input", renderHistory);
         el.historySearch?.addEventListener("keydown", (event) => {
             if (event.key === "Escape" && el.historySearch.value) {
                 event.preventDefault();
                 event.stopPropagation();
                 el.historySearch.value = "";
-                renderHistory();
-                renderProjects();
+                el.historySearch.dispatchEvent(new Event("input", { bubbles: true }));
             }
         });
         el.newBtn?.addEventListener("click", () => {
