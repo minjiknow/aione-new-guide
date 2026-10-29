@@ -5075,6 +5075,20 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         return group;
     }
 
+    function createEmpty(message, tagName = "div") {
+        const content = window.AIOneWorkspaceCommon.createFilterEmpty(message, "");
+        content.className = "empty-state drawer-list-empty";
+        content.querySelector(".no-file-icon").classList.add("type1");
+        content.querySelector(".empty-title").classList.add("type1");
+        content.querySelector(".empty-desc").remove();
+        if (tagName === "li") {
+            const item = document.createElement("li");
+            item.append(content);
+            return item;
+        }
+        return content;
+    }
+
     function renderChatItems(options = {}) {
         const list = options.list;
         if (!list) return;
@@ -5087,6 +5101,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         const loading = list.querySelector(":scope > .drawer-list-loading-more");
         const scrollTop = list.scrollTop;
         list.replaceChildren();
+        if (!items.length && options.emptyMessage) list.append(createEmpty(options.emptyMessage));
         items.forEach((item, index) => {
             const id = normalizeId(item);
             const title = getTitle(item, options.fallbackTitle);
@@ -5238,6 +5253,7 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         applyLocalAction,
         filterItems,
         renderChatItems,
+        createEmpty,
         createBadges,
     });
 })();

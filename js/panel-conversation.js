@@ -903,7 +903,7 @@
                     }
                 } catch (error) {
                     console.error("대화 목록 조회 실패", error);
-                    el.historyList.innerHTML = '<div class="selected-empty">작성 이력을 불러오지 못했습니다.</div>';
+                    el.historyList.replaceChildren(window.AIOneConversationDrawer.createEmpty("작성 이력을 불러오지 못했습니다."));
                 } finally {
                     if (append) state.conversationLoadingMore = false;
                     // Start: 261026 수정 - Drawer 목록 조회 완료 정리
@@ -1174,6 +1174,7 @@
                     list: el.historyList,
                     totalElement: el.historyTotal,
                     items: state.conversations,
+                    emptyMessage: state.conversationSearchTitle ? "검색 결과가 없습니다." : "작성 이력이 없습니다.",
                     total: state.conversations.length,
                     activeId: state.conversationId,
                     sortMode: el.historySort?.value || "latest",

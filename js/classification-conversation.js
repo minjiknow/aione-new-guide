@@ -1181,15 +1181,10 @@
                         `;
                       })
                       .join('')
-                  : `
-                    <li class="run-empty drawer-list-empty"><p class="empty-title">
-                      ${
-                        runListSearchTerm
-                          ? '검색 결과가 없습니다.'
-                          : '등록된 질의이력이 없습니다.'
-                      }
-                    </p></li>
-                  `;
+                  : window.AIOneConversationDrawer.createEmpty(
+                      runListSearchTerm ? '검색 결과가 없습니다.' : '등록된 질의이력이 없습니다.',
+                      'li'
+                    ).outerHTML;
               if (loading) list.append(loading);
               list.scrollTop = scrollTop;
               $$('.drawer-run-item[data-conversation-id]', list).forEach(row => {

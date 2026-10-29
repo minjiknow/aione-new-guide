@@ -488,9 +488,7 @@
         });
         historyPagination.paginate(JSON.stringify([query, $("saleHistoryListSort").value]));
         if (!visible.length) {
-            const empty = document.createElement("p");
-            empty.className = "empty-state";
-            empty.textContent = query ? "검색 조건에 맞는 분석 내역이 없습니다." : "분석 내역이 없습니다.";
+            const empty = window.AIOneConversationDrawer.createEmpty(query ? "검색 조건에 맞는 분석 내역이 없습니다." : "분석 내역이 없습니다.");
             historyList.append(empty);
         }
     }

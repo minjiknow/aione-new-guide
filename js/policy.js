@@ -280,10 +280,7 @@
     });
     historyPagination.paginate(JSON.stringify([keyword, $('#runListSort').value]));
     if (!visible.length) {
-      const empty = document.createElement('div'); empty.className = 'empty-state';
-      const title = document.createElement('p'); title.className = 'empty-title';
-      empty.append(title);
-      title.textContent = keyword ? '검색 조건에 맞는 보고서 검증 목록이 없습니다.' : '보고서 검증 목록이 없습니다.';
+      const empty = window.AIOneConversationDrawer.createEmpty(keyword ? '검색 조건에 맞는 보고서 검증 목록이 없습니다.' : '보고서 검증 목록이 없습니다.');
       $('#policyRunList').append(empty);
     }
   }
