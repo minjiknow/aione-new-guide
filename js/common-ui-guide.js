@@ -6,6 +6,13 @@
 /** 공통 UI 가이드: 내용 검색, 목차 선택 상태, 표 헤더 고정을 처리합니다. */
 (() => {
   'use strict';
+  // 상태 비교 예시는 화면 너비에 따른 자동 접힘을 적용하지 않습니다.
+  document.querySelectorAll('.guide-completion-sidebar').forEach(sidebar => {
+    window.AIOneSidebar.configure(sidebar, {
+      initialCollapsed: sidebar.classList.contains('collapsed'),
+      responsiveRail: false,
+    });
+  });
   // 표의 스크롤 영역을 늘리지 않고 기존 메뉴를 최상위 레이어에 표시합니다.
   document.querySelectorAll('[data-preview-layout="dropdown"] [data-dropdown-menu]').forEach(component => {
     const trigger = component.querySelector('[data-dropdown-trigger]');

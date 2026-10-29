@@ -953,6 +953,11 @@ html[data-theme="dark"] :is(.answer-recommend-empty strong, .selected-refs-guide
 .answer-source-file-section > :is(.folder-upload-head, .answer-upload-component) {
     flex-shrink: 0;
 }
+/* 안내문의 소수 픽셀 높이가 아래 전체선택 체크 표시를 흐리게 하지 않도록 합니다. */
+.answer-upload-component .upload-text {
+    line-height: 17px;
+    line-height: round(up, 1.5em, 1px);
+}
 .answer-source-file-section:not(.is-collapsed) > .answer-source-group:not(.source-search-results) {
     flex: 1 1 auto;
     min-height: 96px;
