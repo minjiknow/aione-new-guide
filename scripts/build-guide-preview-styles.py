@@ -121,7 +121,12 @@ def main():
         chunks = []
         for filename in files:
             css = (ROOT / 'css' / filename).read_text(encoding='utf-8-sig')
-            chunks.append(f'/* Source: {filename} */\n' + select_rules(css, examples.used.get(page, set())))
+            selected = select_rules(css, examples.used.get(page, set()))
+            # Keep animation dependencies; copying only selectors drops @keyframes.
+            animation_values = re.findall(r'(?<![\w-])animation(?:-name)?\s*:\s*([^;{}]+)', selected)
+            animation_names = set(re.findall(r'[\w-]+', ' '.join(animation_values)))
+            keyframes = select_keyframes(css, animation_names)
+            chunks.append(f'/* Source: {filename} */\n' + selected + ('\n' + keyframes if keyframes else ''))
         output.append(f'@scope (.guide-preview[data-preview-page="{page}"]) {{\n' + '\n'.join(chunks) + '\n}')
     target = ROOT / 'css/common-ui-guide.css'
     css = target.read_text(encoding='utf-8')
@@ -131,6 +136,19 @@ def main():
     _, after = remainder.split(END_MARKER, 1)
     generated = '\n'.join(line.rstrip() for line in '\n\n'.join(output).splitlines())
     target.write_text(before + START_MARKER + '\n' + generated + '\n' + END_MARKER + after, encoding='utf-8')
+
+def select_keyframes(css, names):
+    """Preserve referenced keyframes and their original conditional wrappers."""
+    result = []
+    for selector, body in blocks(css):
+        if selector.startswith('@keyframes ') and selector.split()[-1] in names:
+            result.append(f'{selector} {{{body}}}')
+        elif selector.startswith(('@media', '@supports', '@container', '@layer')):
+            nested = select_keyframes(body, names)
+            if nested:
+                result.append(f'{selector} {{\n{nested}\n}}')
+    return '\n'.join(result)
+
 
 if __name__ == '__main__':
     main()

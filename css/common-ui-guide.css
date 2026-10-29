@@ -2559,6 +2559,23 @@ body[data-page="chatbot"] {
     margin-left: 0;
     justify-content: space-between;
 }
+@keyframes prompt-composer-border {
+    0% {
+        background-position:
+            0% 50%,
+            0% 50%;
+    }
+    50% {
+        background-position:
+            100% 50%,
+            100% 50%;
+    }
+    100% {
+        background-position:
+            0% 50%,
+            0% 50%;
+    }
+}
 }
 /* END GENERATED GUIDE PREVIEW STYLES */
 
