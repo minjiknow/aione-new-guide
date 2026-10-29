@@ -97,12 +97,12 @@
                         if (actualConversationId) {
                             await updateActualConversationTitle(actualConversationId, title);
                             applyConversationTitleLocal(actualConversationId, title);
-                            showToast("대화 제목이 수정되었습니다.");
                         } else {
                             workspaceTitle = title;
                         }
                         saveWorkspaceMeta();
                         renderDrawer();
+                        showToast("제목을 변경했습니다.");
                     },
                     onError: (error) => {
                         console.error("상단 대화 제목 수정 실패", error);

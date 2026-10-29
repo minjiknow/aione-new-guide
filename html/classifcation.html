@@ -1288,23 +1288,23 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 	<script type="text/javascript" src="../js/classification-rule.js" defer=""></script>
 	<script type="text/javascript" src="../js/classification.js" defer=""></script>
 
-	<!-- Start: 실행 건 제목 변경 모달 -->
+	<!-- Start: 제목 변경 모달 -->
 	<div class="modal-area">
 		<div class="hidden modal" id="workspaceRunRenameModal" data-component="modal" data-modal="">
 			<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
 			<section class="modal-contents modal-medium modal-variant-rename" role="dialog" aria-modal="true"
-				data-modal-variant="rename" aria-label="실행 건 제목 변경">
+				data-modal-variant="rename" aria-label="제목 변경">
 				<div class="modal-variant-panel" data-modal-panel="content">
 					<div class="modal-icon rename" data-modal-icon="rename" aria-hidden="true">
 						<img alt="" data-icon="edit-compact" src="../assets/icons/edit-compact.svg">
 					</div>
-					<div class="modal-title" data-slot="title">실행 건 제목 변경</div>
+					<div class="modal-title" data-slot="title">제목 변경</div>
 					<div class="modal-msg" data-slot="description">
 						<p class="modal-rename-helper">목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.</p>
 						<label class="modal-rename-field" for="workspaceRunRenameInput">
-							<span class="modal-rename-label">실행 건 제목</span>
+							<span class="modal-rename-label">타이틀명</span>
 							<input type="text" class="form-input" id="workspaceRunRenameInput" maxlength="60"
-								autocomplete="off" data-sidepop-rename-input="">
+								autocomplete="off" placeholder="제목을 입력해주세요" data-sidepop-rename-input="">
 						</label>
 						<p class="modal-rename-error" data-sidepop-rename-error="" hidden="">
 							실행 건 제목을 입력해 주세요.
@@ -1319,7 +1319,7 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 		</div>
 	</div>
 
-	<!-- End: 실행 건 제목 변경 모달 -->
+	<!-- End: 제목 변경 모달 -->
 
 	<!-- Start: 실행 건 삭제 모달 -->
 	<div class="modal-area">
@@ -1357,7 +1357,7 @@ UI 관리: 업로드·문서·분류 목록은 기존 마크업과 렌더러를 
 			<button type="button" class="dropdown-menu-item" data-menu-value="rename" role="menuitem">
 				<img class="icon drawer-list-action-icon" alt="" aria-hidden="true" data-icon="edit-compact"
 					src="../assets/icons/edit-compact.svg">
-				<span class="drawer-list-action-label">이름 변경</span>
+				<span class="drawer-list-action-label">제목 변경</span>
 			</button>
 			<button type="button" class="dropdown-menu-item danger" data-menu-value="delete" role="menuitem">
 				<img class="icon drawer-list-action-icon" alt="" aria-hidden="true" data-icon="delete"

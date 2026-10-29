@@ -146,6 +146,7 @@
       if (item) item.title = title;
       else pendingWorkspaceTitle = title;
       renderHistory();
+      announce('제목을 변경했습니다.');
     },
   });
   function renderWorkspaceTitle() {
@@ -268,6 +269,7 @@
     const visible = window.AIOneConversationDrawer.filterItems(historyItems, keyword);
     window.AIOneConversationDrawer.renderChatItems({
       list: $('#policyRunList'), items: visible, activeId: activeHistoryId,
+      emptyTitle: keyword ? '검색 조건에 맞는 보고서 검증 목록이 없습니다.' : '보고서 검증 목록이 없습니다.',
       sortMode: $('#runListSort').value, totalElement: $('#runListTotal'), total: visible.length,
       showIcon: false, titleMax: 120, isPending: item => item.pending, onSelect: selectWorkspace,
       getBadges: item => ['부처', '보고서', '정책과제', '확인 필요']
@@ -279,10 +281,6 @@
       row.querySelector('.drawer-chat-select').setAttribute('aria-label', `${item.title} 보고서 검증 열기`);
     });
     historyPagination.paginate(JSON.stringify([keyword, $('#runListSort').value]));
-    if (!visible.length) {
-      const empty = window.AIOneConversationDrawer.createEmpty(keyword ? '검색 조건에 맞는 보고서 검증 목록이 없습니다.' : '보고서 검증 목록이 없습니다.');
-      $('#policyRunList').append(empty);
-    }
   }
   /* End: 신규 - 공통 실행 목록 렌더링 및 건수 배지 */
   /* Start: 신규 - 실행 목록 검색·정렬·고정·타이틀 변경·삭제 */
@@ -297,9 +295,11 @@
     const { items, item } = window.AIOneConversationDrawer.applyLocalAction(historyItems, detail);
     if (!item) return;
     historyItems = items;
+    if (detail.action === 'rename') announce('제목을 변경했습니다.');
+    if (detail.action === 'delete') window.AIOneWorkspaceCommon.showToast(`“${item.title}” 검증자료가 삭제되었습니다.`);
     if (item.id === activeHistoryId) {
       if (detail.action === 'rename') renderWorkspaceTitle();
-      if (detail.action === 'delete') selectWorkspace(null);
+      if (detail.action === 'delete') activeHistoryId = '';
     }
     queueMicrotask(renderHistory);
   } });

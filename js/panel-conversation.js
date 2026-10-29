@@ -903,7 +903,7 @@
                     }
                 } catch (error) {
                     console.error("대화 목록 조회 실패", error);
-                    el.historyList.replaceChildren(window.AIOneConversationDrawer.createEmpty("작성 이력을 불러오지 못했습니다."));
+                    el.historyList.replaceChildren(window.AIOneConversationDrawer.createEmptyState("작성 이력을 불러오지 못했습니다."));
                 } finally {
                     if (append) state.conversationLoadingMore = false;
                     // Start: 261026 수정 - Drawer 목록 조회 완료 정리
@@ -1040,7 +1040,7 @@
 
 
             // deleteConversation: 대상 데이터를 삭제.
-            async function deleteConversation(conversationId) {
+            async function deleteConversation(conversationId, title) {
                 if (!conversationId) return false;
                 try {
                     // [API 연동] DELETE ND_conversation.do: 작성 이력의 대화 삭제.
@@ -1051,7 +1051,7 @@
                     if (String(state.conversationId) === String(conversationId)) {
                         resetWorkspace();
                     }
-                    showToast("대화를 삭제했습니다.");
+                    showToast(runtime.config.kind === "work-support" ? `“${title}” 작업이 삭제되었습니다.` : "대화가 삭제되었습니다.");
                     await loadConversationList({
                         title: state.conversationSearchTitle,
                         page: 1,
@@ -1174,7 +1174,7 @@
                     list: el.historyList,
                     totalElement: el.historyTotal,
                     items: state.conversations,
-                    emptyMessage: state.conversationSearchTitle ? "검색 결과가 없습니다." : "작성 이력이 없습니다.",
+                    emptyTitle: state.conversationSearchTitle ? "검색 결과가 없습니다." : state.conversationFavoriteOnly ? "즐겨찾기한 목록이 없습니다." : "등록된 목록이 없습니다.",
                     total: state.conversations.length,
                     activeId: state.conversationId,
                     sortMode: el.historySort?.value || "latest",

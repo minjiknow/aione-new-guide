@@ -332,7 +332,7 @@
             if (detail.action === "rename") {
                 await postForm("ND_updateConversationTitle.do", { conversationId: id, title: detail.title });
                 if (id === state.conversationId) setTitle(detail.title);
-                toast("실행 건 제목이 변경되었습니다.");
+                toast("제목을 변경했습니다.");
             } else if (detail.action === "delete") {
                 await postForm("ND_deleteConversation.do", { conversationId: id });
                 if (id === state.conversationId) resetWorkspace();

@@ -4551,8 +4551,7 @@
 
         function render() {
             const title = readTitle();
-            const characters = Array.from(title);
-            text.textContent = characters.length > maxDisplayLength ? characters.slice(0, maxDisplayLength).join("").trimEnd() + "..." : title;
+            window.AIOneWorkspaceCommon.renderDisplayTitle(text, title, maxDisplayLength);
             text.removeAttribute("data-tooltip");
             text.removeAttribute("title");
             if (!editing) input.value = title;
@@ -5075,18 +5074,13 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         return group;
     }
 
-    function createEmpty(message, tagName = "div") {
-        const content = window.AIOneWorkspaceCommon.createFilterEmpty(message, "");
-        content.className = "empty-state drawer-list-empty";
-        content.querySelector(".no-file-icon").classList.add("type1");
-        content.querySelector(".empty-title").classList.add("type1");
-        content.querySelector(".empty-desc").remove();
-        if (tagName === "li") {
-            const item = document.createElement("li");
-            item.append(content);
-            return item;
-        }
-        return content;
+    // Drawer 목록 없음·검색 결과 없음·조회 실패에 같은 아이콘과 제목을 사용한다.
+    function createEmptyState(title, tagName = "div") {
+        const empty = document.createElement(tagName);
+        empty.className = "empty-state drawer-list-empty";
+        empty.innerHTML = '<div class="no-file-icon type1" aria-hidden="true"><img src="../assets/icons/no-file.svg" alt=""></div><strong class="empty-title type1"></strong>';
+        empty.querySelector(".empty-title").textContent = title;
+        return empty;
     }
 
     function renderChatItems(options = {}) {
@@ -5101,7 +5095,9 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         const loading = list.querySelector(":scope > .drawer-list-loading-more");
         const scrollTop = list.scrollTop;
         list.replaceChildren();
-        if (!items.length && options.emptyMessage) list.append(createEmpty(options.emptyMessage));
+        if (!items.length) {
+            list.append(createEmptyState(options.emptyTitle || "등록된 목록이 없습니다.", list.matches("ul, ol") ? "li" : "div"));
+        }
         items.forEach((item, index) => {
             const id = normalizeId(item);
             const title = getTitle(item, options.fallbackTitle);
@@ -5252,8 +5248,8 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         bindActions,
         applyLocalAction,
         filterItems,
+        createEmptyState,
         renderChatItems,
-        createEmpty,
         createBadges,
     });
 })();
@@ -6379,7 +6375,8 @@ window.AIOneSharedBundle = Object.freeze({ assetsBundled: true });
         modal.querySelector('[role="dialog"]').setAttribute("aria-label", title);
         if (input) {
             input.value = context.title();
-            modal.querySelector(".modal-rename-label").textContent = "제목";
+            modal.querySelector(".modal-rename-label").textContent = "타이틀명";
+            input.placeholder = "제목을 입력해주세요";
             modal.querySelector(".modal-rename-helper").textContent = context.renameDescription || "목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.";
             error.textContent = "제목을 입력해 주세요.";
             error.hidden = true;

@@ -1167,7 +1167,7 @@ window.AIOnePanel = {
                     return;
                 }
                 if (action === "delete") {
-                    const deleted = await deleteConversation(conversationId);
+                    const deleted = await deleteConversation(conversationId, detail.title);
                     if (!deleted) {
                         await loadConversationList({
                             title: state.conversationSearchTitle,

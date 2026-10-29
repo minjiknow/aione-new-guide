@@ -429,7 +429,7 @@
     /* Start: 261026 수정 - 검증 실행 이벤트 */
     $("saleVerify").addEventListener("click", startVerification);
     /* End: 261026 수정 - 검증 실행 이벤트 */
-    // 분석 내역은 공통 drawer UI를 사용한다. 저장 API 연결 전에는 미리보기 자료만 제공한다.
+    // 검토서 검증 목록은 공통 drawer UI를 사용한다. 저장 API 연결 전에는 미리보기 자료만 제공한다.
     const historyFiles = new Map([...files].map(([group, items]) => [group, items.slice()]));
     let historyItems = example
         ? [
@@ -448,6 +448,7 @@
         const visible = window.AIOneConversationDrawer.filterItems(historyItems, query);
         window.AIOneConversationDrawer.renderChatItems({
             list: historyList,
+            emptyTitle: query ? "검색 조건에 맞는 검토서 검증 목록이 없습니다." : "검토서 검증 목록이 없습니다.",
             items: visible,
             activeId: activeHistoryId,
             sortMode: $("saleHistoryListSort").value,
@@ -458,9 +459,9 @@
             isPending: (item) => item.status === "pending",
             getBadges: (item) => [{ text: "검토서 1건" }, { text: item.reviewCount == null ? "확인 필요 집계 중" : `확인 필요 ${item.reviewCount}건`, variant: "query" }],
             onSelect(item) {
-                /* Start: 261026 수정 - 분석 내역 전환 시 진행 중 검증 취소 */
+                /* Start: 261026 수정 - 검토서 검증 목록 전환 시 진행 중 검증 취소 */
                 resetVerification();
-                /* End: 261026 수정 - 분석 내역 전환 시 진행 중 검증 취소 */
+                /* End: 261026 수정 - 검토서 검증 목록 전환 시 진행 중 검증 취소 */
                 activeHistoryId = item.id;
                 historyFiles.forEach((items, group) => files.set(group, items.slice()));
                 example = item.status === "completed";
@@ -472,10 +473,10 @@
                 /* Start: 261026 수정 - 선택한 분석 제목 반영 */
                 setAnalysisTitle(item.title);
                 /* End: 261026 수정 - 선택한 분석 제목 반영 */
-                /* Start: 261026 수정 - 분석 내역의 검증 완료 상태 반영 */
+                /* Start: 261026 수정 - 검토서 검증 목록의 검증 완료 상태 반영 */
                 verificationState = example ? "completed" : "ready";
                 syncVerification();
-                /* End: 261026 수정 - 분석 내역의 검증 완료 상태 반영 */
+                /* End: 261026 수정 - 검토서 검증 목록의 검증 완료 상태 반영 */
                 renderResults();
                 renderHistory();
                 window.AIOneSidePop.close(historyDrawer);
@@ -487,10 +488,6 @@
             button.setAttribute("aria-label", `${item.title} 분석 열기`);
         });
         historyPagination.paginate(JSON.stringify([query, $("saleHistoryListSort").value]));
-        if (!visible.length) {
-            const empty = window.AIOneConversationDrawer.createEmpty(query ? "검색 조건에 맞는 분석 내역이 없습니다." : "분석 내역이 없습니다.");
-            historyList.append(empty);
-        }
     }
 
     window.AIOneConversationDrawer.bindControls({
@@ -504,7 +501,7 @@
         onSort: renderHistory,
     });
     /* Start: 261026 수정 - Drawer 목록 최초 로딩 */
-    historyDrawer.addEventListener("sidepop:open", () => window.AIOneDrawerLoading.run(historyList, "분석 목록", renderHistory));
+    historyDrawer.addEventListener("sidepop:open", () => window.AIOneDrawerLoading.run(historyList, "검토서 검증 목록", renderHistory));
     /* End: 261026 수정 - Drawer 목록 최초 로딩 */
     window.AIOneConversationDrawer.bindActions({
         drawer: historyDrawer,
@@ -512,6 +509,8 @@
             const { items, item } = window.AIOneConversationDrawer.applyLocalAction(historyItems, detail);
             if (!item) return;
             historyItems = items;
+            if (detail.action === "rename") notify("제목을 변경했습니다.");
+            if (detail.action === "delete") window.AIOneWorkspaceCommon.showToast(`“${item.title}” 검증자료가 삭제되었습니다.`);
             if (item.id === activeHistoryId) {
                 /* Start: 261026 수정 - 내역 이름 변경 동기화 */
                 if (detail.action === "rename") setAnalysisTitle(detail.title);
@@ -559,7 +558,7 @@
             labels: { untitled: "제목 없는 대화", workspace: "매각 검토", history: "대화 목록" },
         },
         installPage(runtime) {
-            // Start: 261026 수정 - 공통 제목 편집기에 분석 내역 연결
+            // Start: 261026 수정 - 공통 제목 편집기에 검토서 검증 목록 연결
             titleRuntime = runtime;
             runtime.page.workspaceTitle = {
                 editLabel: "분석 제목 수정",
@@ -569,9 +568,10 @@
                     if (item) item.title = title;
                     setAnalysisTitle(title);
                     renderHistory();
+                    notify("제목을 변경했습니다.");
                 },
             };
-            // End: 261026 수정 - 공통 제목 편집기에 분석 내역 연결
+            // End: 261026 수정 - 공통 제목 편집기에 검토서 검증 목록 연결
             runtime.page.getWelcomeHtml = () => sampleChat.querySelector(".msg-text").innerHTML;
         },
     });

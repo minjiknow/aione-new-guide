@@ -208,7 +208,7 @@
         try {
           await updateActualConversationTitle(conversationId, detail.title);
           applyConversationTitleLocal(conversationId, detail.title);
-          showToast('실행 건 제목이 변경되었습니다.');
+          showToast('제목을 변경했습니다.');
         } catch (error) {
           console.error('실행 건 제목 변경 실패', error);
           await loadActualConversations(true, runListSearchTerm);
@@ -220,7 +220,7 @@
         try {
           await deleteActualConversation(conversationId);
           await syncAfterConversationDelete(conversationId);
-          showToast('대화방이 삭제되었습니다.');
+          showToast(`“${detail.title}” 질의가 삭제되었습니다.`);
         } catch (error) {
           console.error('대화방 삭제 실패', error);
           await loadActualConversations(true, runListSearchTerm);

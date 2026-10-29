@@ -542,14 +542,14 @@
               const currentTitle = String(oldTitle || '').trim() || '제목없는 국회질의분류';
               modal.innerHTML = `
                 <div class="modal-bg" aria-hidden="true"></div>
-                <section class="modal-contents modal-medium" data-modal-variant="rename" role="dialog" aria-modal="true" aria-label="실행 건 제목 변경">
+                <section class="modal-contents modal-medium" data-modal-variant="rename" role="dialog" aria-modal="true" aria-label="제목 변경">
                   <div class="modal-variant-panel" data-modal-panel="content">
                     <div class="modal-icon rename" data-modal-icon="rename" aria-hidden="true"><img alt="" data-icon="edit-compact"></div>
-                    <h3 class="modal-title">실행 건 제목 변경</h3>
+                    <h3 class="modal-title">제목 변경</h3>
                     <p class="modal-rename-helper">목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.</p>
                     <label class="modal-rename-field">
-                      <span class="modal-rename-label">실행 건 제목</span>
-                      <input id="conversationRenameInput" class="form-input" type="text" maxlength="100" value="${escapeHtml(currentTitle)}" aria-label="실행 건 제목" draggable="false">
+                      <span class="modal-rename-label">타이틀명</span>
+                      <input id="conversationRenameInput" class="form-input" type="text" maxlength="100" value="${escapeHtml(currentTitle)}" aria-label="타이틀명" placeholder="제목을 입력해주세요" draggable="false">
                     </label>
                     <div class="modal-actions">
                       <button type="button" class="btn-cancel" data-modal-close>취소</button>
@@ -574,10 +574,10 @@
                   await updateActualConversationTitle(conversationId, normalized);
                   applyConversationTitleLocal(conversationId, normalized);
                   window.AIOneModal?.close(modal);
-                  showToast('실행 건 제목이 변경되었습니다.');
+                  showToast('제목을 변경했습니다.');
                 } catch (error) {
-                  console.error('실행 건 제목 변경 실패', error);
-                  showToast(error.message || '실행 건 제목 변경에 실패했습니다.');
+                  console.error('제목 변경 실패', error);
+                  showToast(error.message || '제목 변경에 실패했습니다.');
                   if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '저장'; }
                 }
               };
@@ -594,7 +594,7 @@
               try {
                 await deleteActualConversation(conversationId);
                 await syncAfterConversationDelete(conversationId);
-                showToast('대화방이 삭제되었습니다.');
+                showToast(`“${title}” 질의가 삭제되었습니다.`);
               } catch (error) {
                 console.error('대화방 삭제 실패', error);
                 showToast(
@@ -1181,10 +1181,13 @@
                         `;
                       })
                       .join('')
-                  : window.AIOneConversationDrawer.createEmpty(
-                      runListSearchTerm ? '검색 결과가 없습니다.' : '등록된 질의이력이 없습니다.',
-                      'li'
-                    ).outerHTML;
+                  : '';
+              if (!list.children.length) {
+                list.append(window.AIOneConversationDrawer.createEmptyState(
+                  runListSearchTerm ? '검색 결과가 없습니다.' : '등록된 질의이력이 없습니다.',
+                  'li'
+                ));
+              }
               if (loading) list.append(loading);
               list.scrollTop = scrollTop;
               $$('.drawer-run-item[data-conversation-id]', list).forEach(row => {

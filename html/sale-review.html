@@ -23,7 +23,7 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 - 신규: 공통 Work·Chat 사이드바·사용자 메뉴 및 상단 분석 도구 연결
 - 신규: 검토서·검증자료 업로드와 파일 목록·검증 실행 영역
 - 신규: 문서 미리보기·검증결과 검색·상세 및 문서 상태바
-- 신규: AI 채팅·질문 입력, 분석 내역·이름 변경·삭제 모달
+- 신규: AI 채팅·질문 입력, 검토서 검증 목록·이름 변경·삭제 모달
 - 신규: 파일 카드·검증결과·기본정보 상세 템플릿
 
 [개발 연동 안내]
@@ -899,20 +899,20 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 			<div class="hidden modal" id="saleHistoryRenameModal" data-component="modal" data-modal="">
 				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
 				<section class="modal-contents modal-medium modal-variant-rename" role="dialog" aria-modal="true"
-					data-modal-variant="rename" aria-label="분석 이름 변경">
+					data-modal-variant="rename" aria-label="제목 변경">
 					<div class="modal-variant-panel" data-modal-panel="content">
 						<div class="modal-icon rename" data-modal-icon="rename" aria-hidden="true">
 							<img src="../assets/icons/edit.svg" alt="">
 						</div>
-						<div class="modal-title" id="saleHistoryRenameModal-title">분석 이름 변경</div>
+						<div class="modal-title" id="saleHistoryRenameModal-title">제목 변경</div>
 						<div class="modal-msg" id="saleHistoryRenameModal-description">
 							<p class="modal-rename-helper">목록에서 구분하기 쉬운 제목으로 변경할 수 있습니다.</p>
 							<label class="modal-rename-field" for="saleHistoryRenameInput">
-								<span class="modal-rename-label">분석 이름</span>
+								<span class="modal-rename-label">타이틀명</span>
 								<input type="text" class="form-input" id="saleHistoryRenameInput" maxlength="60"
-									autocomplete="off" data-sidepop-rename-input="">
+									autocomplete="off" placeholder="제목을 입력해주세요" data-sidepop-rename-input="">
 							</label>
-							<p class="modal-rename-error" data-sidepop-rename-error="" hidden="">분석 이름을 입력해 주세요.</p>
+							<p class="modal-rename-error" data-sidepop-rename-error="" hidden="">제목을 입력해 주세요.</p>
 						</div>
 						<div class="modal-actions">
 							<button type="button" class="btn-cancel" data-modal-close=""
@@ -925,15 +925,15 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 		</div>
 		<!-- End: 신규 - 분석 이름 변경 모달 -->
 
-		<!-- Start: 신규 - 분석 내역 삭제 모달 -->
+		<!-- Start: 신규 - 검토서 검증 목록 삭제 모달 -->
 		<div class="modal-area">
 			<div class="hidden modal" id="saleHistoryDeleteModal" data-component="modal" data-modal="">
 				<div class="modal-bg" data-modal-close="" aria-hidden="true"></div>
 				<section class="modal-contents modal-medium modal-variant-content" role="dialog" aria-modal="true"
-					data-modal-variant="content" aria-label="분석 내역 삭제 확인">
+					data-modal-variant="content" aria-label="검토서 검증 목록 삭제 확인">
 					<div class="modal-variant-panel" data-modal-panel="content">
 						<div class="modal-icon danger" data-modal-icon="default" aria-hidden="true">⚠</div>
-						<div class="modal-title" id="saleHistoryDeleteModal-title">분석 내역 삭제</div>
+						<div class="modal-title" id="saleHistoryDeleteModal-title">검토서 검증 목록 삭제</div>
 						<div class="modal-msg" id="saleHistoryDeleteModal-description">
 							<strong data-sidepop-delete-title="">선택한 분석</strong>를 삭제하시겠습니까?
 						</div>
@@ -946,7 +946,7 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 				</section>
 			</div>
 		</div>
-		<!-- End: 신규 - 분석 내역 삭제 모달 -->
+		<!-- End: 신규 - 검토서 검증 목록 삭제 모달 -->
 		<!-- Start: 신규 - 매각 분석 메뉴 모달 -->
 		<div class="hidden modal modal-menu-backdrop" id="saleHistoryActionModal" data-component="modal" data-modal="">
 			<section class="modal-contents modal-small" role="dialog" aria-modal="true" aria-label="분석 작업 메뉴">
@@ -962,7 +962,7 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 					</button>
 					<button type="button" class="modal-action-item" role="menuitem" data-sidepop-list-action="rename">
 						<img class="modal-action-icon" src="../assets/icons/edit.svg" alt="" aria-hidden="true">
-						<span data-sidepop-action-label="">분석 이름 변경</span>
+						<span data-sidepop-action-label="">제목 변경</span>
 					</button>
 					<button type="button" class="modal-action-item danger" role="menuitem"
 						data-sidepop-list-action="delete">
@@ -977,22 +977,23 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 		<div class="drawer" hidden="" id="saleHistoryDrawer" data-component="sidepop" data-sidepop=""
 			data-sidepop-action-modal="saleHistoryActionModal" data-sidepop-rename-modal="saleHistoryRenameModal"
 			data-sidepop-delete-modal="saleHistoryDeleteModal">
-			<button aria-label="분석 내역 닫기" class="drawer-backdrop" data-sidepop-close="" type="button"></button>
+			<button aria-label="검토서 검증 목록 닫기" class="drawer-backdrop" data-sidepop-close="" type="button"></button>
 			<aside aria-labelledby="saleHistoryDrawerTitle" aria-modal="true"
 				class="drawer-contents drawer-medium drawer-variant-chat-list" data-sidepop-size="medium"
 				data-sidepop-variant="chat-list" role="dialog">
 				<section class="drawer-variant-panel" data-sidepop-panel="chat-list">
 					<header class="drawer-header">
 						<div class="drawer-heading">
-							<h2 class="drawer-title" id="saleHistoryDrawerTitle">분석 내역</h2>
-							<p class="drawer-description">매각 분석 내역을 확인할 수 있습니다. 예시 내역의 변경은 새로고침하면 초기화됩니다.</p>
+							<h2 class="drawer-title" id="saleHistoryDrawerTitle">검토서 검증 목록</h2>
+							<p class="drawer-description">검토서 검증 목록을 확인할 수 있습니다. 예시 내역의 변경은 새로고침하면 초기화됩니다.</p>
 						</div>
-						<button aria-label="분석 내역 닫기" class="icon-button icon-button-ghost" data-sidepop-close=""
-							type="button" data-tooltip="분석 내역 닫기">×</button>
+						<button aria-label="검토서 검증 목록 닫기" class="icon-button icon-button-ghost" data-sidepop-close=""
+							type="button" data-tooltip="검토서 검증 목록 닫기">×</button>
 					</header>
 					<div class="drawer-list-position">
 						<button type="button" class="drawer-position-button" id="saleHistoryDrawerPositionBtn"
-							data-sidepop-position-toggle aria-label="분석 내역 좌측으로 이동" data-tooltip="분석 내역 좌측으로 이동">
+							data-sidepop-position-toggle aria-label="검토서 검증 목록 좌측으로 이동"
+							data-tooltip="검토서 검증 목록 좌측으로 이동">
 							<svg viewBox="0 0 24 24" aria-hidden="true">
 								<rect x="3.5" y="4" width="17" height="16" rx="2"></rect>
 								<path d="M16 5.5V18.5M14 12H7M9.5 9.5 7 12l2.5 2.5"></path>
@@ -1006,8 +1007,8 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 								<circle cx="11" cy="11" r="7"></circle>
 								<path d="m20 20-3.6-3.6"></path>
 							</svg>
-							<input aria-label="분석 내역 검색" autocomplete="off" id="saleHistoryListSearch"
-								placeholder="분석 내역 검색" type="search">
+							<input aria-label="검토서 검증 목록 검색" autocomplete="off" id="saleHistoryListSearch"
+								placeholder="검토서 검증 목록 검색" type="search">
 							<button type="button" id="saleHistoryListSearchClear" class="drawer-search-clear hidden"
 								aria-label="검색어 지우기">×</button>
 						</div>
@@ -1015,13 +1016,13 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 							tabindex="-1"></button>
 						<div class="drawer-list-meta">
 							<span>전체 <strong id="saleHistoryListTotal">0</strong>건</span>
-							<select aria-label="분석 내역 정렬" class="drawer-list-sort" id="saleHistoryListSort"
+							<select aria-label="검토서 검증 목록 정렬" class="drawer-list-sort" id="saleHistoryListSort"
 								style="width: 70px;">
 								<option value="latest">최신순</option>
 								<option value="oldest">과거순</option>
 							</select>
 						</div>
-						<!-- sale-review.js에서 공통 renderChatItems로 분석 내역을 표시합니다. -->
+						<!-- sale-review.js에서 공통 renderChatItems로 검토서 검증 목록을 표시합니다. -->
 						<div aria-live="polite" class="drawer-chat-list drawer-scroll-list" id="saleHistoryItems">
 						</div>
 						<div class="draft-history-pagination" id="saleHistoryPagination" hidden=""></div>
@@ -1223,7 +1224,8 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 					<div class="chat-issue-field">
 						<label class="chat-issue-upload-title" for="chatIssueFiles">파일 첨부 (선택)</label>
 						<label class="chat-issue-upload upload-zone upload-zone-type1 compact" for="chatIssueFiles">
-							<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt="" aria-hidden="true">
+							<img class="upload-zone-default-icon" src="../assets/icons/upload-tray.svg" alt=""
+								aria-hidden="true">
 							<span class="upload-text">파일을 드롭하거나 클릭하여 업로드</span>
 							<span class="upload-hint">스크린샷 등 최대 5개, 각 10MB 이내</span>
 						</label>
@@ -1239,6 +1241,8 @@ UI 관리: 파일 카드·검증결과·기본정보 상세는 이 페이지의 
 		</div>
 	</template>
 	<!-- End: 261028 수정 - 공통 오류신고 팝업 템플릿 재사용 -->
+	<div class="ai-one-toast" data-toast id="toast" role="status" hidden><span class="ai-one-toast-message"
+			data-toast-message></span></div>
 </body>
 
 </html>
