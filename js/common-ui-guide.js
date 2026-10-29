@@ -60,7 +60,17 @@
       window.AIOneDrawerLoading.show(host, '채팅 목록', { append: type === 'more' });
     }
   });
-  document.querySelector('[data-preview-layout="composer"] form')?.addEventListener('submit', event => event.preventDefault());
+  // 가이드에서는 실제 전송 대신 각 예시의 입력값에 따른 버튼 상태만 연결합니다.
+  document.querySelectorAll('.guide-preview form').forEach(form => {
+    const input = form.querySelector('[data-preview-id="chatInput"]');
+    const button = form.querySelector('[data-preview-id="sendBtn"], [data-preview-id="chatSendBtn"]');
+    if (!input || !button) return;
+    const syncSendButton = () => { button.disabled = !input.value.trim(); };
+    input.addEventListener('input', syncSendButton);
+    form.addEventListener('submit', event => event.preventDefault());
+    form.addEventListener('reset', () => queueMicrotask(syncSendButton));
+    syncSendButton();
+  });
   const composerPreview = document.querySelector('[data-preview-layout="composer"]');
   window.AIOneModelTaskMenu.init({
     composer: composerPreview?.querySelector('.prompt-composer-shell'),
